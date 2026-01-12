@@ -1,8 +1,15 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 
-// Dynamically use the current hostname (works for localhost, 192.168.x.x, etc.)
-const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000/api`;
+// Use VITE_API_URL from environment, or fallback to local IP for development
+const API_URL = import.meta.env.VITE_API_URL || 
+  (window.location.protocol === 'https:' 
+    ? '' // In production HTTPS, we shouldn't fallback to insecure HTTP
+    : `http://${window.location.hostname}:3000/api`);
+
+if (!API_URL && window.location.protocol === 'https:') {
+  console.warn('VITE_API_URL is not set. API calls will fail on HTTPS production sites.');
+}
 
 const api = axios.create({
   baseURL: API_URL,
