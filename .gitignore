@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+.nyc_output/
+
+# Production
+dist/
+build/
+
+# Misc
+.DS_Store
+*.log
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Temporary / sensitive files
+login.json
+cleanup.sql
+*.tmp
+backend/fix_data.js
+backend/list_teachers.js
+backend/run_generator.js
+backend/list_slots.js
+backend/test_alice.js
+backend/debug_alice.js
+backend/fix_assignments_and_generate.js
+backend/add_teachers_prefects.sql
+backend/assign_data.sql

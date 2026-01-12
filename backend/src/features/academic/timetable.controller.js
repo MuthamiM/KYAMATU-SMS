@@ -1,0 +1,55 @@
+import * as timetableService from './timetable.service.js';
+import { sendSuccess } from '../../utils/response.js';
+
+export const getTimetable = async (req, res, next) => {
+  try {
+    const { classId } = req.query;
+    if (!classId) throw new Error('classId is required');
+    const timetable = await timetableService.getTimetable(classId);
+    sendSuccess(res, timetable);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getTeacherTimetable = async (req, res, next) => {
+  try {
+    const staffId = req.user.role === 'TEACHER' ? req.user.staff.id : req.query.staffId;
+    // Assuming req.user is populated with staff info if Teacher, or we query DB. 
+    // Usually req.user has userId. Need to fetch staffId if not present.
+    // Ideally middleware adds user.staff.
+    if (!staffId) throw new Error('Staff ID required');
+    
+    const timetable = await timetableService.getTeacherTimetable(staffId);
+    sendSuccess(res, timetable);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const upsertSlot = async (req, res, next) => {
+  try {
+    const slot = await timetableService.upsertTimetableSlot(req.body);
+    sendSuccess(res, slot, 'Timetable slot saved');
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const generate = async (req, res, next) => {
+  try {
+    const result = await timetableService.generateTimetable();
+    sendSuccess(res, result, 'Timetable generated successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteSlot = async (req, res, next) => {
+  try {
+    await timetableService.deleteTimetableSlot(req.params.id);
+    sendSuccess(res, null, 'Slot deleted');
+  } catch (error) {
+    next(error);
+  }
+};
