@@ -16,9 +16,15 @@ const SUBJECTS_LIST = [
   { name: 'Home Science', code: 'HOM' }
 ];
 
+// Kenyan first names
+const FIRST_NAMES_MALE = ['James', 'John', 'Peter', 'David', 'Michael', 'Brian', 'Kevin', 'Dennis', 'Collins', 'Victor', 'Samuel', 'Joseph', 'Daniel', 'Stephen', 'Patrick'];
+const FIRST_NAMES_FEMALE = ['Mary', 'Grace', 'Faith', 'Joy', 'Mercy', 'Alice', 'Sarah', 'Rose', 'Esther', 'Nancy', 'Lucy', 'Catherine', 'Jane', 'Ann', 'Elizabeth'];
+const LAST_NAMES = ['Mwangi', 'Otieno', 'Kamau', 'Wanjiku', 'Ochieng', 'Njoroge', 'Kipchoge', 'Wambui', 'Kimani', 'Mutua', 'Omondi', 'Karanja', 'Kiprotich', 'Akinyi', 'Ndungu'];
+
 async function main() {
-  console.log('Starting historical seed...');
-  // Clean up
+  console.log('🚀 Starting fresh seed with 10 students per class...');
+  
+  // Clean up everything
   await prisma.timetableSlot.deleteMany();
   await prisma.payment.deleteMany();
   await prisma.invoiceItem.deleteMany();
@@ -43,73 +49,67 @@ async function main() {
 
   const hashedPassword = await bcrypt.hash('Admin@123', 12);
 
-  // 1. Create 4 Academic Years (2023, 2024, 2025, 2026)
-  const years = [2023, 2024, 2025, 2026];
-  const academicYears = [];
+  // 1. Create Academic Year 2026
+  console.log('📅 Creating academic year...');
+  const currentYear = await prisma.academicYear.create({
+    data: {
+      name: '2026',
+      startDate: new Date('2026-01-05'),
+      endDate: new Date('2026-11-30'),
+      isCurrent: true,
+    }
+  });
+
+  // Create 3 terms for 2026
+  const terms = [];
+  const termDates = [
+    { name: 'Term 1', num: 1, start: '2026-01-05', end: '2026-04-10' },
+    { name: 'Term 2', num: 2, start: '2026-05-02', end: '2026-08-10' },
+    { name: 'Term 3', num: 3, start: '2026-09-01', end: '2026-11-25' },
+  ];
   
-  for (const year of years) {
-    const isCurrent = year === 2026;
-    const ay = await prisma.academicYear.create({
+  for (const t of termDates) {
+    const term = await prisma.term.create({
       data: {
-        name: year.toString(),
-        startDate: new Date(`${year}-01-05`),
-        endDate: new Date(`${year}-11-30`),
-        isCurrent: isCurrent,
+        name: t.name,
+        termNumber: t.num,
+        startDate: new Date(t.start),
+        endDate: new Date(t.end),
+        academicYearId: currentYear.id
       }
     });
-    academicYears.push(ay);
-    
-    // Create 3 terms for each year
-    for(let t=1; t<=3; t++) {
-        let start, end;
-        if(t===1) { start=`${year}-01-05`; end=`${year}-04-10`; }
-        if(t===2) { start=`${year}-05-02`; end=`${year}-08-10`; }
-        if(t===3) { start=`${year}-09-01`; end=`${year}-11-25`; }
-        
-        await prisma.term.create({
-            data: {
-                name: `Term ${t}`,
-                termNumber: t,
-                startDate: new Date(start),
-                endDate: new Date(end),
-                academicYearId: ay.id
-            }
-        });
-    }
+    terms.push(term);
   }
+  const currentTerm = terms[0]; // Term 1
 
-  // Get current year and term 1 for 2026 reference
-  const currentYear = academicYears.find(y => y.name === '2026');
-  const allTerms = await prisma.term.findMany();
-  const currentTerm1 = allTerms.find(t => t.academicYearId === currentYear.id && t.termNumber === 1);
-
-  // 2. Grades & Streams
+  // 2. Create Grades (Grade 1-6)
+  console.log('📚 Creating grades...');
   const gradesData = [
-    { name: 'Grade 1', level: 3 },
-    { name: 'Grade 2', level: 4 },
-    { name: 'Grade 3', level: 5 },
-    { name: 'Grade 4', level: 6 },
-    { name: 'Grade 5', level: 7 },
-    { name: 'Grade 6', level: 8 },
+    { name: 'Grade 1', level: 1 },
+    { name: 'Grade 2', level: 2 },
+    { name: 'Grade 3', level: 3 },
+    { name: 'Grade 4', level: 4 },
+    { name: 'Grade 5', level: 5 },
+    { name: 'Grade 6', level: 6 },
   ];
 
   const createdGrades = [];
   for (const g of gradesData) {
-    createdGrades.push(await prisma.grade.create({ data: g }));
+    const grade = await prisma.grade.create({ data: g });
+    createdGrades.push(grade);
   }
 
-  const streams = ['East', 'West'];
-  const createdStreams = [];
-  for (const name of streams) {
-    createdStreams.push(await prisma.stream.create({ data: { name } }));
-  }
+  // 3. Create Streams
+  console.log('🏫 Creating streams...');
+  const streamEast = await prisma.stream.create({ data: { name: 'East' } });
+  const streamWest = await prisma.stream.create({ data: { name: 'West' } });
 
-  // 3. Classes and Subjects (For Current Year Structure)
+  // 4. Create Classes (One stream per grade, except Grade 4 has two)
+  console.log('🏫 Creating classes...');
   const createdClasses = [];
-  const createdSubjects = [];
-
+  
   for (const grade of createdGrades) {
-    // Subjects
+    // Create subjects for this grade
     const gradeSubjects = [];
     for (const subj of SUBJECTS_LIST) {
       const subject = await prisma.subject.create({
@@ -120,24 +120,26 @@ async function main() {
         }
       });
       gradeSubjects.push(subject);
-      createdSubjects.push(subject);
     }
 
-    // Classes
-    const streamNames = grade.name === 'Grade 4' ? ['East', 'West'] : ['East'];
-    for (const streamName of streamNames) {
-      const stream = createdStreams.find(s => s.name === streamName);
+    // Determine streams for this grade
+    const streamsForGrade = grade.name === 'Grade 4' 
+      ? [streamEast, streamWest] 
+      : [streamEast];
+
+    for (const stream of streamsForGrade) {
       const cls = await prisma.class.create({
         data: {
-          name: `${grade.name} ${streamName}`,
+          name: `${grade.name} ${stream.name}`,
           capacity: 40,
           gradeId: grade.id,
           streamId: stream.id,
           academicYearId: currentYear.id,
         },
       });
-      createdClasses.push(cls);
+      createdClasses.push({ ...cls, grade, subjects: gradeSubjects });
 
+      // Link subjects to class
       for (const subj of gradeSubjects) {
         await prisma.classSubject.create({
           data: { classId: cls.id, subjectId: subj.id }
@@ -146,160 +148,180 @@ async function main() {
     }
   }
 
-  // 4. Admin & Staff
+  console.log(`✅ Created ${createdClasses.length} classes`);
+
+  // 5. Create Admin Users
+  console.log('👤 Creating admin users...');
   await prisma.user.create({
     data: { email: 'admin@kyamatu.ac.ke', password: hashedPassword, role: 'SUPER_ADMIN', phone: '+254700000001' },
   });
   await prisma.user.create({
     data: { email: 'bursar@kyamatu.ac.ke', password: hashedPassword, role: 'BURSAR', phone: '+254700000003' },
   });
+  
+  // Create Teacher
   const teacherUser = await prisma.user.create({
     data: { email: 'teacher@kyamatu.ac.ke', password: hashedPassword, role: 'TEACHER', phone: '+254700000002' },
   });
   await prisma.staff.create({
-     data: { userId: teacherUser.id, employeeNumber: 'TSC001', firstName: 'John', lastName: 'Musa', gender: 'Male', specialization: 'Mathematics' }
+    data: { 
+      userId: teacherUser.id, 
+      employeeNumber: 'TSC001', 
+      firstName: 'John', 
+      lastName: 'Musa', 
+      gender: 'Male', 
+      specialization: 'Mathematics' 
+    }
   });
 
-  // 5. Historical Students & Growth Data
-  // We simulate students joining in different years
-  console.log('Generating students...');
-  const firstNames = ['James', 'Mary', 'John', 'Patricia', 'Robert', 'Jennifer', 'Michael', 'Linda', 'David', 'Elizabeth'];
-  const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Mwangi', 'Otieno'];
-
+  // 6. Create 10 Students per Class
+  console.log('👨‍🎓 Creating 10 students per class...');
   let studentCounter = 1;
+  const allStudents = [];
 
-  // Distribute new admissions across years
-  // 2023: 80 students
-  // 2024: 100 students
-  // 2025: 120 students
-  // 2026: 50 students (so far)
-  const yearlyAdmissions = [
-      { year: 2023, count: 80 },
-      { year: 2024, count: 100 },
-      { year: 2025, count: 120 },
-      { year: 2026, count: 50 }
-  ];
-
-  const allActiveStudents = [];
-
-  for (const cohort of yearlyAdmissions) {
-      const yearObj = academicYears.find(y => y.name === cohort.year.toString());
+  for (const cls of createdClasses) {
+    console.log(`   Adding 10 students to ${cls.name}...`);
+    
+    for (let i = 0; i < 10; i++) {
+      const isMale = Math.random() > 0.5;
+      const firstName = isMale 
+        ? FIRST_NAMES_MALE[Math.floor(Math.random() * FIRST_NAMES_MALE.length)]
+        : FIRST_NAMES_FEMALE[Math.floor(Math.random() * FIRST_NAMES_FEMALE.length)];
+      const lastName = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
       
-      for(let i=0; i<cohort.count; i++) {
-          const fName = firstNames[Math.floor(Math.random() * firstNames.length)];
-          const lName = lastNames[Math.floor(Math.random() * lastNames.length)];
-          
-          // Random admission date within that year
-          const month = Math.floor(Math.random() * 11); // 0-11
-          const day = Math.floor(Math.random() * 28) + 1;
-          const admitDate = new Date(cohort.year, month, day);
+      // Random admission date in Jan 2026
+      const admitDay = Math.floor(Math.random() * 10) + 5;
+      const admitDate = new Date(2026, 0, admitDay);
 
-          const sUser = await prisma.user.create({
-              data: { 
-                  email: `student${studentCounter}@kyamatu.ac.ke`, 
-                  password: hashedPassword, 
-                  role: 'STUDENT',
-              }
-          });
+      const studentUser = await prisma.user.create({
+        data: { 
+          email: `student${studentCounter}@kyamatu.ac.ke`, 
+          password: hashedPassword, 
+          role: 'STUDENT',
+        }
+      });
 
-          // Assign to a random class (current class ref) 
-          // Ideally we'd track class history but for dashboard "current" stats we just link to a current class
-          const cls = createdClasses[Math.floor(Math.random() * createdClasses.length)];
-
-          const student = await prisma.student.create({
-              data: {
-                  userId: sUser.id,
-                  firstName: fName,
-                  lastName: lName,
-                  admissionNumber: `ADM${cohort.year}${studentCounter.toString().padStart(3, '0')}`,
-                  gender: Math.random() > 0.5 ? 'Male' : 'Female',
-                  dateOfBirth: new Date(2015, 0, 1),
-                  classId: cls.id,
-                  admissionStatus: 'APPROVED',
-                  admissionDate: admitDate
-              }
-          });
-          
-          allActiveStudents.push(student);
-          studentCounter++;
-      }
-  }
-
-  // 6. Generate Historical Payments (Fee Collection Trends)
-  // We create payments distributed across the years corresponding to the students active then
-  console.log('Generating payments...');
-  
-  // Create Fee Structures just for 2026 for completeness, but we'll manually create payments with dates
-  // Grade 1-3 Fee
-  const fsLower = await prisma.feeStructure.create({
-      data: { name: 'Tuition', amount: 15000, gradeId: createdGrades[0].id, termId: currentTerm1.id }
-  });
-  
-  // Create a dummy invoice for 2026 for everyone to link recent payments to
-  // For historical payments, we might need dummy invoices or just allow unlinked?
-  // Schema requires invoiceId.
-  // We'll focus on 2026 payments for the "Fee Collection" chart granularity if it's monthly for current year
-  // But user wanted "Historical". To show a trend line of yearly collection:
-  
-  for (const student of allActiveStudents) {
-      // 2026 Invoicing
-      const invoice = await prisma.studentInvoice.create({
-          data: {
-             invoiceNo: `INV${student.admissionNumber}`,
-             studentId: student.id,
-             termId: currentTerm1.id,
-             totalAmount: 15000,
-             balance: 15000,
-             dueDate: new Date('2026-02-01')
-          }
+      // Calculate birth year based on grade (roughly age 6-12)
+      const birthYear = 2026 - (cls.grade.level + 5);
+      
+      const student = await prisma.student.create({
+        data: {
+          userId: studentUser.id,
+          firstName: firstName,
+          lastName: lastName,
+          admissionNumber: `ADM2026${studentCounter.toString().padStart(3, '0')}`,
+          gender: isMale ? 'Male' : 'Female',
+          dateOfBirth: new Date(birthYear, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1),
+          classId: cls.id,
+          admissionStatus: 'APPROVED',
+          admissionDate: admitDate
+        }
       });
       
-      // Randomly make a payment for 2026
-      if(Math.random() > 0.2) {
-          const amount = Math.floor(Math.random() * 10000) + 1000;
-          await prisma.payment.create({
-              data: {
-                  amount: amount,
-                  method: 'MPESA',
-                  status: 'COMPLETED',
-                  transactionRef: `TX${Math.random().toString(36).substring(7)}`,
-                  studentId: student.id,
-                  invoiceId: invoice.id,
-                  paidAt: new Date(2026, Math.floor(Math.random() * 3), Math.floor(Math.random() * 28) + 1) // Jan-Mar 2026
-              }
-          });
-          await prisma.studentInvoice.update({
-             where: { id: invoice.id },
-             data: { paidAmount: amount, balance: 15000 - amount }
-          });
-      }
+      allStudents.push(student);
+      studentCounter++;
+    }
   }
 
-  // 7. Attendance for Today/Yesterday (for Pie Chart)
-  console.log('Generating attendance...');
-  const today = new Date(); // Today
-  const yesterday = new Date(); yesterday.setDate(today.getDate() - 1);
+  console.log(`✅ Created ${allStudents.length} students total`);
+
+  // 7. Create Fee Structure and Invoices
+  console.log('💰 Creating fee structures and invoices...');
   
-  for(const student of allActiveStudents) {
-      // 95% attendance rate
-      const status = Math.random() > 0.05 ? 'PRESENT' : 'ABSENT';
-      await prisma.attendance.create({
-          data: {
-              date: today,
-              studentId: student.id,
-              classId: student.classId,
-              status: status,
-              termId: currentTerm1.id
-          }
-      });
+  // Fee structure for all grades
+  for (const grade of createdGrades) {
+    await prisma.feeStructure.create({
+      data: { 
+        name: 'Tuition Fee', 
+        amount: 15000, 
+        gradeId: grade.id, 
+        termId: currentTerm.id 
+      }
+    });
   }
 
-  console.log('Seed completed successfully!');
+  // Create invoices and some payments for students
+  for (const student of allStudents) {
+    const invoice = await prisma.studentInvoice.create({
+      data: {
+        invoiceNo: `INV${student.admissionNumber}`,
+        studentId: student.id,
+        termId: currentTerm.id,
+        totalAmount: 15000,
+        balance: 15000,
+        dueDate: new Date('2026-02-01')
+      }
+    });
+
+    // 70% of students have made some payment
+    if (Math.random() > 0.3) {
+      const paymentAmount = Math.floor(Math.random() * 12000) + 3000; // 3000-15000
+      await prisma.payment.create({
+        data: {
+          amount: paymentAmount,
+          method: Math.random() > 0.5 ? 'MPESA' : 'BANK_TRANSFER',
+          status: 'COMPLETED',
+          transactionRef: `TX${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+          studentId: student.id,
+          invoiceId: invoice.id,
+          paidAt: new Date(2026, 0, Math.floor(Math.random() * 14) + 1)
+        }
+      });
+      
+      await prisma.studentInvoice.update({
+        where: { id: invoice.id },
+        data: { 
+          paidAmount: paymentAmount, 
+          balance: Math.max(0, 15000 - paymentAmount) 
+        }
+      });
+    }
+  }
+
+  // 8. Create Attendance Records (Today)
+  console.log('📋 Creating attendance records...');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  for (const student of allStudents) {
+    // 94% present, 4% absent, 2% late
+    const rand = Math.random();
+    let status = 'PRESENT';
+    if (rand > 0.96) status = 'LATE';
+    else if (rand > 0.94) status = 'ABSENT';
+
+    await prisma.attendance.create({
+      data: {
+        date: today,
+        studentId: student.id,
+        classId: student.classId,
+        status: status,
+        termId: currentTerm.id
+      }
+    });
+  }
+
+  // 9. Summary
+  const classCount = await prisma.class.count();
+  const studentCount = await prisma.student.count();
+  const staffCount = await prisma.staff.count();
+
+  console.log('\n🎉 Seed completed successfully!');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`📊 Summary:`);
+  console.log(`   • Classes: ${classCount}`);
+  console.log(`   • Students: ${studentCount} (10 per class)`);
+  console.log(`   • Staff: ${staffCount}`);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('\n📧 Login credentials:');
+  console.log('   Admin: admin@kyamatu.ac.ke / Admin@123');
+  console.log('   Bursar: bursar@kyamatu.ac.ke / Admin@123');
+  console.log('   Teacher: teacher@kyamatu.ac.ke / Admin@123');
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error('❌ Seed failed:', e);
     process.exit(1);
   })
   .finally(async () => {

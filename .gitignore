@@ -32,6 +32,7 @@ build/
 # Temporary / sensitive files
 login.json
 cleanup.sql
+CREDENTIALS.md
 *.tmp
 backend/fix_data.js
 backend/list_teachers.js

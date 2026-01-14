@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import api from '../services/api';
 import {
@@ -7,11 +8,23 @@ import {
   BookOpen,
   Wallet,
   TrendingUp,
+  TrendingDown,
   Calendar,
   Award,
   ClipboardList,
   GraduationCap,
   DollarSign,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  ArrowUpRight,
+  ArrowDownRight,
+  MoreHorizontal,
+  Bell,
+  UserPlus,
+  CreditCard,
+  FileText,
+  Activity,
 } from 'lucide-react';
 import {
   BarChart,
@@ -24,116 +37,469 @@ import {
   PieChart,
   Pie,
   Cell,
+  LineChart,
+  Line,
+  Area,
+  AreaChart,
+  Legend,
 } from 'recharts';
 
-const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'];
+const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
+// Stat Card Component - Modern Design
+function StatCard({ label, value, icon: Icon, color, bgColor, change, changeType, subtitle, onClick }) {
+  return (
+    <div 
+      onClick={onClick}
+      className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow ${onClick ? 'cursor-pointer' : ''}`}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <p className="text-sm font-medium text-gray-500">{label}</p>
+          <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
+          {subtitle && <p className="text-xs text-gray-400 mt-1">{subtitle}</p>}
+          {change && (
+            <div className={`flex items-center mt-3 text-sm ${changeType === 'up' ? 'text-green-600' : changeType === 'down' ? 'text-red-500' : 'text-gray-500'}`}>
+              {changeType === 'up' ? (
+                <ArrowUpRight className="w-4 h-4 mr-1" />
+              ) : changeType === 'down' ? (
+                <ArrowDownRight className="w-4 h-4 mr-1" />
+              ) : null}
+              <span className="font-medium">{change}</span>
+              <span className="text-gray-400 ml-1">vs last term</span>
+            </div>
+          )}
+        </div>
+        <div className={`${bgColor} p-4 rounded-2xl`}>
+          <Icon className={`w-7 h-7 ${color}`} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Mini Stat Card
+function MiniStatCard({ label, value, icon: Icon, color }) {
+  return (
+    <div className="bg-gray-50 rounded-xl p-4 flex items-center gap-4">
+      <div className={`${color} p-3 rounded-xl`}>
+        <Icon className="w-5 h-5 text-white" />
+      </div>
+      <div>
+        <p className="text-2xl font-bold text-gray-900">{value}</p>
+        <p className="text-xs text-gray-500">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+// Progress Ring Component
+function ProgressRing({ percentage, size = 120, strokeWidth = 12, color = '#3b82f6' }) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (percentage / 100) * circumference;
+
+  return (
+    <div className="relative inline-flex items-center justify-center">
+      <svg width={size} height={size} className="transform -rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="#e5e7eb"
+          strokeWidth={strokeWidth}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          className="transition-all duration-500 ease-out"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-2xl font-bold text-gray-900">{percentage}%</span>
+        <span className="text-xs text-gray-500">Complete</span>
+      </div>
+    </div>
+  );
+}
 
 function AdminDashboard({ stats, loading }) {
-  const gradeDistribution = [
-    { name: 'Grade 1', students: 45 },
-    { name: 'Grade 2', students: 52 },
-    { name: 'Grade 3', students: 48 },
-    { name: 'Grade 4', students: 55 },
-    { name: 'Grade 5', students: 50 },
-    { name: 'Grade 6', students: 47 },
-  ];
+  const navigate = useNavigate();
+  const [chartData, setChartData] = useState({
+    monthlyAdmissions: [],
+    feeCollection: [],
+    gradeDistribution: [],
+    attendanceData: [],
+  });
 
-  const genderData = [
-    { name: 'Male', value: 48 },
-    { name: 'Female', value: 52 },
-  ];
+  useEffect(() => {
+    fetchChartData();
+  }, []);
+
+  const fetchChartData = async () => {
+    try {
+      // Fetch grade distribution from classes
+      const classesRes = await api.get('/academic/classes').catch(() => ({ data: { data: [] } }));
+      const classes = classesRes.data.data || [];
+      
+      // Group by grade
+      const gradeMap = {};
+      classes.forEach(cls => {
+        const gradeName = cls.grade?.name || 'Unknown';
+        if (!gradeMap[gradeName]) {
+          gradeMap[gradeName] = 0;
+        }
+        gradeMap[gradeName] += cls._count?.students || cls.students?.length || 0;
+      });
+
+      const gradeDistribution = Object.entries(gradeMap).map(([name, students]) => ({
+        name: name.replace('Grade ', 'G'),
+        students,
+        fullName: name,
+      }));
+
+      // Monthly data simulation based on stats
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const currentMonth = new Date().getMonth();
+      
+      const monthlyAdmissions = months.slice(0, currentMonth + 1).map((month, idx) => ({
+        month,
+        students: Math.floor(Math.random() * 15) + 5,
+        target: 12,
+      }));
+
+      const feeCollection = months.slice(0, currentMonth + 1).map((month, idx) => ({
+        month,
+        collected: Math.floor(Math.random() * 500000) + 200000,
+        expected: 600000,
+      }));
+
+      setChartData({
+        monthlyAdmissions,
+        feeCollection,
+        gradeDistribution,
+        attendanceData: [
+          { name: 'Present', value: 94, color: '#22c55e' },
+          { name: 'Absent', value: 4, color: '#ef4444' },
+          { name: 'Late', value: 2, color: '#f59e0b' },
+        ],
+      });
+    } catch (error) {
+      console.error('Failed to fetch chart data:', error);
+    }
+  };
 
   const statCards = [
-    { label: 'Total Students', value: stats?.totalStudents || 0, icon: Users, color: 'bg-blue-500', change: '+12%' },
-    { label: 'Total Staff', value: stats?.totalStaff || 0, icon: UserCog, color: 'bg-green-500', change: '+3%' },
-    { label: 'Active Classes', value: stats?.totalClasses || 0, icon: BookOpen, color: 'bg-purple-500', change: '0%' },
-    { label: 'Pending Admissions', value: stats?.pendingAdmissions || 0, icon: ClipboardList, color: 'bg-orange-500', change: 'New' },
+    { 
+      label: 'Total Students', 
+      value: loading ? '...' : stats?.totalStudents?.toLocaleString() || '0', 
+      icon: Users, 
+      color: 'text-blue-600', 
+      bgColor: 'bg-blue-100',
+      change: '+12%',
+      changeType: 'up',
+      subtitle: 'Active enrollment',
+      onClick: () => navigate('/students')
+    },
+    { 
+      label: 'Total Staff', 
+      value: loading ? '...' : stats?.totalStaff || '0', 
+      icon: UserCog, 
+      color: 'text-green-600', 
+      bgColor: 'bg-green-100',
+      change: '+3%',
+      changeType: 'up',
+      subtitle: 'Teaching & Non-teaching',
+      onClick: () => navigate('/staff')
+    },
+    { 
+      label: 'Active Classes', 
+      value: loading ? '...' : stats?.totalClasses || '0', 
+      icon: BookOpen, 
+      color: 'text-purple-600', 
+      bgColor: 'bg-purple-100',
+      change: '0%',
+      changeType: 'neutral',
+      subtitle: 'This academic year',
+      onClick: () => navigate('/classes')
+    },
+    { 
+      label: 'Pending Admissions', 
+      value: loading ? '...' : stats?.pendingAdmissions || '0', 
+      icon: ClipboardList, 
+      color: 'text-orange-600', 
+      bgColor: 'bg-orange-100',
+      change: 'New',
+      changeType: 'neutral',
+      subtitle: 'Awaiting approval',
+      onClick: () => navigate('/admissions')
+    },
+  ];
+
+  const quickStats = [
+    { label: 'Daily Revenue', value: 'KES 45K', icon: DollarSign, color: 'bg-emerald-500' },
+    { label: 'Attendance Rate', value: '94%', icon: CheckCircle, color: 'bg-blue-500' },
+    { label: 'Due Payments', value: '23', icon: AlertCircle, color: 'bg-amber-500' },
+    { label: 'Events Today', value: '3', icon: Calendar, color: 'bg-purple-500' },
   ];
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((stat, index) => (
-          <div key={index} className="card p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-gray-500">{stat.label}</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">
-                  {loading ? '-' : stat.value}
-                </p>
-                <span className="inline-flex items-center text-xs text-green-600 mt-2">
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  {stat.change}
-                </span>
-              </div>
-              <div className={`${stat.color} p-3 rounded-xl`}>
-                <stat.icon className="w-6 h-6 text-white" />
-              </div>
-            </div>
+      {/* Alert Banner */}
+      <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl p-4 text-white flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="bg-white/20 p-2 rounded-lg">
+            <Bell className="w-5 h-5" />
           </div>
+          <div>
+            <p className="font-medium">Term 1 Progress Report</p>
+            <p className="text-sm text-blue-100">Report cards are ready for Grade 4-6. Click to review and publish.</p>
+          </div>
+        </div>
+        <button 
+          onClick={() => navigate('/reports')}
+          className="bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-50 transition"
+        >
+          View Reports
+        </button>
+      </div>
+
+      {/* Main Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {statCards.map((stat, index) => (
+          <StatCard key={index} {...stat} />
         ))}
       </div>
 
+      {/* Quick Stats Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {quickStats.map((stat, index) => (
+          <MiniStatCard key={index} {...stat} />
+        ))}
+      </div>
+
+      {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 card p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">Students per Grade</h2>
+        {/* Students per Grade - Bar Chart */}
+        <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Students per Grade</h2>
+              <p className="text-sm text-gray-500">Distribution across all grades</p>
+            </div>
+            <button className="p-2 hover:bg-gray-100 rounded-lg transition">
+              <MoreHorizontal className="w-5 h-5 text-gray-400" />
+            </button>
+          </div>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={gradeDistribution}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
-                <Bar dataKey="students" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              <BarChart data={chartData.gradeDistribution} barCategoryGap="20%">
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+                <XAxis 
+                  dataKey="name" 
+                  tick={{ fontSize: 12, fill: '#6b7280' }} 
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12, fill: '#6b7280' }} 
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    border: 'none', 
+                    borderRadius: '12px', 
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' 
+                  }}
+                  formatter={(value, name, props) => [value, props.payload.fullName]}
+                />
+                <Bar 
+                  dataKey="students" 
+                  fill="#3b82f6" 
+                  radius={[8, 8, 0, 0]}
+                  maxBarSize={50}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="card p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">Gender Distribution</h2>
-          <div className="h-72">
+        {/* Attendance Donut Chart */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Attendance Today</h2>
+              <p className="text-sm text-gray-500">Real-time status</p>
+            </div>
+          </div>
+          <div className="flex flex-col items-center">
+            <ProgressRing percentage={94} size={160} strokeWidth={16} color="#22c55e" />
+            <div className="mt-6 w-full space-y-3">
+              {chartData.attendanceData.map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                    <span className="text-sm text-gray-600">{item.name}</span>
+                  </div>
+                  <span className="text-sm font-semibold text-gray-900">{item.value}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Second Row Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Fee Collection Trend */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Fee Collection</h2>
+              <p className="text-sm text-gray-500">Monthly revenue trend</p>
+            </div>
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-blue-500" />
+                <span className="text-gray-600">Collected</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-gray-300" />
+                <span className="text-gray-600">Expected</span>
+              </div>
+            </div>
+          </div>
+          <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={genderData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                >
-                  {genderData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
+              <AreaChart data={chartData.feeCollection}>
+                <defs>
+                  <linearGradient id="colorCollected" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+                <XAxis 
+                  dataKey="month" 
+                  tick={{ fontSize: 12, fill: '#6b7280' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12, fill: '#6b7280' }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(value) => `${value / 1000}K`}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    border: 'none', 
+                    borderRadius: '12px', 
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' 
+                  }}
+                  formatter={(value) => [`KES ${value.toLocaleString()}`, '']}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="collected" 
+                  stroke="#3b82f6" 
+                  strokeWidth={2}
+                  fillOpacity={1} 
+                  fill="url(#colorCollected)" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Monthly Admissions */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Monthly Admissions</h2>
+              <p className="text-sm text-gray-500">New students enrolled</p>
+            </div>
+            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+              +18% this term
+            </span>
+          </div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData.monthlyAdmissions}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+                <XAxis 
+                  dataKey="month" 
+                  tick={{ fontSize: 12, fill: '#6b7280' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12, fill: '#6b7280' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    border: 'none', 
+                    borderRadius: '12px', 
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' 
+                  }}
+                />
+                <Bar dataKey="students" fill="#22c55e" radius={[6, 6, 0, 0]} maxBarSize={40} />
+                <Bar dataKey="target" fill="#e5e7eb" radius={[6, 6, 0, 0]} maxBarSize={40} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-gray-900">Top Performers</h2>
-            <span className="badge badge-primary">This Term</span>
+      {/* Bottom Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Top Performers */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Top Performers</h2>
+              <p className="text-sm text-gray-500">This Term</p>
+            </div>
+            <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium flex items-center gap-1">
+              <Award className="w-4 h-4" /> Best
+            </span>
           </div>
           <div className="space-y-4">
             {[
-              { name: 'Alice Wanjiku', score: 95, class: 'Grade 4 East' },
-              { name: 'Brian Ochieng', score: 92, class: 'Grade 4 East' },
-              { name: 'Carol Muthoni', score: 90, class: 'Grade 4 East' },
+              { name: 'Alice Wanjiku', score: 95, class: 'Grade 4 East', rank: 1 },
+              { name: 'Brian Ochieng', score: 92, class: 'Grade 4 East', rank: 2 },
+              { name: 'Carol Muthoni', score: 90, class: 'Grade 4 East', rank: 3 },
+              { name: 'David Kamau', score: 88, class: 'Grade 5 East', rank: 4 },
             ].map((student, index) => (
-              <div key={index} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                  <Award className="w-4 h-4 text-primary-600" />
+              <div 
+                key={index} 
+                onClick={() => navigate('/students')}
+                className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition cursor-pointer"
+              >
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                  index === 0 ? 'bg-yellow-400 text-yellow-900' : 
+                  index === 1 ? 'bg-gray-300 text-gray-700' : 
+                  index === 2 ? 'bg-amber-600 text-white' : 
+                  'bg-gray-200 text-gray-600'
+                }`}>
+                  {student.rank}
                 </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">{student.name}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-gray-900 truncate">{student.name}</p>
                   <p className="text-xs text-gray-500">{student.class}</p>
                 </div>
                 <div className="text-right">
@@ -145,25 +511,63 @@ function AdminDashboard({ stats, loading }) {
           </div>
         </div>
 
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-gray-900">Recent Activity</h2>
+        {/* Recent Activity */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
+              <p className="text-sm text-gray-500">Latest updates</p>
+            </div>
+            <button onClick={() => navigate('/reports')} className="text-blue-600 text-sm font-medium hover:text-blue-700">View All</button>
           </div>
           <div className="space-y-4">
             {[
-              { action: 'New student admitted', detail: 'Eva Akinyi - Grade 4 East', time: '2 hours ago' },
-              { action: 'Assessment created', detail: 'Mathematics CAT 1', time: '5 hours ago' },
-              { action: 'Fee payment received', detail: 'KES 15,000 - Alice Wanjiku', time: '1 day ago' },
-              { action: 'Report cards generated', detail: 'Grade 4 - Term 1', time: '2 days ago' },
+              { icon: UserPlus, action: 'New student admitted', detail: 'Eva Akinyi - Grade 4 East', time: '2h ago', color: 'bg-green-100 text-green-600' },
+              { icon: FileText, action: 'Assessment created', detail: 'Mathematics CAT 1', time: '5h ago', color: 'bg-blue-100 text-blue-600' },
+              { icon: CreditCard, action: 'Fee payment received', detail: 'KES 15,000 - Alice Wanjiku', time: '1d ago', color: 'bg-purple-100 text-purple-600' },
+              { icon: Award, action: 'Report cards generated', detail: 'Grade 4 - Term 1', time: '2d ago', color: 'bg-yellow-100 text-yellow-600' },
             ].map((activity, index) => (
               <div key={index} className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-primary-500 rounded-full mt-2" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                  <p className="text-xs text-gray-500">{activity.detail}</p>
+                <div className={`p-2 rounded-lg ${activity.color}`}>
+                  <activity.icon className="w-4 h-4" />
                 </div>
-                <span className="text-xs text-gray-400">{activity.time}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900">{activity.action}</p>
+                  <p className="text-xs text-gray-500 truncate">{activity.detail}</p>
+                </div>
+                <span className="text-xs text-gray-400 whitespace-nowrap">{activity.time}</span>
               </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
+              <p className="text-sm text-gray-500">Shortcuts</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { icon: UserPlus, label: 'Add Student', color: 'bg-blue-500', path: '/admissions' },
+              { icon: Calendar, label: 'Attendance', color: 'bg-green-500', path: '/attendance' },
+              { icon: ClipboardList, label: 'Assessment', color: 'bg-purple-500', path: '/assessments' },
+              { icon: DollarSign, label: 'Collect Fee', color: 'bg-orange-500', path: '/fees' },
+              { icon: FileText, label: 'Reports', color: 'bg-pink-500', path: '/reports' },
+              { icon: Bell, label: 'Announce', color: 'bg-indigo-500', path: '/announcements' },
+            ].map((action, index) => (
+              <button 
+                key={index}
+                onClick={() => navigate(action.path)}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition group"
+              >
+                <div className={`${action.color} p-3 rounded-xl group-hover:scale-110 transition`}>
+                  <action.icon className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-sm font-medium text-gray-700">{action.label}</span>
+              </button>
             ))}
           </div>
         </div>
@@ -173,96 +577,75 @@ function AdminDashboard({ stats, loading }) {
 }
 
 function TeacherDashboard({ user }) {
+  const navigate = useNavigate();
+  const quickStats = [
+    { label: 'My Classes', value: '3', icon: BookOpen, color: 'text-blue-600', bgColor: 'bg-blue-100' },
+    { label: 'Total Students', value: '120', icon: Users, color: 'text-green-600', bgColor: 'bg-green-100' },
+    { label: 'Today\'s Attendance', value: '95%', icon: CheckCircle, color: 'text-purple-600', bgColor: 'bg-purple-100' },
+    { label: 'Pending Tasks', value: '2', icon: ClipboardList, color: 'text-orange-600', bgColor: 'bg-orange-100' },
+  ];
+
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-gray-500">My Classes</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">3</p>
-            </div>
-            <div className="bg-blue-500 p-3 rounded-xl">
-              <BookOpen className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-        <div className="card p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Total Students</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">120</p>
-            </div>
-            <div className="bg-green-500 p-3 rounded-xl">
-              <Users className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-        <div className="card p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Today's Attendance</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">95%</p>
-            </div>
-            <div className="bg-purple-500 p-3 rounded-xl">
-              <Calendar className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-        <div className="card p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Pending Assessments</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">2</p>
-            </div>
-            <div className="bg-orange-500 p-3 rounded-xl">
-              <ClipboardList className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {quickStats.map((stat, index) => (
+          <StatCard key={index} {...stat} />
+        ))}
       </div>
 
-      <div className="card p-6">
-        <h2 className="font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <button className="btn btn-outline flex flex-col items-center gap-2 py-4">
-            <Calendar className="w-6 h-6" />
-            <span>Take Attendance</span>
-          </button>
-          <button className="btn btn-outline flex flex-col items-center gap-2 py-4">
-            <ClipboardList className="w-6 h-6" />
-            <span>Enter Scores</span>
-          </button>
-          <button className="btn btn-outline flex flex-col items-center gap-2 py-4">
-            <Users className="w-6 h-6" />
-            <span>View Students</span>
-          </button>
-          <button className="btn btn-outline flex flex-col items-center gap-2 py-4">
-            <Award className="w-6 h-6" />
-            <span>Generate Reports</span>
-          </button>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">Quick Actions</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { icon: Calendar, label: 'Take Attendance', color: 'bg-blue-500', path: '/attendance' },
+              { icon: ClipboardList, label: 'Enter Scores', color: 'bg-green-500', path: '/assessments' },
+              { icon: Users, label: 'View Students', color: 'bg-purple-500', path: '/students' },
+              { icon: Award, label: 'Generate Reports', color: 'bg-orange-500', path: '/reports' },
+            ].map((action, index) => (
+              <button 
+                key={index} 
+                onClick={() => navigate(action.path)}
+                className="flex flex-col items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition"
+              >
+                <div className={`${action.color} p-3 rounded-xl`}>
+                  <action.icon className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-sm font-medium text-gray-700 text-center">{action.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      <div className="card p-6">
-        <h2 className="font-semibold text-gray-900 mb-4">My Classes</h2>
-        <div className="space-y-3">
-          {[
-            { name: 'Grade 4 East', subject: 'Mathematics', students: 40 },
-            { name: 'Grade 4 West', subject: 'Mathematics', students: 38 },
-            { name: 'Grade 5 East', subject: 'Mathematics', students: 42 },
-          ].map((cls, index) => (
-            <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div>
-                <p className="font-medium text-gray-900">{cls.name}</p>
-                <p className="text-sm text-gray-500">{cls.subject}</p>
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">My Classes</h2>
+          <div className="space-y-3">
+            {[
+              { name: 'Grade 4 East', subject: 'Mathematics', students: 40 },
+              { name: 'Grade 4 West', subject: 'Mathematics', students: 38 },
+              { name: 'Grade 5 East', subject: 'Mathematics', students: 42 },
+            ].map((cls, index) => (
+              <div 
+                key={index} 
+                onClick={() => navigate('/classes')}
+                className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-100 p-2 rounded-lg">
+                    <BookOpen className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{cls.name}</p>
+                    <p className="text-sm text-gray-500">{cls.subject}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-gray-900">{cls.students}</p>
+                  <p className="text-xs text-gray-500">students</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-bold text-gray-900">{cls.students}</p>
-                <p className="text-xs text-gray-500">students</p>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </>
@@ -270,96 +653,75 @@ function TeacherDashboard({ user }) {
 }
 
 function BursarDashboard() {
+  const navigate = useNavigate();
+  const feeData = [
+    { month: 'Jan', collected: 450000, pending: 150000 },
+    { month: 'Feb', collected: 380000, pending: 120000 },
+    { month: 'Mar', collected: 520000, pending: 80000 },
+  ];
+
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Total Collections</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">KES 2.5M</p>
-            </div>
-            <div className="bg-green-500 p-3 rounded-xl">
-              <DollarSign className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-        <div className="card p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Outstanding Fees</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">KES 850K</p>
-            </div>
-            <div className="bg-red-500 p-3 rounded-xl">
-              <Wallet className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-        <div className="card p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Students Cleared</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">245</p>
-            </div>
-            <div className="bg-blue-500 p-3 rounded-xl">
-              <Users className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-        <div className="card p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Pending Payments</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">52</p>
-            </div>
-            <div className="bg-orange-500 p-3 rounded-xl">
-              <ClipboardList className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard label="Total Collections" value="KES 2.5M" icon={DollarSign} color="text-green-600" bgColor="bg-green-100" change="+15%" changeType="up" />
+        <StatCard label="Outstanding Fees" value="KES 850K" icon={Wallet} color="text-red-600" bgColor="bg-red-100" change="-8%" changeType="down" />
+        <StatCard label="Students Cleared" value="245" icon={CheckCircle} color="text-blue-600" bgColor="bg-blue-100" />
+        <StatCard label="Pending Payments" value="52" icon={Clock} color="text-orange-600" bgColor="bg-orange-100" />
       </div>
 
-      <div className="card p-6">
-        <h2 className="font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <button className="btn btn-outline flex flex-col items-center gap-2 py-4">
-            <DollarSign className="w-6 h-6" />
-            <span>Record Payment</span>
-          </button>
-          <button className="btn btn-outline flex flex-col items-center gap-2 py-4">
-            <ClipboardList className="w-6 h-6" />
-            <span>Generate Invoice</span>
-          </button>
-          <button className="btn btn-outline flex flex-col items-center gap-2 py-4">
-            <Users className="w-6 h-6" />
-            <span>Fee Defaulters</span>
-          </button>
-          <button className="btn btn-outline flex flex-col items-center gap-2 py-4">
-            <Award className="w-6 h-6" />
-            <span>Fee Reports</span>
-          </button>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">Quick Actions</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { icon: DollarSign, label: 'Record Payment', color: 'bg-green-500', path: '/fees' },
+              { icon: FileText, label: 'Generate Invoice', color: 'bg-blue-500', path: '/fees' },
+              { icon: AlertCircle, label: 'Fee Defaulters', color: 'bg-red-500', path: '/fees' },
+              { icon: Award, label: 'Fee Reports', color: 'bg-purple-500', path: '/reports' },
+            ].map((action, index) => (
+              <button 
+                key={index} 
+                onClick={() => navigate(action.path)}
+                className="flex flex-col items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition"
+              >
+                <div className={`${action.color} p-3 rounded-xl`}>
+                  <action.icon className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-sm font-medium text-gray-700 text-center">{action.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      <div className="card p-6">
-        <h2 className="font-semibold text-gray-900 mb-4">Recent Payments</h2>
-        <div className="space-y-3">
-          {[
-            { name: 'Alice Wanjiku', amount: 'KES 15,000', method: 'M-PESA', time: '2 hours ago' },
-            { name: 'Brian Ochieng', amount: 'KES 22,000', method: 'Bank Transfer', time: '5 hours ago' },
-            { name: 'Carol Muthoni', amount: 'KES 18,500', method: 'M-PESA', time: '1 day ago' },
-          ].map((payment, index) => (
-            <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div>
-                <p className="font-medium text-gray-900">{payment.name}</p>
-                <p className="text-sm text-gray-500">{payment.method}</p>
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">Recent Payments</h2>
+          <div className="space-y-3">
+            {[
+              { name: 'Alice Wanjiku', amount: 'KES 15,000', method: 'M-PESA', time: '2 hours ago' },
+              { name: 'Brian Ochieng', amount: 'KES 22,000', method: 'Bank Transfer', time: '5 hours ago' },
+              { name: 'Carol Muthoni', amount: 'KES 18,500', method: 'M-PESA', time: '1 day ago' },
+            ].map((payment, index) => (
+              <div 
+                key={index} 
+                onClick={() => navigate('/fees')}
+                className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 cursor-pointer transition"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="bg-green-100 p-2 rounded-lg">
+                    <CreditCard className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{payment.name}</p>
+                    <p className="text-sm text-gray-500">{payment.method}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-green-600">{payment.amount}</p>
+                  <p className="text-xs text-gray-500">{payment.time}</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-bold text-green-600">{payment.amount}</p>
-                <p className="text-xs text-gray-500">{payment.time}</p>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </>
@@ -367,77 +729,66 @@ function BursarDashboard() {
 }
 
 function StudentDashboard({ user }) {
+  const subjectScores = [
+    { subject: 'Math', score: 88 },
+    { subject: 'Eng', score: 82 },
+    { subject: 'Sci', score: 90 },
+    { subject: 'SST', score: 78 },
+    { subject: 'Kis', score: 85 },
+    { subject: 'Art', score: 92 },
+  ];
+
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-gray-500">My Average</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">85%</p>
-            </div>
-            <div className="bg-blue-500 p-3 rounded-xl">
-              <Award className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-        <div className="card p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Attendance</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">94%</p>
-            </div>
-            <div className="bg-green-500 p-3 rounded-xl">
-              <Calendar className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-        <div className="card p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Class Rank</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">#5</p>
-            </div>
-            <div className="bg-purple-500 p-3 rounded-xl">
-              <GraduationCap className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-        <div className="card p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Fee Balance</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">KES 5K</p>
-            </div>
-            <div className="bg-orange-500 p-3 rounded-xl">
-              <Wallet className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard label="My Average" value="85%" icon={Award} color="text-blue-600" bgColor="bg-blue-100" change="+5%" changeType="up" />
+        <StatCard label="Attendance" value="94%" icon={CheckCircle} color="text-green-600" bgColor="bg-green-100" />
+        <StatCard label="Class Rank" value="#5" icon={GraduationCap} color="text-purple-600" bgColor="bg-purple-100" change="+2" changeType="up" />
+        <StatCard label="Fee Balance" value="KES 5K" icon={Wallet} color="text-orange-600" bgColor="bg-orange-100" />
       </div>
 
-      <div className="card p-6">
-        <h2 className="font-semibold text-gray-900 mb-4">My Subjects</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[
-            { name: 'Mathematics', score: 88, grade: 'A' },
-            { name: 'English', score: 82, grade: 'B+' },
-            { name: 'Science', score: 90, grade: 'A' },
-            { name: 'Social Studies', score: 78, grade: 'B' },
-            { name: 'Kiswahili', score: 85, grade: 'A-' },
-            { name: 'Creative Arts', score: 92, grade: 'A' },
-          ].map((subject, index) => (
-            <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div>
-                <p className="font-medium text-gray-900">{subject.name}</p>
-                <p className="text-sm text-gray-500">Term 1 Score</p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">Subject Performance</h2>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={subjectScores}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+                <XAxis dataKey="subject" tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} domain={[0, 100]} />
+                <Tooltip />
+                <Bar dataKey="score" fill="#3b82f6" radius={[6, 6, 0, 0]} maxBarSize={40} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">My Subjects</h2>
+          <div className="space-y-3">
+            {[
+              { name: 'Mathematics', score: 88, grade: 'A' },
+              { name: 'English', score: 82, grade: 'B+' },
+              { name: 'Science', score: 90, grade: 'A' },
+              { name: 'Social Studies', score: 78, grade: 'B' },
+            ].map((subject, index) => (
+              <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-100 p-2 rounded-lg">
+                    <BookOpen className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{subject.name}</p>
+                    <p className="text-sm text-gray-500">Term 1 Score</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-gray-900">{subject.score}%</p>
+                  <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium">{subject.grade}</span>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-bold text-gray-900">{subject.score}%</p>
-                <span className="badge badge-primary">{subject.grade}</span>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </>
@@ -509,19 +860,29 @@ function Dashboard() {
     return labels[role] || role;
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{getGreeting()}! 👋</h1>
           <p className="text-gray-500">
-            Welcome back, {user?.email?.split('@')[0]}!
-            <span className="ml-2 badge badge-primary">{getRoleLabel(user?.role)}</span>
+            Welcome back, <span className="font-medium text-gray-700">{user?.email?.split('@')[0]}</span>
+            <span className="ml-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+              {getRoleLabel(user?.role)}
+            </span>
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-sm text-gray-500">Academic Year</p>
-          <p className="font-semibold text-gray-900">2026 - Term 1</p>
+        <div className="text-right bg-white px-4 py-3 rounded-xl shadow-sm border border-gray-100">
+          <p className="text-xs text-gray-500 uppercase tracking-wide">Academic Year</p>
+          <p className="font-bold text-gray-900">2026 - Term 1</p>
         </div>
       </div>
 
