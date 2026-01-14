@@ -75,8 +75,8 @@ const authLimiter = rateLimit({
   },
 });
 
-app.use('/api', generalLimiter);
-app.use('/api/auth', authLimiter);
+// app.use('/api', generalLimiter);
+// app.use('/api/auth', authLimiter);
 
 app.use(auditLog);
 
@@ -86,6 +86,7 @@ app.get('/', (req, res) => {
     message: 'KYAMATU-SMS API is running', 
     version: '1.0.0',
     status: 'ok',
+    env: config.env,
     requestId: req.id 
   });
 });
