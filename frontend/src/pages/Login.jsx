@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { GraduationCap, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import loginBg from '../assets/login-bg.png';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -29,8 +30,12 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div 
+      className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: `url(${loginBg})` }}
+    >
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-0"></div>
+      <div className="w-full max-w-md z-10 relative">
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -81,53 +86,6 @@ function Login() {
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-xs text-gray-500 text-center">
-              Demo Credentials
-            </p>
-            <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('admin@kyamatu.ac.ke');
-                  setPassword('Admin@123');
-                }}
-                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-              >
-                Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('teacher@kyamatu.ac.ke');
-                  setPassword('Admin@123');
-                }}
-                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-              >
-                Teacher
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('bursar@kyamatu.ac.ke');
-                  setPassword('Admin@123');
-                }}
-                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-              >
-                Bursar
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('student1@kyamatu.ac.ke');
-                  setPassword('Admin@123');
-                }}
-                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-              >
-                Student
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
