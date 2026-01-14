@@ -80,6 +80,26 @@ app.use('/api/auth', authLimiter);
 
 app.use(auditLog);
 
+// Root routes for health checks and status
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'KYAMATU-SMS API is running', 
+    version: '1.0.0',
+    status: 'ok',
+    requestId: req.id 
+  });
+});
+
+app.get('/api', (req, res) => {
+  res.json({ 
+    message: 'KYAMATU-SMS API Base Endpoint',
+    docs: '/api/docs', // if any
+    health: '/api/health',
+    status: 'ok',
+    requestId: req.id 
+  });
+});
+
 app.get('/api/health', async (req, res) => {
   const start = Date.now();
   let dbStatus = 'disconnected';

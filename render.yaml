@@ -2,8 +2,10 @@ services:
   - type: web
     name: kyamatu-sms-backend
     runtime: node
-    buildCommand: cd backend && npm install && npx prisma generate
-    startCommand: cd backend && npx prisma migrate deploy && npm start
+    root: backend
+    region: oregon
+    buildCommand: npm install && npx prisma generate
+    startCommand: npx prisma migrate deploy && npm run db:seed && npm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -24,3 +26,4 @@ databases:
     databaseName: kyamatu_sms
     user: kyamatu_user
     plan: free
+    region: oregon

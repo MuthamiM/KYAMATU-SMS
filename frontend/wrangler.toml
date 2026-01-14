@@ -3,5 +3,5 @@ pages_build_output_dir = "dist"
 compatibility_date = "2024-01-01"
 
 [vars]
-# You can override this in Cloudflare Dashboard or via line commands
-# VITE_API_URL = "https://your-tunnel-url.trycloudflare.com/api"
+# Production backend URL
+VITE_API_URL = "https://kyamatu-sms-backend.onrender.com/api"
