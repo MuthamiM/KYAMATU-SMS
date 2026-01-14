@@ -129,9 +129,8 @@ export const login = async (email, password) => {
     
     return { user: userWithoutPassword, ...tokens };
   } catch (error) {
-    // Expose EVERYTHING for debugging production 500
     if (error instanceof AuthenticationError) throw error;
-    throw new Error(`DEBUG_LOGIN_FAIL: ${error.message} - ${JSON.stringify(error)}`);
+    throw error;
   }
 };
 
