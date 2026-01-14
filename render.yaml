@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: kyamatu-sms-backend
+    runtime: node
+    repo: https://github.com/MuthamiM/KYAMATU-SMS
+    # Note: Replace repo URL if different
+    root: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kyamatu-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: https://kyamatu-frontend.pages.dev
+    plan: free
+
+databases:
+  - name: kyamatu-db
+    databaseName: kyamatu_sms
+    user: kyamatu_user
+    plan: free

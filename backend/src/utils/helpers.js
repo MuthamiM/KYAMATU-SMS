@@ -69,3 +69,31 @@ export const paginationMeta = (total, page, limit) => {
     hasPrev: page > 1,
   };
 };
+
+export const escapeHtml = (str) => {
+  if (typeof str !== 'string') return str;
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+};
+
+const SENSITIVE_FIELDS = ['password', 'token', 'secret', 'authorization', 'refreshToken'];
+
+export const redactSensitiveFields = (obj) => {
+  if (!obj || typeof obj !== 'object') return obj;
+  const redacted = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (SENSITIVE_FIELDS.some(field => key.toLowerCase().includes(field.toLowerCase()))) {
+      redacted[key] = '[REDACTED]';
+    } else if (typeof value === 'object' && value !== null) {
+      redacted[key] = redactSensitiveFields(value);
+    } else {
+      redacted[key] = value;
+    }
+  }
+  return redacted;
+};
+

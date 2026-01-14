@@ -1,14 +1,19 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 
-// Use VITE_API_URL from environment, or fallback to local IP for development
-const API_URL = import.meta.env.VITE_API_URL || 
-  (window.location.protocol === 'https:' 
-    ? '' // In production HTTPS, we shouldn't fallback to insecure HTTP
-    : `http://${window.location.hostname}:3000/api`);
+// Use VITE_API_URL from environment, or fallback logic
+const getBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:3000/api';
+  }
+  return '/api'; // In production, assume relative path (requires proxy/rewrite)
+};
 
-if (!API_URL && window.location.protocol === 'https:') {
-  console.warn('VITE_API_URL is not set. API calls will fail on HTTPS production sites.');
+const API_URL = getBaseUrl();
+
+if (!import.meta.env.VITE_API_URL && window.location.hostname !== 'localhost') {
+  console.warn('VITE_API_URL is not set. Defaulting to relative path /api');
 }
 
 const api = axios.create({

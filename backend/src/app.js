@@ -6,9 +6,10 @@ import config from './config/index.js';
 import logger from './config/logger.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import prisma from './config/database.js';
+import { sanitizeInputs } from './middleware/sanitize.js';
+import { requestId } from './middleware/requestId.js';
+import { auditLog } from './middleware/auditLog.js';
 
-
-// Routes imports
 import authRoutes from './features/auth/auth.routes.js';
 import studentsRoutes from './features/students/students.routes.js';
 import staffRoutes from './features/staff/staff.routes.js';
@@ -22,24 +23,62 @@ import timetableRoutes from './features/academic/timetable.routes.js';
 
 const app = express();
 
-app.use(helmet());
+app.use(requestId);
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "blob:"],
+    },
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+  },
+}));
 
 app.use(cors({
-  origin: true, // Allow all origins for local development (Laptop + Tablet)
+  origin: config.env === 'production' ? config.cors.origin : true,
   credentials: true,
 }));
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-const limiter = rateLimit({
+app.use(sanitizeInputs);
+
+const generalLimiter = rateLimit({
   windowMs: config.rateLimit.windowMs,
   max: config.rateLimit.max,
   message: { success: false, message: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    logger.warn({ requestId: req.id, ip: req.ip, path: req.path, message: 'Rate limit exceeded' });
+    res.status(429).json({ success: false, message: 'Too many requests, please try again later' });
+  },
 });
-app.use('/api', limiter);
 
+const authLimiter = rateLimit({
+  windowMs: config.authRateLimit.windowMs,
+  max: config.authRateLimit.max,
+  message: { success: false, message: 'Too many login attempts, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  handler: (req, res) => {
+    logger.warn({ requestId: req.id, ip: req.ip, message: 'Auth rate limit exceeded' });
+    res.status(429).json({ success: false, message: 'Too many login attempts, please try again later' });
+  },
+});
 
+app.use('/api', generalLimiter);
+app.use('/api/auth', authLimiter);
+
+app.use(auditLog);
 
 app.get('/api/health', async (req, res) => {
   const start = Date.now();
@@ -47,7 +86,7 @@ app.get('/api/health', async (req, res) => {
   let dbLatency = null;
 
   try {
-    await prisma.$queryRaw`SELECT 1`; // Simple query to check connection
+    await prisma.$queryRaw`SELECT 1`;
     dbStatus = 'connected';
     dbLatency = Date.now() - start;
   } catch (e) {
@@ -59,6 +98,7 @@ app.get('/api/health', async (req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
+    requestId: req.id,
     dbStatus,
     dbLatency,
     uptime: process.uptime(),
@@ -66,8 +106,6 @@ app.get('/api/health', async (req, res) => {
       heapUsed: Math.round(memory.heapUsed / 1024 / 1024),
       heapTotal: Math.round(memory.heapTotal / 1024 / 1024),
     },
-    nodeVersion: process.version,
-    env: config.env
   });
 });
 
@@ -88,7 +126,8 @@ app.use(errorHandler);
 const PORT = config.port;
 
 app.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT} in ${config.env} mode`);
+  logger.info({ message: `Server running on port ${PORT}`, env: config.env });
 });
 
 export default app;
+
