@@ -42,7 +42,20 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: config.env === 'production' ? config.cors.origin : true,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin matches allowed production origin or is a preview deployment
+    const allowedOrigin = config.cors.origin;
+    if (origin === allowedOrigin || origin.endsWith('.kyamatu-frontend.pages.dev') || origin.startsWith('http://localhost')) {
+      return callback(null, true);
+    }
+    
+    // For debugging connection issues, you might want to log blocked origins
+    // console.log('Blocked CORS origin:', origin);
+    return callback(new Error('Not allowed by CORS'), false);
+  },
   credentials: true,
 }));
 
