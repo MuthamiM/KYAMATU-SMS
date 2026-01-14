@@ -47,9 +47,7 @@ export const errorHandler = (err, req, res, next) => {
   }
   
   const statusCode = err.statusCode || 500;
-  const message = config.env === 'production' 
-    ? 'Internal server error' 
-    : err.message;
+  const message = err.message; // Temporarily exposing for debugging
   
   return res.status(statusCode).json({
     success: false,
