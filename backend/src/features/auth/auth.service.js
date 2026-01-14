@@ -87,46 +87,52 @@ export const register = async (data) => {
 };
 
 export const login = async (email, password) => {
-  const user = await prisma.user.findUnique({
-    where: { email },
-    select: {
-      id: true,
-      email: true,
-      phone: true,
-      password: true,
-      role: true,
-      isActive: true,
-    },
-  });
-  
-  if (!user) {
-    throw new AuthenticationError('Invalid credentials');
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        password: true,
+        role: true,
+        isActive: true,
+      },
+    });
+    
+    if (!user) {
+      throw new AuthenticationError('Invalid credentials');
+    }
+    
+    if (!user.isActive) {
+      throw new AuthenticationError('Account is deactivated');
+    }
+    
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    
+    if (!isValidPassword) {
+      throw new AuthenticationError('Invalid credentials');
+    }
+    
+    const tokens = generateTokens(user.id);
+    
+    const expiryMs = parseExpiry(config.jwt.refreshExpiresIn);
+    await prisma.refreshToken.create({
+      data: {
+        token: tokens.refreshToken,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + expiryMs),
+      },
+    });
+    
+    const { password: _, ...userWithoutPassword } = user;
+    
+    return { user: userWithoutPassword, ...tokens };
+  } catch (error) {
+    // Expose EVERYTHING for debugging production 500
+    if (error instanceof AuthenticationError) throw error;
+    throw new Error(`DEBUG_LOGIN_FAIL: ${error.message} - ${JSON.stringify(error)}`);
   }
-  
-  if (!user.isActive) {
-    throw new AuthenticationError('Account is deactivated');
-  }
-  
-  const isValidPassword = await bcrypt.compare(password, user.password);
-  
-  if (!isValidPassword) {
-    throw new AuthenticationError('Invalid credentials');
-  }
-  
-  const tokens = generateTokens(user.id);
-  
-  const expiryMs = parseExpiry(config.jwt.refreshExpiresIn);
-  await prisma.refreshToken.create({
-    data: {
-      token: tokens.refreshToken,
-      userId: user.id,
-      expiresAt: new Date(Date.now() + expiryMs),
-    },
-  });
-  
-  const { password: _, ...userWithoutPassword } = user;
-  
-  return { user: userWithoutPassword, ...tokens };
 };
 
 export const refreshAccessToken = async (refreshToken) => {
