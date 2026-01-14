@@ -2,8 +2,6 @@ services:
   - type: web
     name: kyamatu-sms-backend
     runtime: node
-    repo: https://github.com/MuthamiM/KYAMATU-SMS
-    # Note: Replace repo URL if different
     root: backend
     buildCommand: npm install
     startCommand: npm start
