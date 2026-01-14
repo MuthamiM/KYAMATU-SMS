@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import * as dashboardController from './dashboard.controller.js';
-import { authenticate, authorize } from '../../middleware/auth.js';
+import { authenticate } from '../../middleware/auth.js';
+import { requireRole } from '../../middleware/rbac.js';
 
 const router = Router();
 
 router.use(authenticate);
-router.use(authorize('SUPER_ADMIN', 'ADMIN', 'BURSAR')); // Restrict to admin roles
+router.use(requireRole('SUPER_ADMIN', 'ADMIN', 'BURSAR')); // Restrict to admin roles
 
 router.get('/summary', dashboardController.getDashboardSummary);
 router.get('/charts/students', dashboardController.getStudentCharts);
