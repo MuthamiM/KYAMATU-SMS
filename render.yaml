@@ -23,7 +23,5 @@ services:
 
 databases:
   - name: kyamatu-db
-    databaseName: kyamatu_sms
-    user: kyamatu_user
     plan: free
     region: oregon
