@@ -151,12 +151,12 @@ function Layout() {
     <div className="min-h-screen bg-gray-50">
       <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } print:hidden`}>
+      } print:hidden flex flex-col`}>
         <div className="flex h-16 items-center justify-center border-b border-slate-800">
-          <div className="flex items-center gap-2 font-bold text-xl">
+          <Link to="/dashboard" className="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition-opacity">
             <School className="h-8 w-8 text-secondary-400" />
             <span>Kyamatu SMS</span>
-          </div>
+          </Link>
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4">
@@ -210,10 +210,7 @@ function Layout() {
           </button>
 
           <div className="flex items-center gap-4 ml-auto">
-            <button className="relative rounded-full p-2 text-gray-500 hover:bg-gray-100">
-              <Bell className="h-6 w-6" />
-              <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />
-            </button>
+            <NotificationDropdown />
             <button 
               onClick={handleLogout}
               className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"

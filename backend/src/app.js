@@ -20,6 +20,7 @@ import reportsRoutes from './features/reports/reports.routes.js';
 import feesRoutes from './features/fees/fees.routes.js';
 import communicationRoutes from './features/communication/communication.routes.js';
 import timetableRoutes from './features/academic/timetable.routes.js';
+import dashboardRoutes from './features/dashboard/dashboard.routes.js';
 
 const app = express();
 
@@ -140,6 +141,7 @@ app.use('/api/reports', reportsRoutes);
 app.use('/api/fees', feesRoutes);
 app.use('/api/communication', communicationRoutes);
 app.use('/api/timetable', timetableRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
