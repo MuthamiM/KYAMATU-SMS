@@ -150,24 +150,75 @@ async function main() {
 
   console.log(`✅ Created ${createdClasses.length} classes`);
 
-  // 5. Create Admin Users
-  console.log('👤 Creating admin users...');
-  await prisma.user.create({
-    data: { email: 'admin@kyamatu.ac.ke', password: hashedPassword, role: 'SUPER_ADMIN', phone: '+254700000001' },
+  // 5. Create Admin & Management Staff
+  console.log('👤 Creating admin and management staff...');
+  
+  // Headmaster (SUPER_ADMIN)
+  const headmasterUser = await prisma.user.create({
+    data: { email: 'headmaster@kyamatu.ac.ke', password: hashedPassword, role: 'SUPER_ADMIN', phone: '+254700000001' },
   });
+  await prisma.staff.create({
+    data: { 
+      userId: headmasterUser.id, 
+      employeeNumber: 'ADM001', 
+      firstName: 'Joseph', 
+      lastName: 'Mutua', 
+      gender: 'Male', 
+      qualification: 'M.Ed Administration',
+      specialization: 'School Administration' 
+    }
+  });
+
+  // Deputy Headmaster (ADMIN)
+  const deputyUser = await prisma.user.create({
+    data: { email: 'deputy@kyamatu.ac.ke', password: hashedPassword, role: 'ADMIN', phone: '+254700000002' },
+  });
+  await prisma.staff.create({
+    data: { 
+      userId: deputyUser.id, 
+      employeeNumber: 'ADM002', 
+      firstName: 'Margaret', 
+      lastName: 'Wambua', 
+      gender: 'Female', 
+      qualification: 'B.Ed',
+      specialization: 'Curriculum & Instruction' 
+    }
+  });
+
+  // System Admin (for testing)
   await prisma.user.create({
+    data: { email: 'admin@kyamatu.ac.ke', password: hashedPassword, role: 'SUPER_ADMIN', phone: '+254700000000' },
+  });
+
+  // Bursar
+  const bursarUser = await prisma.user.create({
     data: { email: 'bursar@kyamatu.ac.ke', password: hashedPassword, role: 'BURSAR', phone: '+254700000003' },
   });
-  
-  // Create Multiple Teachers
-  console.log('👨‍🏫 Creating teaching staff...');
+  await prisma.staff.create({
+    data: { 
+      userId: bursarUser.id, 
+      employeeNumber: 'FIN001', 
+      firstName: 'Samuel', 
+      lastName: 'Kioko', 
+      gender: 'Male', 
+      qualification: 'B.Com Accounting',
+      specialization: 'Finance & Accounting' 
+    }
+  });
+
+  // 10 Teachers
+  console.log('👨‍🏫 Creating 10 teaching staff...');
   const teacherData = [
-    { email: 'teacher@kyamatu.ac.ke', empNo: 'TSC001', first: 'John', last: 'Musa', gender: 'Male', spec: 'Mathematics' },
-    { email: 'mmwende@kyamatu.ac.ke', empNo: 'TSC002', first: 'Mary', last: 'Mwende', gender: 'Female', spec: 'English' },
-    { email: 'pkimani@kyamatu.ac.ke', empNo: 'TSC003', first: 'Peter', last: 'Kimani', gender: 'Male', spec: 'Science and Technology' },
-    { email: 'gwanjiku@kyamatu.ac.ke', empNo: 'TSC004', first: 'Grace', last: 'Wanjiku', gender: 'Female', spec: 'Kiswahili' },
-    { email: 'dotieno@kyamatu.ac.ke', empNo: 'TSC005', first: 'David', last: 'Otieno', gender: 'Male', spec: 'Social Studies' },
-    { email: 'fnzuki@kyamatu.ac.ke', empNo: 'TSC006', first: 'Faith', last: 'Nzuki', gender: 'Female', spec: 'CRE' },
+    { email: 'jmusa@kyamatu.ac.ke', empNo: 'TSC001', first: 'John', last: 'Musa', gender: 'Male', qual: 'B.Ed Mathematics', spec: 'Mathematics' },
+    { email: 'mmwende@kyamatu.ac.ke', empNo: 'TSC002', first: 'Mary', last: 'Mwende', gender: 'Female', qual: 'B.Ed English', spec: 'English' },
+    { email: 'pkimani@kyamatu.ac.ke', empNo: 'TSC003', first: 'Peter', last: 'Kimani', gender: 'Male', qual: 'B.Sc Education', spec: 'Science and Technology' },
+    { email: 'gwanjiku@kyamatu.ac.ke', empNo: 'TSC004', first: 'Grace', last: 'Wanjiku', gender: 'Female', qual: 'B.Ed Kiswahili', spec: 'Kiswahili' },
+    { email: 'dotieno@kyamatu.ac.ke', empNo: 'TSC005', first: 'David', last: 'Otieno', gender: 'Male', qual: 'B.Ed Social Studies', spec: 'Social Studies' },
+    { email: 'fnzuki@kyamatu.ac.ke', empNo: 'TSC006', first: 'Faith', last: 'Nzuki', gender: 'Female', qual: 'B.Ed CRE', spec: 'CRE' },
+    { email: 'bkiprop@kyamatu.ac.ke', empNo: 'TSC007', first: 'Brian', last: 'Kiprop', gender: 'Male', qual: 'B.Ed Arts', spec: 'Creative Arts' },
+    { email: 'enjoroge@kyamatu.ac.ke', empNo: 'TSC008', first: 'Esther', last: 'Njoroge', gender: 'Female', qual: 'B.Ed PHE', spec: 'PHE' },
+    { email: 'cmuturi@kyamatu.ac.ke', empNo: 'TSC009', first: 'Collins', last: 'Muturi', gender: 'Male', qual: 'B.Sc Agriculture', spec: 'Agriculture' },
+    { email: 'akinya@kyamatu.ac.ke', empNo: 'TSC010', first: 'Alice', last: 'Kinya', gender: 'Female', qual: 'B.Ed Home Science', spec: 'Home Science' },
   ];
 
   for (const t of teacherData) {
@@ -180,12 +231,36 @@ async function main() {
         employeeNumber: t.empNo, 
         firstName: t.first, 
         lastName: t.last, 
-        gender: t.gender, 
+        gender: t.gender,
+        qualification: t.qual,
         specialization: t.spec 
       }
     });
   }
   console.log(`✅ Created ${teacherData.length} teachers`);
+
+  // 3 Non-Teaching Staff (Support Staff - isActive: false for system access)
+  console.log('🧹 Creating 3 non-teaching support staff...');
+  const supportStaff = [
+    { empNo: 'SUP001', first: 'James', last: 'Mutiso', gender: 'Male', role: 'Security Guard' },
+    { empNo: 'SUP002', first: 'Rose', last: 'Muthoni', gender: 'Female', role: 'Cook' },
+    { empNo: 'SUP003', first: 'Patrick', last: 'Kamau', gender: 'Male', role: 'Groundskeeper' },
+  ];
+
+  for (const s of supportStaff) {
+    // Support staff don't need system login, so no user account
+    await prisma.staff.create({
+      data: { 
+        employeeNumber: s.empNo, 
+        firstName: s.first, 
+        lastName: s.last, 
+        gender: s.gender,
+        specialization: s.role,
+        userId: null, // No system access
+      }
+    });
+  }
+  console.log(`✅ Created ${supportStaff.length} support staff`);
 
   // 6. Create 10 Students per Class
   console.log('👨‍🎓 Creating 10 students per class...');
