@@ -284,9 +284,12 @@ app.post('/api/admin/reseed', async (req, res) => {
     }
 
     // 3 Support Staff
-    await prisma.staff.create({ data: { employeeNumber: 'SUP001', firstName: 'James', lastName: 'Mutiso', gender: 'Male', specialization: 'Security' }});
-    await prisma.staff.create({ data: { employeeNumber: 'SUP002', firstName: 'Rose', lastName: 'Muthoni', gender: 'Female', specialization: 'Cook' }});
-    await prisma.staff.create({ data: { employeeNumber: 'SUP003', firstName: 'Patrick', lastName: 'Kamau', gender: 'Male', specialization: 'Groundskeeper' }});
+    const sup1 = await prisma.user.create({ data: { email: 'jmutiso@kyamatu.ac.ke', password: hashedPassword, role: 'STAFF', phone: '+254700000010' }});
+    await prisma.staff.create({ data: { userId: sup1.id, employeeNumber: 'SUP001', firstName: 'James', lastName: 'Mutiso', gender: 'Male', specialization: 'Security' }});
+    const sup2 = await prisma.user.create({ data: { email: 'rmuthoni@kyamatu.ac.ke', password: hashedPassword, role: 'STAFF', phone: '+254700000011' }});
+    await prisma.staff.create({ data: { userId: sup2.id, employeeNumber: 'SUP002', firstName: 'Rose', lastName: 'Muthoni', gender: 'Female', specialization: 'Cook' }});
+    const sup3 = await prisma.user.create({ data: { email: 'pkamau@kyamatu.ac.ke', password: hashedPassword, role: 'STAFF', phone: '+254700000012' }});
+    await prisma.staff.create({ data: { userId: sup3.id, employeeNumber: 'SUP003', firstName: 'Patrick', lastName: 'Kamau', gender: 'Male', specialization: 'Groundskeeper' }});
 
     // 10 Students per class
     const firstNamesMale = ['James', 'John', 'Peter', 'David', 'Michael', 'Brian', 'Kevin', 'Dennis', 'Collins', 'Victor'];
