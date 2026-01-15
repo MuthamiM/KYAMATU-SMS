@@ -277,3 +277,49 @@ export const getProfile = async (userId) => {
   
   return user;
 };
+
+export const updateProfile = async (userId, data) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { staff: true, student: true },
+  });
+
+  if (!user) {
+    throw new NotFoundError('User');
+  }
+
+  // Update phone if provided
+  if (data.phone) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { phone: data.phone },
+    });
+  }
+
+  // Update staff profile if user is staff
+  if (user.staff && (data.firstName || data.lastName || data.qualification || data.specialization)) {
+    await prisma.staff.update({
+      where: { id: user.staff.id },
+      data: {
+        ...(data.firstName && { firstName: data.firstName }),
+        ...(data.lastName && { lastName: data.lastName }),
+        ...(data.qualification && { qualification: data.qualification }),
+        ...(data.specialization && { specialization: data.specialization }),
+      },
+    });
+  }
+
+  // Update student profile if user is student
+  if (user.student && (data.firstName || data.lastName)) {
+    await prisma.student.update({
+      where: { id: user.student.id },
+      data: {
+        ...(data.firstName && { firstName: data.firstName }),
+        ...(data.lastName && { lastName: data.lastName }),
+      },
+    });
+  }
+
+  // Return updated profile
+  return getProfile(userId);
+};

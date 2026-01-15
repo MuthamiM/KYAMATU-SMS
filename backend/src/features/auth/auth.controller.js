@@ -1,5 +1,6 @@
 import * as authService from './auth.service.js';
 import { sendSuccess, sendCreated } from '../../utils/response.js';
+import { clearRateLimit, clearAllRateLimits as clearAllLimits } from '../../config/redis.js';
 
 export const register = async (req, res, next) => {
   try {
@@ -63,6 +64,44 @@ export const getProfile = async (req, res, next) => {
   try {
     const profile = await authService.getProfile(req.user.id);
     sendSuccess(res, profile);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateProfile = async (req, res, next) => {
+  try {
+    const profile = await authService.updateProfile(req.user.id, req.body);
+    sendSuccess(res, profile, 'Profile updated successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Admin: Clear rate limit for a specific IP
+export const clearRateLimitByIp = async (req, res, next) => {
+  try {
+    const { ip } = req.params;
+    const cleared = await clearRateLimit(ip);
+    if (cleared) {
+      sendSuccess(res, null, `Rate limit cleared for IP: ${ip}`);
+    } else {
+      sendSuccess(res, null, 'No rate limit found for this IP or Redis not configured');
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Admin: Clear all rate limits
+export const clearAllRateLimits = async (req, res, next) => {
+  try {
+    const cleared = await clearAllLimits();
+    if (cleared) {
+      sendSuccess(res, null, 'All rate limits cleared');
+    } else {
+      sendSuccess(res, null, 'No rate limits found or Redis not configured');
+    }
   } catch (error) {
     next(error);
   }

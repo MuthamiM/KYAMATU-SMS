@@ -2,8 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import { RedisStore } from 'rate-limit-redis';
 import config from './config/index.js';
 import logger from './config/logger.js';
+import { connectRedis, getRedisClient, clearRateLimit, clearAllRateLimits } from './config/redis.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import prisma from './config/database.js';
 import { sanitizeInputs } from './middleware/sanitize.js';
@@ -64,33 +66,56 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(sanitizeInputs);
 
-const generalLimiter = rateLimit({
-  windowMs: config.rateLimit.windowMs,
-  max: config.rateLimit.max,
-  message: { success: false, message: 'Too many requests, please try again later' },
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: (req, res) => {
-    logger.warn({ requestId: req.id, ip: req.ip, path: req.path, message: 'Rate limit exceeded' });
-    res.status(429).json({ success: false, message: 'Too many requests, please try again later' });
-  },
-});
+// Initialize Redis and create rate limiters
+const initializeApp = async () => {
+  const redisClient = await connectRedis();
+  
+  // Create Redis store if available, otherwise use memory
+  const createStore = (prefix) => {
+    if (redisClient) {
+      return new RedisStore({
+        sendCommand: (...args) => redisClient.sendCommand(args),
+        prefix: `rl:${prefix}:`,
+      });
+    }
+    return undefined; // Falls back to memory store
+  };
 
-const authLimiter = rateLimit({
-  windowMs: config.authRateLimit.windowMs,
-  max: config.authRateLimit.max,
-  message: { success: false, message: 'Too many login attempts, please try again later' },
-  standardHeaders: true,
-  legacyHeaders: false,
-  skipSuccessfulRequests: true,
-  handler: (req, res) => {
-    logger.warn({ requestId: req.id, ip: req.ip, message: 'Auth rate limit exceeded' });
-    res.status(429).json({ success: false, message: 'Too many login attempts, please try again later' });
-  },
-});
+  const generalLimiter = rateLimit({
+    windowMs: config.rateLimit.windowMs,
+    max: config.rateLimit.max,
+    message: { success: false, message: 'Too many requests, please try again later' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: createStore('general'),
+    handler: (req, res) => {
+      logger.warn({ requestId: req.id, ip: req.ip, path: req.path, message: 'Rate limit exceeded' });
+      res.status(429).json({ success: false, message: 'Too many requests, please try again later' });
+    },
+  });
 
-app.use('/api', generalLimiter);
-app.use('/api/auth', authLimiter);
+  const authLimiter = rateLimit({
+    windowMs: config.authRateLimit.windowMs,
+    max: config.authRateLimit.max,
+    message: { success: false, message: 'Too many login attempts, please try again later' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true,
+    store: createStore('auth'),
+    handler: (req, res) => {
+      logger.warn({ requestId: req.id, ip: req.ip, message: 'Auth rate limit exceeded' });
+      res.status(429).json({ success: false, message: 'Too many login attempts, please try again later' });
+    },
+  });
+
+  app.use('/api', generalLimiter);
+  app.use('/api/auth', authLimiter);
+};
+
+// Initialize rate limiters
+initializeApp().catch(err => {
+  logger.error({ message: 'Failed to initialize app', error: err.message });
+});
 
 app.use(auditLog);
 
