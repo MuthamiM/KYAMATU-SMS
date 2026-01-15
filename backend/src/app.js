@@ -317,7 +317,7 @@ app.post('/api/admin/reseed', async (req, res) => {
             dateOfBirth: new Date(2020 - cls.grade.level, Math.floor(Math.random()*12), Math.floor(Math.random()*28)+1),
             admissionDate: new Date('2026-01-05'),
             classId: cls.id,
-            status: 'ACTIVE'
+            admissionStatus: 'APPROVED'
           }
         });
         studentNum++;
