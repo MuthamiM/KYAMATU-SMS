@@ -297,6 +297,7 @@ app.post('/api/admin/reseed', async (req, res) => {
     const lastNames = ['Mwangi', 'Otieno', 'Kamau', 'Wanjiku', 'Ochieng', 'Njoroge', 'Kipchoge', 'Wambui', 'Kimani', 'Mutua'];
     
     let studentNum = 1;
+    const createdStudents = [];
     for (const cls of classes) {
       for (let i = 0; i < 10; i++) {
         const isMale = Math.random() > 0.5;
@@ -307,7 +308,7 @@ app.post('/api/admin/reseed', async (req, res) => {
         const studentUser = await prisma.user.create({
           data: { email: `student${studentNum}@kyamatu.ac.ke`, password: hashedPassword, role: 'STUDENT', phone: null }
         });
-        await prisma.student.create({
+        const student = await prisma.student.create({
           data: {
             userId: studentUser.id,
             admissionNumber,
@@ -320,8 +321,73 @@ app.post('/api/admin/reseed', async (req, res) => {
             admissionStatus: 'APPROVED'
           }
         });
+        createdStudents.push({ student, gradeId: cls.grade.id });
         studentNum++;
       }
+    }
+
+    // Fee Structures per grade
+    const feeStructures = [];
+    for (const grade of grades) {
+      // Base fee varies by grade level (PP1/PP2 cheaper, upper grades more)
+      const baseFee = grade.level <= 2 ? 8500 : (grade.level <= 4 ? 9500 : 10500);
+      const fs = await prisma.feeStructure.create({
+        data: {
+          name: `${grade.name} Term Fees`,
+          amount: baseFee,
+          gradeId: grade.id,
+          termId: term1.id
+        }
+      });
+      feeStructures.push({ gradeId: grade.id, feeStructure: fs });
+    }
+
+    // Create invoices for each student
+    let invoiceNum = 1;
+    for (const { student, gradeId } of createdStudents) {
+      const fs = feeStructures.find(f => f.gradeId === gradeId);
+      if (!fs) continue;
+
+      const totalAmount = fs.feeStructure.amount;
+      // Random partial payment (0%, 25%, 50%, 75%, or 100%)
+      const paymentPercent = [0, 0.25, 0.5, 0.75, 1][Math.floor(Math.random() * 5)];
+      const paidAmount = Math.round(totalAmount * paymentPercent);
+      const balance = totalAmount - paidAmount;
+
+      const invoice = await prisma.studentInvoice.create({
+        data: {
+          invoiceNo: `INV-2026-${String(invoiceNum).padStart(4, '0')}`,
+          studentId: student.id,
+          termId: term1.id,
+          totalAmount,
+          paidAmount,
+          balance,
+          dueDate: new Date('2026-02-15'),
+          items: {
+            create: [
+              { description: 'Tuition Fee', amount: totalAmount * 0.7, feeStructureId: fs.feeStructure.id },
+              { description: 'Activity Fee', amount: totalAmount * 0.15 },
+              { description: 'Exam Fee', amount: totalAmount * 0.15 }
+            ]
+          }
+        }
+      });
+
+      // Create payment record if any amount was paid
+      if (paidAmount > 0) {
+        await prisma.payment.create({
+          data: {
+            amount: paidAmount,
+            method: ['CASH', 'MPESA', 'BANK_TRANSFER'][Math.floor(Math.random() * 3)],
+            status: 'COMPLETED',
+            transactionRef: `TXN-${Date.now()}-${invoiceNum}`,
+            studentId: student.id,
+            invoiceId: invoice.id,
+            paidAt: new Date('2026-01-10')
+          }
+        });
+      }
+      invoiceNum++;
     }
 
     logger.info('Database reseed completed successfully');
@@ -332,7 +398,8 @@ app.post('/api/admin/reseed', async (req, res) => {
         grades: grades.length,
         classes: classes.length,
         teachers: teachers.length,
-        students: studentNum - 1
+        students: studentNum - 1,
+        invoices: invoiceNum - 1
       }
     });
   } catch (error) {

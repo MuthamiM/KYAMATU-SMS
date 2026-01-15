@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
-import { useThemeStore } from '../stores/themeStore';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { User, Lock, Bell, Palette, School, Activity, Save, Loader2, Camera } from 'lucide-react';
+import { User, Lock, Bell, School, Activity, Save, Loader2, Camera } from 'lucide-react';
 
 function Settings() {
   const { user } = useAuthStore();
-  const { theme, setTheme } = useThemeStore();
   const [activeTab, setActiveTab] = useState('profile');
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -27,7 +25,6 @@ function Settings() {
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'security', label: 'Security', icon: Lock },
     { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'appearance', label: 'Appearance', icon: Palette },
     { id: 'school', label: 'School Info', icon: School },
   ];
 
@@ -100,11 +97,6 @@ function Settings() {
     } finally {
       setChangingPassword(false);
     }
-  };
-
-  const handleThemeChange = (newTheme) => {
-    setTheme(newTheme);
-    toast.success(`Theme changed to ${newTheme}`);
   };
 
   const handleProfileSave = async () => {
@@ -447,56 +439,6 @@ function Settings() {
                     </label>
                   </div>
                 ))}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'appearance' && (
-            <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Appearance</h2>
-              <div className="space-y-4 max-w-md">
-                <div>
-                  <label className="label">Theme</label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { value: 'light', label: 'Light', icon: '☀️' },
-                      { value: 'dark', label: 'Dark', icon: '🌙' },
-                      { value: 'system', label: 'System', icon: '💻' },
-                    ].map((option) => (
-                      <button
-                        key={option.value}
-                        onClick={() => handleThemeChange(option.value)}
-                        className={`p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
-                          theme === option.value
-                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                            : 'border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500'
-                        }`}
-                      >
-                        <span className="text-2xl">{option.icon}</span>
-                        <span className={`text-sm font-medium ${
-                          theme === option.value ? 'text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300'
-                        }`}>
-                          {option.label}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="label">Language</label>
-                  <select className="input" onChange={() => toast('Language support coming soon')}>
-                    <option>English</option>
-                    <option>Swahili</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="label">Date Format</label>
-                  <select className="input" onChange={() => toast.success('Date format updated')}>
-                    <option>DD/MM/YYYY</option>
-                    <option>MM/DD/YYYY</option>
-                    <option>YYYY-MM-DD</option>
-                  </select>
-                </div>
               </div>
             </div>
           )}
