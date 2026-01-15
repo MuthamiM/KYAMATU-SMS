@@ -159,20 +159,33 @@ async function main() {
     data: { email: 'bursar@kyamatu.ac.ke', password: hashedPassword, role: 'BURSAR', phone: '+254700000003' },
   });
   
-  // Create Teacher
-  const teacherUser = await prisma.user.create({
-    data: { email: 'teacher@kyamatu.ac.ke', password: hashedPassword, role: 'TEACHER', phone: '+254700000002' },
-  });
-  await prisma.staff.create({
-    data: { 
-      userId: teacherUser.id, 
-      employeeNumber: 'TSC001', 
-      firstName: 'John', 
-      lastName: 'Musa', 
-      gender: 'Male', 
-      specialization: 'Mathematics' 
-    }
-  });
+  // Create Multiple Teachers
+  console.log('👨‍🏫 Creating teaching staff...');
+  const teacherData = [
+    { email: 'teacher@kyamatu.ac.ke', empNo: 'TSC001', first: 'John', last: 'Musa', gender: 'Male', spec: 'Mathematics' },
+    { email: 'mmwende@kyamatu.ac.ke', empNo: 'TSC002', first: 'Mary', last: 'Mwende', gender: 'Female', spec: 'English' },
+    { email: 'pkimani@kyamatu.ac.ke', empNo: 'TSC003', first: 'Peter', last: 'Kimani', gender: 'Male', spec: 'Science and Technology' },
+    { email: 'gwanjiku@kyamatu.ac.ke', empNo: 'TSC004', first: 'Grace', last: 'Wanjiku', gender: 'Female', spec: 'Kiswahili' },
+    { email: 'dotieno@kyamatu.ac.ke', empNo: 'TSC005', first: 'David', last: 'Otieno', gender: 'Male', spec: 'Social Studies' },
+    { email: 'fnzuki@kyamatu.ac.ke', empNo: 'TSC006', first: 'Faith', last: 'Nzuki', gender: 'Female', spec: 'CRE' },
+  ];
+
+  for (const t of teacherData) {
+    const teacherUser = await prisma.user.create({
+      data: { email: t.email, password: hashedPassword, role: 'TEACHER', phone: `+2547${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}` },
+    });
+    await prisma.staff.create({
+      data: { 
+        userId: teacherUser.id, 
+        employeeNumber: t.empNo, 
+        firstName: t.first, 
+        lastName: t.last, 
+        gender: t.gender, 
+        specialization: t.spec 
+      }
+    });
+  }
+  console.log(`✅ Created ${teacherData.length} teachers`);
 
   // 6. Create 10 Students per Class
   console.log('👨‍🎓 Creating 10 students per class...');
