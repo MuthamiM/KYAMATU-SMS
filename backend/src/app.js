@@ -169,6 +169,45 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
+// Admin seed endpoint - requires secret key
+app.post('/api/admin/reseed', async (req, res) => {
+  const { secretKey } = req.body;
+  
+  // Simple secret key check (use env var in production)
+  if (secretKey !== 'kyamatu-reseed-2026') {
+    return res.status(403).json({ success: false, message: 'Invalid secret key' });
+  }
+
+  try {
+    logger.info('Starting database reseed...');
+    
+    // Dynamic import of seed function
+    const { spawn } = await import('child_process');
+    const seedProcess = spawn('node', ['prisma/seed.js'], {
+      cwd: process.cwd(),
+      env: process.env,
+      stdio: 'pipe'
+    });
+
+    let output = '';
+    seedProcess.stdout.on('data', (data) => { output += data.toString(); });
+    seedProcess.stderr.on('data', (data) => { output += data.toString(); });
+
+    seedProcess.on('close', (code) => {
+      if (code === 0) {
+        logger.info('Database reseed completed successfully');
+        res.json({ success: true, message: 'Database reseeded successfully', output });
+      } else {
+        logger.error({ message: 'Seed failed', code, output });
+        res.status(500).json({ success: false, message: 'Seed failed', output });
+      }
+    });
+  } catch (error) {
+    logger.error({ message: 'Reseed error', error: error.message });
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentsRoutes);
 app.use('/api/staff', staffRoutes);
