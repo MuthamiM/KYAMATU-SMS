@@ -13,17 +13,29 @@ services:
         fromDatabase:
           name: kyamatu-db
           property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: kyamatu-redis
+          type: redis
+          property: connectionString
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_REFRESH_SECRET
         generateValue: true
       - key: CORS_ORIGIN
         value: https://kyamatu-frontend.pages.dev
+      - key: AUTH_RATE_LIMIT_MAX
+        value: "15"
     plan: free
 
 databases:
   - name: kyamatu-db
     databaseName: kyamatu_sms
     user: kyamatu_user
+    plan: free
+    region: oregon
+
+  - name: kyamatu-redis
+    type: redis
     plan: free
     region: oregon

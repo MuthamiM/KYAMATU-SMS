@@ -1,13 +1,27 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
+import { useThemeStore } from '../stores/themeStore';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { User, Lock, Bell, Palette, School, Activity } from 'lucide-react';
+import { User, Lock, Bell, Palette, School, Activity, Save, Loader2, Camera } from 'lucide-react';
 
 function Settings() {
   const { user } = useAuthStore();
+  const { theme, setTheme } = useThemeStore();
   const [activeTab, setActiveTab] = useState('profile');
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  const [profileForm, setProfileForm] = useState({
+    firstName: '',
+    lastName: '',
+    phone: '',
+    qualification: '',
+    specialization: '',
+  });
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
@@ -19,44 +33,171 @@ function Settings() {
 
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
 
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/auth/profile');
+      const data = res.data.data;
+      setProfile(data);
+      
+      // Populate form based on user type
+      if (data.staff) {
+        setProfileForm({
+          firstName: data.staff.firstName || '',
+          lastName: data.staff.lastName || '',
+          phone: data.phone || '',
+          qualification: data.staff.qualification || '',
+          specialization: data.staff.specialization || '',
+        });
+      } else if (data.student) {
+        setProfileForm({
+          firstName: data.student.firstName || '',
+          lastName: data.student.lastName || '',
+          phone: data.phone || '',
+          qualification: '',
+          specialization: '',
+        });
+      } else {
+        setProfileForm({
+          firstName: '',
+          lastName: '',
+          phone: data.phone || '',
+          qualification: '',
+          specialization: '',
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch profile:', error);
+      toast.error('Failed to load profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleUpdatePassword = async () => {
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
       toast.error('New passwords do not match');
       return;
     }
+    if (passwordForm.newPassword.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
     try {
+      setChangingPassword(true);
       await api.post('/auth/change-password', {
-        oldPassword: passwordForm.currentPassword,
+        currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword
       });
       toast.success('Password updated successfully');
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to update password');
+    } finally {
+      setChangingPassword(false);
     }
   };
 
-  const handleProfileSave = () => {
-    toast('Profile details are managed by administrators. Please contact support to update personal info.', {
-      icon: 'ℹ️',
-    });
+  const handleThemeChange = (newTheme) => {
+    setTheme(newTheme);
+    toast.success(`Theme changed to ${newTheme}`);
+  };
+
+  const handleProfileSave = async () => {
+    try {
+      setSaving(true);
+      await api.put('/auth/profile', profileForm);
+      toast.success('Profile updated successfully');
+      fetchProfile(); // Refresh profile data
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleChangePhoto = () => {
-    toast('Photo upload is currently disabled by policy.', {
-      icon: '📷',
-    });
+    toast('Photo upload coming soon!', { icon: '📷' });
   };
+
+  const getDisplayName = () => {
+    if (profile?.staff) {
+      return `${profile.staff.firstName} ${profile.staff.lastName}`;
+    }
+    if (profile?.student) {
+      return `${profile.student.firstName} ${profile.student.lastName}`;
+    }
+    if (profile?.guardian) {
+      return `${profile.guardian.firstName} ${profile.guardian.lastName}`;
+    }
+    return profile?.email?.split('@')[0] || 'User';
+  };
+
+  const getInitials = () => {
+    if (profile?.staff) {
+      return `${profile.staff.firstName?.[0] || ''}${profile.staff.lastName?.[0] || ''}`.toUpperCase();
+    }
+    if (profile?.student) {
+      return `${profile.student.firstName?.[0] || ''}${profile.student.lastName?.[0] || ''}`.toUpperCase();
+    }
+    return profile?.email?.charAt(0).toUpperCase() || 'U';
+  };
+
+  const getRoleBadgeColor = (role) => {
+    const colors = {
+      SUPER_ADMIN: 'bg-red-100 text-red-700',
+      ADMIN: 'bg-purple-100 text-purple-700',
+      TEACHER: 'bg-blue-100 text-blue-700',
+      BURSAR: 'bg-green-100 text-green-700',
+      STUDENT: 'bg-yellow-100 text-yellow-700',
+      PARENT: 'bg-orange-100 text-orange-700',
+    };
+    return colors[role] || 'bg-gray-100 text-gray-700';
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-500">Manage your account and preferences</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
+        <p className="text-gray-500 dark:text-gray-400">Manage your account and preferences</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Sidebar */}
         <div className="card p-4">
+          {/* Profile Summary */}
+          <div className="text-center pb-4 mb-4 border-b border-gray-200 dark:border-slate-600">
+            <div className="relative inline-block">
+              <div className="w-20 h-20 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mx-auto">
+                <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">{getInitials()}</span>
+              </div>
+              <button 
+                onClick={handleChangePhoto}
+                className="absolute bottom-0 right-0 bg-white dark:bg-slate-700 p-1.5 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-slate-600 transition"
+              >
+                <Camera className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+              </button>
+            </div>
+            <h3 className="font-semibold text-gray-900 dark:text-white mt-3">{getDisplayName()}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{profile?.email}</p>
+            <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(profile?.role)}`}>
+              {profile?.role?.replace('_', ' ')}
+            </span>
+          </div>
+
+          {/* Navigation Tabs */}
           <nav className="space-y-1">
             {tabs.map((tab) => (
               <button
@@ -64,8 +205,8 @@ function Settings() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
                   activeTab === tab.id
-                    ? 'bg-primary-50 text-primary-600'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700'
                 }`}
               >
                 <tab.icon className="w-5 h-5" />
@@ -75,48 +216,147 @@ function Settings() {
           </nav>
         </div>
 
+        {/* Main Content */}
         <div className="lg:col-span-3 card p-6">
           {activeTab === 'profile' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-gray-900">Profile Settings</h2>
-              <div className="flex items-center gap-6">
-                <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center">
-                  <span className="text-2xl font-bold text-primary-600">
-                    {user?.email?.charAt(0).toUpperCase()}
-                  </span>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Profile Information</h2>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  Member since {new Date(profile?.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+
+              {/* Staff/Student specific info */}
+              {profile?.staff && (
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <p className="text-sm text-blue-700">
+                    <strong>Employee ID:</strong> {profile.staff.employeeNumber}
+                  </p>
+                </div>
+              )}
+
+              {profile?.student && (
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <p className="text-sm text-green-700">
+                    <strong>Admission No:</strong> {profile.student.admissionNumber}
+                    {profile.student.class && (
+                      <> • <strong>Class:</strong> {profile.student.class.grade?.name} {profile.student.class.stream?.name}</>
+                    )}
+                  </p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="label">First Name</label>
+                  <input
+                    type="text"
+                    value={profileForm.firstName}
+                    onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
+                    className="input"
+                    placeholder="Enter first name"
+                  />
                 </div>
                 <div>
-                  <button onClick={handleChangePhoto} className="btn btn-secondary text-sm">Change Photo</button>
+                  <label className="label">Last Name</label>
+                  <input
+                    type="text"
+                    value={profileForm.lastName}
+                    onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
+                    className="input"
+                    placeholder="Enter last name"
+                  />
                 </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="label">Email</label>
                   <input
                     type="email"
-                    value={user?.email || ''}
+                    value={profile?.email || ''}
                     disabled
-                    className="input bg-gray-50"
+                    className="input bg-gray-50 cursor-not-allowed"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                </div>
+                <div>
+                  <label className="label">Phone</label>
+                  <input
+                    type="tel"
+                    value={profileForm.phone}
+                    onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                    className="input"
+                    placeholder="+254 7XX XXX XXX"
                   />
                 </div>
+
+                {/* Staff-specific fields */}
+                {profile?.staff && (
+                  <>
+                    <div>
+                      <label className="label">Qualification</label>
+                      <input
+                        type="text"
+                        value={profileForm.qualification}
+                        onChange={(e) => setProfileForm({ ...profileForm, qualification: e.target.value })}
+                        className="input"
+                        placeholder="e.g., B.Ed, M.Ed"
+                      />
+                    </div>
+                    <div>
+                      <label className="label">Specialization</label>
+                      <input
+                        type="text"
+                        value={profileForm.specialization}
+                        onChange={(e) => setProfileForm({ ...profileForm, specialization: e.target.value })}
+                        className="input"
+                        placeholder="e.g., Mathematics, Science"
+                      />
+                    </div>
+                  </>
+                )}
+
                 <div>
                   <label className="label">Role</label>
                   <input
                     type="text"
-                    value={user?.role || ''}
+                    value={profile?.role?.replace('_', ' ') || ''}
                     disabled
-                    className="input bg-gray-50"
+                    className="input bg-gray-50 cursor-not-allowed"
                   />
                 </div>
+                <div>
+                  <label className="label">Account Status</label>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      profile?.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    }`}>
+                      {profile?.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <button onClick={handleProfileSave} className="btn btn-primary">Save Changes</button>
+
+              <div className="flex justify-end pt-4 border-t border-gray-200">
+                <button 
+                  onClick={handleProfileSave} 
+                  disabled={saving}
+                  className="btn btn-primary flex items-center gap-2"
+                >
+                  {saving ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
             </div>
           )}
 
           {activeTab === 'security' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-gray-900">Security Settings</h2>
-              <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Security Settings</h2>
+              <div className="max-w-md space-y-4">
                 <div>
                   <label className="label">Current Password</label>
                   <input 
@@ -136,6 +376,7 @@ function Settings() {
                     value={passwordForm.newPassword}
                     onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
                   />
+                  <p className="text-xs text-gray-500 mt-1">Min 8 chars with uppercase, lowercase & number (e.g., Admin@123)</p>
                 </div>
                 <div>
                   <label className="label">Confirm Password</label>
@@ -147,32 +388,63 @@ function Settings() {
                     onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
                   />
                 </div>
-                <button onClick={handleUpdatePassword} className="btn btn-primary">Update Password</button>
+                <button 
+                  onClick={handleUpdatePassword} 
+                  className="btn btn-primary flex items-center gap-2"
+                  disabled={!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword || changingPassword}
+                >
+                  {changingPassword ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    'Update Password'
+                  )}
+                </button>
+              </div>
+
+              <div className="pt-6 border-t border-gray-200">
+                <h3 className="font-medium text-gray-900 mb-4">Active Sessions</h3>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900">Current Session</p>
+                      <p className="text-sm text-gray-500">This device • Active now</p>
+                    </div>
+                    <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">Active</span>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
           {activeTab === 'notifications' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-gray-900">Notification Preferences</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Notification Preferences</h2>
               <div className="space-y-4">
                 {[
-                  { label: 'Email notifications', desc: 'Receive updates via email' },
-                  { label: 'SMS notifications', desc: 'Receive SMS alerts' },
-                  { label: 'Attendance alerts', desc: 'Get notified about attendance' },
-                  { label: 'Fee reminders', desc: 'Receive fee payment reminders' },
+                  { label: 'Email notifications', desc: 'Receive updates via email', defaultChecked: true },
+                  { label: 'SMS notifications', desc: 'Receive SMS alerts', defaultChecked: false },
+                  { label: 'Attendance alerts', desc: 'Get notified about attendance', defaultChecked: true },
+                  { label: 'Fee reminders', desc: 'Receive fee payment reminders', defaultChecked: true },
+                  { label: 'Exam results', desc: 'Get notified when results are published', defaultChecked: true },
+                  { label: 'Announcements', desc: 'Receive school announcements', defaultChecked: true },
                 ].map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div key={index} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
                     <div>
-                      <p className="font-medium text-gray-900">{item.label}</p>
-                      <p className="text-sm text-gray-500">{item.desc}</p>
+                      <p className="font-medium text-gray-900 dark:text-white">{item.label}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{item.desc}</p>
                     </div>
-                    <input 
-                      type="checkbox" 
-                      defaultChecked 
-                      className="w-5 h-5 text-primary-600"
-                      onChange={() => toast.success('Preference updated')}
-                    />
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        defaultChecked={item.defaultChecked}
+                        className="sr-only peer"
+                        onChange={() => toast.success('Preference updated')}
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                    </label>
                   </div>
                 ))}
               </div>
@@ -181,15 +453,34 @@ function Settings() {
 
           {activeTab === 'appearance' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-gray-900">Appearance</h2>
-              <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Appearance</h2>
+              <div className="space-y-4 max-w-md">
                 <div>
                   <label className="label">Theme</label>
-                  <select className="input" onChange={() => toast('Theme setting saved (requires reload)')}>
-                    <option>Light</option>
-                    <option>Dark</option>
-                    <option>System</option>
-                  </select>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { value: 'light', label: 'Light', icon: '☀️' },
+                      { value: 'dark', label: 'Dark', icon: '🌙' },
+                      { value: 'system', label: 'System', icon: '💻' },
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => handleThemeChange(option.value)}
+                        className={`p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
+                          theme === option.value
+                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                            : 'border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500'
+                        }`}
+                      >
+                        <span className="text-2xl">{option.icon}</span>
+                        <span className={`text-sm font-medium ${
+                          theme === option.value ? 'text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300'
+                        }`}>
+                          {option.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <div>
                   <label className="label">Language</label>
@@ -198,29 +489,45 @@ function Settings() {
                     <option>Swahili</option>
                   </select>
                 </div>
+                <div>
+                  <label className="label">Date Format</label>
+                  <select className="input" onChange={() => toast.success('Date format updated')}>
+                    <option>DD/MM/YYYY</option>
+                    <option>MM/DD/YYYY</option>
+                    <option>YYYY-MM-DD</option>
+                  </select>
+                </div>
               </div>
             </div>
           )}
 
           {activeTab === 'school' && (
             <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-gray-900">School Information</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">School Information</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="label">School Name</label>
-                  <input type="text" value="Kyamatu Primary School" disabled className="input bg-gray-50" />
+                  <input type="text" value="Kyamatu Primary School" disabled className="input bg-gray-50 dark:bg-slate-700" />
                 </div>
                 <div>
                   <label className="label">School Code</label>
-                  <input type="text" value="KPS-001" disabled className="input bg-gray-50" />
+                  <input type="text" value="KPS-001" disabled className="input bg-gray-50 dark:bg-slate-700" />
                 </div>
                 <div>
                   <label className="label">County</label>
-                  <input type="text" value="Machakos" disabled className="input bg-gray-50" />
+                  <input type="text" value="Kitui" disabled className="input bg-gray-50 dark:bg-slate-700" />
                 </div>
                 <div>
                   <label className="label">Sub-County</label>
-                  <input type="text" value="Machakos" disabled className="input bg-gray-50" />
+                  <input type="text" value="Kitui Central" disabled className="input bg-gray-50 dark:bg-slate-700" />
+                </div>
+                <div>
+                  <label className="label">Current Term</label>
+                  <input type="text" value="Term 1, 2026" disabled className="input bg-gray-50 dark:bg-slate-700" />
+                </div>
+                <div>
+                  <label className="label">Academic Year</label>
+                  <input type="text" value="2026" disabled className="input bg-gray-50 dark:bg-slate-700" />
                 </div>
               </div>
             </div>

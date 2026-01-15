@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
+import { useThemeStore } from './stores/themeStore';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -33,6 +35,12 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
 function App() {
   const { isAuthenticated } = useAuthStore();
+  const { initTheme } = useThemeStore();
+
+  // Initialize theme on app load
+  useEffect(() => {
+    initTheme();
+  }, [initTheme]);
 
   return (
     <Routes>
@@ -105,7 +113,7 @@ function App() {
         <Route
           path="reports"
           element={
-            <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'TEACHER']}>
+            <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'BURSAR']}>
               <Reports />
             </ProtectedRoute>
           }
@@ -123,7 +131,7 @@ function App() {
         <Route
           path="timetable"
           element={
-             <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'STUDENT']}>
+             <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'TEACHER']}>
                <Timetable />
              </ProtectedRoute>
           }

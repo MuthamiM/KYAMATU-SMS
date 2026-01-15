@@ -24,14 +24,14 @@ import {
 
 const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/students', icon: Users, label: 'Students', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'BURSAR'] },
+  { path: '/students', icon: Users, label: 'Students', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER'] },
   { path: '/admissions', icon: UserPlus, label: 'Admissions', roles: ['SUPER_ADMIN', 'ADMIN'] },
   { path: '/staff', icon: UserCog, label: 'Staff', roles: ['SUPER_ADMIN', 'ADMIN'] },
   { path: '/classes', icon: BookOpen, label: 'Classes', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER'] },
   { path: '/attendance', icon: CalendarCheck, label: 'Attendance', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER'] },
-  { path: '/timetable', icon: Calendar, label: 'Timetable', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'STUDENT'] },
+  { path: '/timetable', icon: Calendar, label: 'Timetable', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER'] },
   { path: '/assessments', icon: ClipboardList, label: 'Assessments', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER'] },
-  { path: '/reports', icon: FileText, label: 'Reports', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER'] },
+  { path: '/reports', icon: FileText, label: 'Reports', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'BURSAR'] },
   { path: '/fees', icon: Wallet, label: 'Fees', roles: ['SUPER_ADMIN', 'ADMIN', 'BURSAR'] },
   { path: '/announcements', icon: Bell, label: 'Announcements' },
   { path: '/settings', icon: Settings, label: 'Settings' },
@@ -148,8 +148,8 @@ function Layout() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 dark:bg-slate-950 text-white transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } print:hidden flex flex-col`}>
         <div className="flex h-16 items-center justify-center border-b border-slate-800">
@@ -201,10 +201,10 @@ function Layout() {
       {/* Main Content */}
       <div className="flex min-h-screen flex-col lg:pl-64 print:pl-0">
         {/* Top Header */}
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 shadow-sm print:hidden">
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 shadow-sm print:hidden">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 lg:hidden"
+            className="rounded-lg p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 lg:hidden"
           >
             <Menu className="h-6 w-6" />
           </button>
@@ -213,7 +213,7 @@ function Layout() {
             <NotificationDropdown />
             <button 
               onClick={handleLogout}
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700"
             >
               <LogOut className="h-5 w-5" />
               <span className="hidden sm:inline">Logout</span>
