@@ -1,20 +1,20 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 
+// Production backend URL
+const PRODUCTION_API_URL = 'https://kyamatu-sms-backend.onrender.com/api';
+
 // Use VITE_API_URL from environment, or fallback logic
 const getBaseUrl = () => {
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     return 'http://localhost:3000/api';
   }
-  return '/api'; // In production, assume relative path (requires proxy/rewrite)
+  // In production (Cloudflare Pages), use the Render backend URL
+  return PRODUCTION_API_URL;
 };
 
 const API_URL = getBaseUrl();
-
-if (!import.meta.env.VITE_API_URL && window.location.hostname !== 'localhost') {
-  console.warn('VITE_API_URL is not set. Defaulting to relative path /api');
-}
 
 const api = axios.create({
   baseURL: API_URL,
