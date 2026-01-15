@@ -390,6 +390,67 @@ app.post('/api/admin/reseed', async (req, res) => {
       invoiceNum++;
     }
 
+    // Create Assessments and Scores for each student
+    logger.info('Creating assessments...');
+    const assessmentTypes = ['CAT 1', 'CAT 2', 'Mid-Term', 'End-Term'];
+    let assessmentCount = 0;
+    let scoreCount = 0;
+
+    // Get all subjects grouped by grade
+    const allSubjects = await prisma.subject.findMany();
+    const subjectsByGrade = {};
+    for (const subj of allSubjects) {
+      if (!subjectsByGrade[subj.gradeId]) subjectsByGrade[subj.gradeId] = [];
+      subjectsByGrade[subj.gradeId].push(subj);
+    }
+
+    // For each grade, create assessments
+    for (const grade of grades) {
+      const gradeSubjects = subjectsByGrade[grade.id] || [];
+      for (const subject of gradeSubjects) {
+        for (const assessmentType of assessmentTypes) {
+          const weight = assessmentType.includes('End-Term') ? 0.4 : (assessmentType.includes('Mid-Term') ? 0.3 : 0.15);
+          const assessmentDate = assessmentType === 'CAT 1' ? new Date('2026-01-25') : 
+                                  assessmentType === 'CAT 2' ? new Date('2026-02-15') :
+                                  assessmentType === 'Mid-Term' ? new Date('2026-02-28') : new Date('2026-03-30');
+          
+          const assessment = await prisma.assessment.create({
+            data: {
+              name: `${subject.name} ${assessmentType}`,
+              type: assessmentType.includes('CAT') ? 'CAT' : (assessmentType.includes('Mid') ? 'MID_TERM' : 'END_TERM'),
+              maxScore: 100,
+              weight,
+              date: assessmentDate,
+              subjectId: subject.id,
+              termId: term1.id
+            }
+          });
+          assessmentCount++;
+
+          // Create scores for each student in this grade
+          const gradeStudents = createdStudents.filter(s => s.gradeId === grade.id);
+          for (const { student } of gradeStudents) {
+            // Generate realistic score (50-100 range, normally distributed around 70)
+            const baseScore = 70 + (Math.random() * 30 - 15);
+            const score = Math.min(100, Math.max(45, Math.round(baseScore)));
+            const gradeValue = score >= 80 ? 'A' : score >= 70 ? 'B' : score >= 60 ? 'C' : score >= 50 ? 'D' : 'E';
+
+            await prisma.assessmentScore.create({
+              data: {
+                score,
+                grade: gradeValue,
+                comment: score >= 80 ? 'Excellent work!' : score >= 70 ? 'Good performance' : score >= 60 ? 'Satisfactory' : 'Needs improvement',
+                studentId: student.id,
+                assessmentId: assessment.id
+              }
+            });
+            scoreCount++;
+          }
+        }
+      }
+    }
+    logger.info(`Created ${assessmentCount} assessments and ${scoreCount} scores`);
+
     logger.info('Database reseed completed successfully');
     res.json({ 
       success: true, 
@@ -399,7 +460,9 @@ app.post('/api/admin/reseed', async (req, res) => {
         classes: classes.length,
         teachers: teachers.length,
         students: studentNum - 1,
-        invoices: invoiceNum - 1
+        invoices: invoiceNum - 1,
+        assessments: assessmentCount,
+        scores: scoreCount
       }
     });
   } catch (error) {
