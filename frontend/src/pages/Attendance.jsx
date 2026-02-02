@@ -125,7 +125,7 @@ function Attendance() {
     total: attendance.length,
   };
 
-  return (
+
   if (user.role === 'STUDENT') {
     return (
       <div className="space-y-6">
@@ -251,9 +251,9 @@ function Attendance() {
                     </td>
                     <td>
                       <span className={`badge ${item.attendance?.status === 'PRESENT' ? 'badge-success' :
-                          item.attendance?.status === 'ABSENT' ? 'badge-danger' :
-                            item.attendance?.status === 'LATE' ? 'badge-warning' :
-                              'badge-primary'
+                        item.attendance?.status === 'ABSENT' ? 'badge-danger' :
+                          item.attendance?.status === 'LATE' ? 'badge-warning' :
+                            'badge-primary'
                         }`}>
                         {item.attendance?.status || 'Not Marked'}
                       </span>
@@ -265,8 +265,8 @@ function Attendance() {
                             key={status}
                             onClick={() => updateStatus(item.student.id, status)}
                             className={`p-2 rounded transition-colors ${item.attendance?.status === status
-                                ? 'bg-primary-100 text-primary-600'
-                                : 'hover:bg-gray-100 text-gray-500'
+                              ? 'bg-primary-100 text-primary-600'
+                              : 'hover:bg-gray-100 text-gray-500'
                               }`}
                             title={status}
                           >

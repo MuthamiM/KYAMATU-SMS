@@ -4,17 +4,17 @@ import { generateAdmissionNumber, paginationMeta } from '../../utils/helpers.js'
 
 export const createStudent = async (data) => {
   const admissionNumber = data.admissionNumber || generateAdmissionNumber();
-  
+
   const existing = await prisma.student.findUnique({
     where: { admissionNumber },
   });
-  
+
   if (existing) {
     throw new ConflictError('Admission number already exists');
   }
 
   const { email, password, phone, ...studentData } = data;
-  
+
   const student = await prisma.student.create({
     data: {
       ...studentData,
@@ -41,22 +41,46 @@ export const createStudent = async (data) => {
       },
     },
   });
-  
+
   return student;
 };
 
 export const getStudents = async (filters = {}) => {
   const page = parseInt(filters.page, 10) || 1;
   const limit = parseInt(filters.limit, 10) || 20;
-  const { classId, gradeId, search, admissionStatus } = filters;
+  const { classId, gradeId, search, admissionStatus, checkTeacherId } = filters;
   const skip = (page - 1) * limit;
-  
+
   const where = {};
-  
-  if (classId) where.classId = classId;
+
+  if (checkTeacherId) {
+    // Find all classes assigned to this teacher
+    const assignments = await prisma.teacherAssignment.findMany({
+      where: { staffId: checkTeacherId },
+      select: { classId: true }
+    });
+    const assignedClassIds = assignments.map(a => a.classId);
+
+    // If teacher has no classes, returned empty (or handle as needed)
+    if (assignedClassIds.length === 0) {
+      return { students: [], meta: paginationMeta(0, page, limit) };
+    }
+
+    // Restrict query to these classes
+    where.classId = { in: assignedClassIds };
+  }
+
+  if (classId) {
+    // If strict classId provided, ensure it's one of the allowed ones (intersection)
+    if (where.classId && !where.classId.in.includes(classId)) {
+      return { students: [], meta: paginationMeta(0, page, limit) };
+    }
+    where.classId = classId;
+  }
+
   if (admissionStatus) where.admissionStatus = admissionStatus;
   if (gradeId) {
-    where.class = { gradeId };
+    where.class = { ...where.class, gradeId };
   }
   if (search) {
     where.OR = [
@@ -65,7 +89,7 @@ export const getStudents = async (filters = {}) => {
       { admissionNumber: { contains: search } },
     ];
   }
-  
+
   const [students, total] = await Promise.all([
     prisma.student.findMany({
       where,
@@ -84,7 +108,7 @@ export const getStudents = async (filters = {}) => {
     }),
     prisma.student.count({ where }),
   ]);
-  
+
   return { students, meta: paginationMeta(total, page, limit) };
 };
 
@@ -111,11 +135,11 @@ export const getStudentById = async (id) => {
       },
     },
   });
-  
+
   if (!student) {
     throw new NotFoundError('Student');
   }
-  
+
   return student;
 };
 
@@ -129,11 +153,11 @@ export const getStudentByAdmissionNumber = async (admissionNumber) => {
       },
     },
   });
-  
+
   if (!student) {
     throw new NotFoundError('Student');
   }
-  
+
   return student;
 };
 
@@ -148,7 +172,7 @@ export const updateStudent = async (id, data) => {
       },
     },
   });
-  
+
   return student;
 };
 
@@ -157,11 +181,11 @@ export const deleteStudent = async (id) => {
     where: { id },
     include: { user: true },
   });
-  
+
   if (!student) {
     throw new NotFoundError('Student');
   }
-  
+
   await prisma.user.delete({
     where: { id: student.userId },
   });
@@ -179,7 +203,7 @@ export const approveAdmission = async (id, classId) => {
       class: { include: { grade: true, stream: true } },
     },
   });
-  
+
   return student;
 };
 
@@ -188,7 +212,7 @@ export const rejectAdmission = async (id) => {
     where: { id },
     data: { admissionStatus: 'REJECTED' },
   });
-  
+
   return student;
 };
 
@@ -197,7 +221,7 @@ export const promoteStudents = async (fromClassId, toClassId) => {
     where: { classId: fromClassId },
     data: { classId: toClassId },
   });
-  
+
   return result;
 };
 
@@ -216,11 +240,11 @@ export const getStudentsByGuardian = async (guardianId) => {
       },
     },
   });
-  
+
   if (!guardian) {
     throw new NotFoundError('Guardian');
   }
-  
+
   return guardian.students.map(sg => sg.student);
 };
 
@@ -232,6 +256,6 @@ export const linkGuardian = async (studentId, guardianId, isPrimary = false) => 
       isPrimary,
     },
   });
-  
+
   return link;
 };

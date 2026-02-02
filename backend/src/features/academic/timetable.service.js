@@ -221,5 +221,15 @@ export const getNextLesson = async (teacherId) => {
     next = slots[0];
   }
 
-  return next;
-};
+
+  export const getMasterTimetable = async () => {
+    const slots = await prisma.timetableSlot.findMany({
+      include: {
+        subject: true,
+        class: { include: { grade: true, stream: true } },
+        teacher: { include: { user: { select: { firstName: true, lastName: true } } } }
+      },
+      orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }, { class: { name: 'asc' } }]
+    });
+    return slots;
+  };
