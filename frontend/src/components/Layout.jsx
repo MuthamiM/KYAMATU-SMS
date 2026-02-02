@@ -149,9 +149,8 @@ function Layout() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 dark:bg-slate-950 text-white transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } print:hidden flex flex-col`}>
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 dark:bg-slate-950 text-white transform transition-transform duration-200 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } print:hidden flex flex-col`}>
         <div className="flex h-16 items-center justify-center border-b border-slate-800">
           <Link to="/dashboard" className="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition-opacity">
             <School className="h-8 w-8 text-secondary-400" />
@@ -168,11 +167,10 @@ function Layout() {
                 <li key={item.path}>
                   <Link
                     to={item.path}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      active
-                        ? 'bg-primary-600 text-white'
-                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                    }`}
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${active
+                      ? 'bg-primary-600 text-white'
+                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                      }`}
                   >
                     <Icon className="h-5 w-5" />
                     {item.label}
@@ -199,19 +197,19 @@ function Layout() {
       </div>
 
       {/* Main Content */}
-      <div className="flex min-h-screen flex-col lg:pl-64 print:pl-0">
+      <div className={`flex min-h-screen flex-col transition-all duration-200 ease-in-out ${sidebarOpen ? 'lg:pl-64' : 'lg:pl-0'} print:pl-0`}>
         {/* Top Header */}
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 shadow-sm print:hidden">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="rounded-lg p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 lg:hidden"
+            className="rounded-lg p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700"
           >
             <Menu className="h-6 w-6" />
           </button>
 
           <div className="flex items-center gap-4 ml-auto">
             <NotificationDropdown />
-            <button 
+            <button
               onClick={handleLogout}
               className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700"
             >

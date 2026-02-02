@@ -22,7 +22,7 @@ const FIRST_NAMES_FEMALE = ['Mary', 'Grace', 'Faith', 'Joy', 'Mercy', 'Alice', '
 const LAST_NAMES = ['Mwangi', 'Otieno', 'Kamau', 'Wanjiku', 'Ochieng', 'Njoroge', 'Kipchoge', 'Wambui', 'Kimani', 'Mutua', 'Omondi', 'Karanja', 'Kiprotich', 'Akinyi', 'Ndungu'];
 
 async function main() {
-  console.log('🚀 Starting fresh seed with 10 students per class...');
+  console.log('Starting fresh seed with 10 students per class...');
   
   // Clean up everything
   await prisma.timetableSlot.deleteMany();
@@ -50,7 +50,7 @@ async function main() {
   const hashedPassword = await bcrypt.hash('Admin@123', 12);
 
   // 1. Create Academic Year 2026
-  console.log('📅 Creating academic year...');
+  console.log('Creating academic year...');
   const currentYear = await prisma.academicYear.create({
     data: {
       name: '2026',
@@ -83,7 +83,7 @@ async function main() {
   const currentTerm = terms[0]; // Term 1
 
   // 2. Create Grades (Grade 1-6)
-  console.log('📚 Creating grades...');
+  console.log('Creating grades...');
   const gradesData = [
     { name: 'Grade 1', level: 1 },
     { name: 'Grade 2', level: 2 },
@@ -100,12 +100,12 @@ async function main() {
   }
 
   // 3. Create Streams
-  console.log('🏫 Creating streams...');
+  console.log('Creating streams...');
   const streamEast = await prisma.stream.create({ data: { name: 'East' } });
   const streamWest = await prisma.stream.create({ data: { name: 'West' } });
 
   // 4. Create Classes (One stream per grade, except Grade 4 has two)
-  console.log('🏫 Creating classes...');
+  console.log('Creating classes...');
   const createdClasses = [];
   
   for (const grade of createdGrades) {
@@ -148,10 +148,10 @@ async function main() {
     }
   }
 
-  console.log(`✅ Created ${createdClasses.length} classes`);
+  console.log(`Created ${createdClasses.length} classes`);
 
   // 5. Create Admin & Management Staff
-  console.log('👤 Creating admin and management staff...');
+  console.log('Creating admin and management staff...');
   
   // Headmaster (SUPER_ADMIN)
   const headmasterUser = await prisma.user.create({
@@ -207,7 +207,7 @@ async function main() {
   });
 
   // 10 Teachers
-  console.log('👨‍🏫 Creating 10 teaching staff...');
+  console.log('Creating 10 teaching staff...');
   const teacherData = [
     { email: 'jmusa@kyamatu.ac.ke', empNo: 'TSC001', first: 'John', last: 'Musa', gender: 'Male', qual: 'B.Ed Mathematics', spec: 'Mathematics' },
     { email: 'mmwende@kyamatu.ac.ke', empNo: 'TSC002', first: 'Mary', last: 'Mwende', gender: 'Female', qual: 'B.Ed English', spec: 'English' },
@@ -237,10 +237,10 @@ async function main() {
       }
     });
   }
-  console.log(`✅ Created ${teacherData.length} teachers`);
+  console.log(`Created ${teacherData.length} teachers`);
 
   // 3 Non-Teaching Staff (Support Staff - isActive: false for system access)
-  console.log('🧹 Creating 3 non-teaching support staff...');
+  console.log('Creating 3 non-teaching support staff...');
   const supportStaff = [
     { empNo: 'SUP001', first: 'James', last: 'Mutiso', gender: 'Male', role: 'Security Guard' },
     { empNo: 'SUP002', first: 'Rose', last: 'Muthoni', gender: 'Female', role: 'Cook' },
@@ -260,10 +260,10 @@ async function main() {
       }
     });
   }
-  console.log(`✅ Created ${supportStaff.length} support staff`);
+  console.log(`Created ${supportStaff.length} support staff`);
 
   // 6. Create 10 Students per Class
-  console.log('👨‍🎓 Creating 10 students per class...');
+  console.log('Creating 10 students per class...');
   let studentCounter = 1;
   const allStudents = [];
 
@@ -311,10 +311,10 @@ async function main() {
     }
   }
 
-  console.log(`✅ Created ${allStudents.length} students total`);
+  console.log(`Created ${allStudents.length} students total`);
 
   // 7. Create Fee Structure and Invoices
-  console.log('💰 Creating fee structures and invoices...');
+  console.log('Creating fee structures and invoices...');
   
   // Fee structure for all grades
   for (const grade of createdGrades) {
@@ -367,7 +367,7 @@ async function main() {
   }
 
   // 8. Create Attendance Records (Today)
-  console.log('📋 Creating attendance records...');
+  console.log('Creating attendance records...');
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -394,14 +394,14 @@ async function main() {
   const studentCount = await prisma.student.count();
   const staffCount = await prisma.staff.count();
 
-  console.log('\n🎉 Seed completed successfully!');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`📊 Summary:`);
-  console.log(`   • Classes: ${classCount}`);
-  console.log(`   • Students: ${studentCount} (10 per class)`);
-  console.log(`   • Staff: ${staffCount}`);
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('\n📧 Login credentials:');
+  console.log('\nSeed completed successfully!');
+  console.log('-------------------------------------------');
+  console.log(`Summary:`);
+  console.log(`   - Classes: ${classCount}`);
+  console.log(`   - Students: ${studentCount} (10 per class)`);
+  console.log(`   - Staff: ${staffCount}`);
+  console.log('-------------------------------------------');
+  console.log('\nLogin credentials:');
   console.log('   Admin: admin@kyamatu.ac.ke / Admin@123');
   console.log('   Bursar: bursar@kyamatu.ac.ke / Admin@123');
   console.log('   Teacher: teacher@kyamatu.ac.ke / Admin@123');
@@ -409,7 +409,7 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error('❌ Seed failed:', e);
+    console.error('Seed failed:', e);
     process.exit(1);
   })
   .finally(async () => {

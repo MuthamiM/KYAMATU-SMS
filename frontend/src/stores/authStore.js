@@ -39,19 +39,17 @@ export const useAuthStore = create(
 
       logout: async () => {
         const refreshToken = get().refreshToken;
-        try {
-          if (refreshToken) {
-            await api.post('/auth/logout', { refreshToken });
-          }
-        } catch {
-        } finally {
-          set({
-            user: null,
-            accessToken: null,
-            refreshToken: null,
-            isAuthenticated: false,
-          });
+        // Don't await the API call to make logout feel instant
+        if (refreshToken) {
+          api.post('/auth/logout', { refreshToken }).catch(() => { });
         }
+
+        set({
+          user: null,
+          accessToken: null,
+          refreshToken: null,
+          isAuthenticated: false,
+        });
       },
 
       fetchProfile: async () => {

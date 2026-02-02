@@ -5,12 +5,13 @@ import toast from 'react-hot-toast';
 import { Plus, Search, Filter, MoreVertical, Eye, Edit, Trash2 } from 'lucide-react';
 
 function Students() {
+  const [page, setPage] = useState(1);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [meta, setMeta] = useState(null);
-  
+
   // Edit & Delete State
   const [editingStudent, setEditingStudent] = useState(null);
   const [editForm, setEditForm] = useState({ firstName: '', lastName: '', classId: '' });
@@ -18,13 +19,13 @@ function Students() {
 
   useEffect(() => {
     fetchStudents();
-  }, []);
+  }, [page, search]);
 
   const fetchStudents = async () => {
     try {
       setLoading(true);
       const response = await api.get('/students', {
-        params: { search, limit: 20 },
+        params: { search, page, limit: 10 },
       });
       setStudents(response.data.data);
       setMeta(response.data.meta);
@@ -41,10 +42,10 @@ function Students() {
   };
 
   const fetchClasses = async () => {
-     try {
-       const res = await api.get('/academic/classes');
-       setClasses(res.data.data || []);
-     } catch (e) { console.error('Failed to load classes'); }
+    try {
+      const res = await api.get('/academic/classes');
+      setClasses(res.data.data || []);
+    } catch (e) { console.error('Failed to load classes'); }
   };
 
   const handleEdit = (student) => {
@@ -190,13 +191,13 @@ function Students() {
                         >
                           <Eye className="w-4 h-4" />
                         </Link>
-                        <button 
+                        <button
                           onClick={() => handleEdit(student)}
                           className="p-1.5 text-gray-500 hover:bg-gray-100 rounded"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDelete(student.id)}
                           className="p-1.5 text-danger-500 hover:bg-danger-50 rounded"
                         >
@@ -219,12 +220,14 @@ function Students() {
             <div className="flex gap-2">
               <button
                 disabled={!meta.hasPrev}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
                 className="btn btn-secondary text-sm"
               >
                 Previous
               </button>
               <button
                 disabled={!meta.hasNext}
+                onClick={() => setPage(p => p + 1)}
                 className="btn btn-secondary text-sm"
               >
                 Next
@@ -233,7 +236,7 @@ function Students() {
           </div>
         )}
       </div>
-      
+
       {/* Edit Student Modal */}
       {editingStudent && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -247,7 +250,7 @@ function Students() {
                   required
                   className="input"
                   value={editForm.firstName}
-                  onChange={(e) => setEditForm({...editForm, firstName: e.target.value})}
+                  onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
                 />
               </div>
               <div>
@@ -257,7 +260,7 @@ function Students() {
                   required
                   className="input"
                   value={editForm.lastName}
-                  onChange={(e) => setEditForm({...editForm, lastName: e.target.value})}
+                  onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
                 />
               </div>
               <div>
@@ -265,7 +268,7 @@ function Students() {
                 <select
                   className="input"
                   value={editForm.classId}
-                  onChange={(e) => setEditForm({...editForm, classId: e.target.value})}
+                  onChange={(e) => setEditForm({ ...editForm, classId: e.target.value })}
                 >
                   <option value="">Select Class</option>
                   {classes.map(c => (

@@ -291,7 +291,7 @@ function Reports() {
           </head>
           <body>
             <div class="header">
-              <div class="logo">🏫 KYAMATU PRIMARY SCHOOL</div>
+              <div class="logo">KYAMATU PRIMARY SCHOOL</div>
               <div style="font-size: 12px; color: #666;">P.O. Box 123, Kitui County | Tel: +254 700 000 000</div>
               <div class="title">Student Clearance Form</div>
             </div>
@@ -304,30 +304,30 @@ function Reports() {
             </div>
 
             <div class="clearance-section">
-              <div class="section-title">📚 Library</div>
+              <div class="section-title">Library</div>
               <div class="checkbox"><span class="box ${isCleared ? 'checked' : ''}"></span> All books returned</div>
               <div class="checkbox"><span class="box ${isCleared ? 'checked' : ''}"></span> No outstanding fines</div>
               <div style="margin-top: 15px;"><strong>Librarian:</strong> _______________________ <strong>Date:</strong> ___________</div>
             </div>
 
             <div class="clearance-section">
-              <div class="section-title">💰 Finance / Bursar</div>
+              <div class="section-title">Finance / Bursar</div>
               <div class="checkbox"><span class="box ${isCleared ? 'checked' : ''}"></span> School fees fully paid</div>
               <div class="checkbox"><span class="box ${isCleared ? 'checked' : ''}"></span> No outstanding balances</div>
               <div style="margin-top: 10px;"><strong>Balance:</strong> KES ${feeBalance.toLocaleString()}</div>
-              <div class="status-badge ${isCleared ? 'cleared' : 'not-cleared'}">${isCleared ? '✓ CLEARED' : '✗ NOT CLEARED - BALANCE DUE'}</div>
+              <div class="status-badge ${isCleared ? 'cleared' : 'not-cleared'}">${isCleared ? 'CLEARED' : 'NOT CLEARED - BALANCE DUE'}</div>
               <div style="margin-top: 15px;"><strong>Bursar:</strong> _______________________ <strong>Date:</strong> ___________</div>
             </div>
 
             <div class="clearance-section">
-              <div class="section-title">🏠 Hostel / Dormitory</div>
+              <div class="section-title">Hostel / Dormitory</div>
               <div class="checkbox"><span class="box ${isCleared ? 'checked' : ''}"></span> Room cleared and inspected</div>
               <div class="checkbox"><span class="box ${isCleared ? 'checked' : ''}"></span> All items returned</div>
               <div style="margin-top: 15px;"><strong>Matron/Patron:</strong> _______________________ <strong>Date:</strong> ___________</div>
             </div>
 
             <div class="clearance-section">
-              <div class="section-title">👨‍🏫 Class Teacher</div>
+              <div class="section-title">Class Teacher</div>
               <div class="checkbox"><span class="box ${isCleared ? 'checked' : ''}"></span> All assignments completed</div>
               <div class="checkbox"><span class="box ${isCleared ? 'checked' : ''}"></span> School property returned</div>
               <div style="margin-top: 15px;"><strong>Class Teacher:</strong> _______________________ <strong>Date:</strong> ___________</div>
@@ -400,7 +400,7 @@ function Reports() {
           </head>
           <body>
             <div class="header">
-              <div class="logo">🏫 KYAMATU PRIMARY SCHOOL</div>
+              <div class="logo">KYAMATU PRIMARY SCHOOL</div>
               <div style="font-size: 12px; color: #666;">P.O. Box 123, Kitui County | Tel: +254 700 000 000</div>
               <div class="title">FEE STATEMENT</div>
             </div>
@@ -522,9 +522,9 @@ function Reports() {
           <body>
             <div class="watermark">OFFICIAL</div>
             <div class="header">
-              <div class="logo">🏫 KYAMATU PRIMARY SCHOOL</div>
+              <div class="logo">KYAMATU PRIMARY SCHOOL</div>
               <div style="font-size: 12px; color: #666;">P.O. Box 123, Kitui County | Tel: +254 700 000 000</div>
-              <div class="title">📋 EXAMINATION AUDIT REPORT</div>
+              <div class="title">EXAMINATION AUDIT REPORT</div>
               <div style="font-size: 12px; margin-top: 5px;">CONFIDENTIAL - FOR OFFICIAL USE ONLY</div>
             </div>
 
@@ -560,7 +560,7 @@ function Reports() {
                       <td>${s.assessments?.find(a => a.name?.includes('End'))?.percentage || '-'}</td>
                       <td style="font-weight: bold;">${s.average}%</td>
                       <td style="font-weight: bold;">${s.grade}</td>
-                      <td>✓</td>
+                      <td>Yes</td>
                     </tr>
                   `).join('') : '<tr><td colspan="8" style="text-align: center;">No assessment records found</td></tr>'}
                 </tbody>
@@ -570,16 +570,16 @@ function Reports() {
             <div class="audit-section">
               <div class="section-title">Audit Checklist</div>
               <table>
-                <tr><td>☑️ All examination scripts accounted for</td><td>VERIFIED</td></tr>
-                <tr><td>☑️ Marks correctly entered in system</td><td>VERIFIED</td></tr>
-                <tr><td>☑️ No unauthorized alterations detected</td><td>VERIFIED</td></tr>
-                <tr><td>☑️ Student identity confirmed</td><td>VERIFIED</td></tr>
-                <tr><td>☑️ Attendance during exams verified</td><td>VERIFIED</td></tr>
+                <tr><td>[X] All examination scripts accounted for</td><td>VERIFIED</td></tr>
+                <tr><td>[X] Marks correctly entered in system</td><td>VERIFIED</td></tr>
+                <tr><td>[X] No unauthorized alterations detected</td><td>VERIFIED</td></tr>
+                <tr><td>[X] Student identity confirmed</td><td>VERIFIED</td></tr>
+                <tr><td>[X] Attendance during exams verified</td><td>VERIFIED</td></tr>
               </table>
             </div>
 
             <div class="disclaimer">
-              <strong>⚠️ DISCLAIMER:</strong> This audit report is generated from the official school database. Any discrepancies should be reported to the examination office within 7 days of issuance. Tampering with examination records is a serious offense.
+              <strong>DISCLAIMER:</strong> This audit report is generated from the official school database. Any discrepancies should be reported to the examination office within 7 days of issuance. Tampering with examination records is a serious offense.
             </div>
 
             <div class="signature-section">
@@ -640,7 +640,7 @@ function Reports() {
           <body>
             <div class="certificate" style="position: relative;">
               <div class="header">
-                <div class="logo">🏫 KYAMATU PRIMARY SCHOOL</div>
+                <div class="logo">KYAMATU PRIMARY SCHOOL</div>
                 <div class="subtitle">Excellence in Education Since 1985</div>
                 <div class="title">CERTIFICATE OF ATTENDANCE</div>
               </div>
@@ -718,7 +718,7 @@ function Reports() {
           <body>
             <div class="certificate">
               <div class="header">
-                <div class="logo">🏫 KYAMATU PRIMARY SCHOOL</div>
+                <div class="logo">KYAMATU PRIMARY SCHOOL</div>
                 <div style="font-size: 12px; color: #666;">Kitui County, Kenya</div>
                 <div class="ribbon">CERTIFICATE OF GOOD CONDUCT</div>
                 <div class="title">Certificate of Excellence</div>
@@ -731,10 +731,10 @@ function Reports() {
                 <p>Has demonstrated exemplary behavior and conduct throughout their time at our institution.</p>
                 
                 <div class="qualities">
-                  <span class="quality">✓ Discipline</span>
-                  <span class="quality">✓ Respect</span>
-                  <span class="quality">✓ Integrity</span>
-                  <span class="quality">✓ Leadership</span>
+                  <span class="quality">Discipline</span>
+                  <span class="quality">Respect</span>
+                  <span class="quality">Integrity</span>
+                  <span class="quality">Leadership</span>
                 </div>
 
                 <p>The above-named student has maintained good moral standing and has not been involved in any disciplinary issues during their enrollment period.</p>
@@ -835,7 +835,7 @@ function Reports() {
           <body>
             <div class="certificate">
               <div class="header">
-                <div class="logo">🏫 KYAMATU PRIMARY SCHOOL</div>
+                <div class="logo">KYAMATU PRIMARY SCHOOL</div>
                 <div class="subtitle">P.O. Box 123, Kitui County, Kenya | Tel: +254 700 000 000 | Email: info@kyamatu.ac.ke</div>
                 <div class="subtitle">Ministry of Education Registration No: KPS/KTI/2020</div>
                 <div class="title">School Leaving Certificate</div>
@@ -873,7 +873,7 @@ function Reports() {
               </div>
 
               <div class="history-section">
-                <div class="section-title">📚 Academic History at Kyamatu Primary School</div>
+                <div class="section-title">Academic History at Kyamatu Primary School</div>
                 <table>
                   <thead>
                     <tr>
@@ -1156,27 +1156,6 @@ function Reports() {
                     Search
                   </button>
                 </div>
-              </div>
-              
-              {/* Or select from list */}
-              <div className="flex-1 min-w-64">
-                <label className="label">Or Select from List</label>
-                <select
-                  value={selectedStudent}
-                  onChange={(e) => {
-                    setSelectedStudent(e.target.value);
-                    const student = students.find(s => s.id === e.target.value);
-                    setFoundStudent(student || null);
-                  }}
-                  className="input"
-                >
-                  <option value="">Choose a student</option>
-                  {students.map((student) => (
-                    <option key={student.id} value={student.id}>
-                      {student.admissionNumber} - {student.firstName} {student.lastName} ({student.class?.name || 'N/A'})
-                    </option>
-                  ))}
-                </select>
               </div>
             </div>
 
