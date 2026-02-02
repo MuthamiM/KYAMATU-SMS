@@ -89,7 +89,7 @@ function App() {
         <Route
           path="classes"
           element={
-            <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'TEACHER']}>
+            <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}>
               <Classes />
             </ProtectedRoute>
           }
@@ -105,7 +105,7 @@ function App() {
         <Route
           path="assessments"
           element={
-            <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'TEACHER']}>
+            <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'STUDENT']}>
               <Assessments />
             </ProtectedRoute>
           }
@@ -113,7 +113,7 @@ function App() {
         <Route
           path="reports"
           element={
-            <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'BURSAR']}>
+            <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'BURSAR', 'STUDENT']}>
               <Reports />
             </ProtectedRoute>
           }
@@ -131,17 +131,17 @@ function App() {
         <Route
           path="timetable"
           element={
-             <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'TEACHER']}>
-               <Timetable />
-             </ProtectedRoute>
+            <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'TEACHER']}>
+              <Timetable />
+            </ProtectedRoute>
           }
         />
         <Route
           path="system-status"
           element={
-             <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}>
-               <SystemStatus />
-             </ProtectedRoute>
+            <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}>
+              <SystemStatus />
+            </ProtectedRoute>
           }
         />
       </Route>

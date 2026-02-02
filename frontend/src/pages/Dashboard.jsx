@@ -49,7 +49,7 @@ const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 // Stat Card Component - Modern Design
 function StatCard({ label, value, icon: Icon, color, bgColor, change, changeType, subtitle, onClick }) {
   return (
-    <div 
+    <div
       onClick={onClick}
       className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow ${onClick ? 'cursor-pointer' : ''}`}
     >
@@ -149,7 +149,7 @@ function AdminDashboard({ stats, loading }) {
       // Fetch grade distribution from classes
       const classesRes = await api.get('/academic/classes').catch(() => ({ data: { data: [] } }));
       const classes = classesRes.data.data || [];
-      
+
       // Group by grade
       const gradeMap = {};
       classes.forEach(cls => {
@@ -169,7 +169,7 @@ function AdminDashboard({ stats, loading }) {
       // Monthly data simulation based on stats
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       const currentMonth = new Date().getMonth();
-      
+
       const monthlyAdmissions = months.slice(0, currentMonth + 1).map((month, idx) => ({
         month,
         students: Math.floor(Math.random() * 15) + 5,
@@ -198,44 +198,44 @@ function AdminDashboard({ stats, loading }) {
   };
 
   const statCards = [
-    { 
-      label: 'Total Students', 
-      value: loading ? '...' : stats?.totalStudents?.toLocaleString() || '0', 
-      icon: Users, 
-      color: 'text-blue-600', 
+    {
+      label: 'Total Students',
+      value: loading ? '...' : stats?.totalStudents?.toLocaleString() || '0',
+      icon: Users,
+      color: 'text-blue-600',
       bgColor: 'bg-blue-100',
       change: '+12%',
       changeType: 'up',
       subtitle: 'Active enrollment',
       onClick: () => navigate('/students')
     },
-    { 
-      label: 'Total Staff', 
-      value: loading ? '...' : stats?.totalStaff || '0', 
-      icon: UserCog, 
-      color: 'text-green-600', 
+    {
+      label: 'Total Staff',
+      value: loading ? '...' : stats?.totalStaff || '0',
+      icon: UserCog,
+      color: 'text-green-600',
       bgColor: 'bg-green-100',
       change: '+3%',
       changeType: 'up',
       subtitle: 'Teaching & Non-teaching',
       onClick: () => navigate('/staff')
     },
-    { 
-      label: 'Active Classes', 
-      value: loading ? '...' : stats?.totalClasses || '0', 
-      icon: BookOpen, 
-      color: 'text-purple-600', 
+    {
+      label: 'Active Classes',
+      value: loading ? '...' : stats?.totalClasses || '0',
+      icon: BookOpen,
+      color: 'text-purple-600',
       bgColor: 'bg-purple-100',
       change: '0%',
       changeType: 'neutral',
       subtitle: 'This academic year',
       onClick: () => navigate('/classes')
     },
-    { 
-      label: 'Pending Admissions', 
-      value: loading ? '...' : stats?.pendingAdmissions || '0', 
-      icon: ClipboardList, 
-      color: 'text-orange-600', 
+    {
+      label: 'Pending Admissions',
+      value: loading ? '...' : stats?.pendingAdmissions || '0',
+      icon: ClipboardList,
+      color: 'text-orange-600',
       bgColor: 'bg-orange-100',
       change: 'New',
       changeType: 'neutral',
@@ -264,7 +264,7 @@ function AdminDashboard({ stats, loading }) {
             <p className="text-sm text-blue-100">Report cards are ready for Grade 4-6. Click to review and publish.</p>
           </div>
         </div>
-        <button 
+        <button
           onClick={() => navigate('/reports')}
           className="bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-50 transition"
         >
@@ -303,29 +303,29 @@ function AdminDashboard({ stats, loading }) {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData.gradeDistribution} barCategoryGap="20%">
                 <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
-                <XAxis 
-                  dataKey="name" 
-                  tick={{ fontSize: 12, fill: '#6b7280' }} 
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 12, fill: '#6b7280' }}
                   axisLine={false}
                   tickLine={false}
                 />
-                <YAxis 
-                  tick={{ fontSize: 12, fill: '#6b7280' }} 
+                <YAxis
+                  tick={{ fontSize: 12, fill: '#6b7280' }}
                   axisLine={false}
                   tickLine={false}
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#fff', 
-                    border: 'none', 
-                    borderRadius: '12px', 
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    border: 'none',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                   }}
                   formatter={(value, name, props) => [value, props.payload.fullName]}
                 />
-                <Bar 
-                  dataKey="students" 
-                  fill="#3b82f6" 
+                <Bar
+                  dataKey="students"
+                  fill="#3b82f6"
                   radius={[8, 8, 0, 0]}
                   maxBarSize={50}
                 />
@@ -384,39 +384,39 @@ function AdminDashboard({ stats, loading }) {
               <AreaChart data={chartData.feeCollection}>
                 <defs>
                   <linearGradient id="colorCollected" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
-                <XAxis 
-                  dataKey="month" 
+                <XAxis
+                  dataKey="month"
                   tick={{ fontSize: 12, fill: '#6b7280' }}
                   axisLine={false}
                   tickLine={false}
                 />
-                <YAxis 
+                <YAxis
                   tick={{ fontSize: 12, fill: '#6b7280' }}
                   axisLine={false}
                   tickLine={false}
                   tickFormatter={(value) => `${value / 1000}K`}
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#fff', 
-                    border: 'none', 
-                    borderRadius: '12px', 
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    border: 'none',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                   }}
                   formatter={(value) => [`KES ${value.toLocaleString()}`, '']}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="collected" 
-                  stroke="#3b82f6" 
+                <Area
+                  type="monotone"
+                  dataKey="collected"
+                  stroke="#3b82f6"
                   strokeWidth={2}
-                  fillOpacity={1} 
-                  fill="url(#colorCollected)" 
+                  fillOpacity={1}
+                  fill="url(#colorCollected)"
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -438,23 +438,23 @@ function AdminDashboard({ stats, loading }) {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData.monthlyAdmissions}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
-                <XAxis 
-                  dataKey="month" 
+                <XAxis
+                  dataKey="month"
                   tick={{ fontSize: 12, fill: '#6b7280' }}
                   axisLine={false}
                   tickLine={false}
                 />
-                <YAxis 
+                <YAxis
                   tick={{ fontSize: 12, fill: '#6b7280' }}
                   axisLine={false}
                   tickLine={false}
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#fff', 
-                    border: 'none', 
-                    borderRadius: '12px', 
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    border: 'none',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                   }}
                 />
                 <Bar dataKey="students" fill="#22c55e" radius={[6, 6, 0, 0]} maxBarSize={40} />
@@ -485,17 +485,16 @@ function AdminDashboard({ stats, loading }) {
               { name: 'Carol Muthoni', score: 90, class: 'Grade 4 East', rank: 3 },
               { name: 'David Kamau', score: 88, class: 'Grade 5 East', rank: 4 },
             ].map((student, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 onClick={() => navigate('/students')}
                 className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition cursor-pointer"
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                  index === 0 ? 'bg-yellow-400 text-yellow-900' : 
-                  index === 1 ? 'bg-gray-300 text-gray-700' : 
-                  index === 2 ? 'bg-amber-600 text-white' : 
-                  'bg-gray-200 text-gray-600'
-                }`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${index === 0 ? 'bg-yellow-400 text-yellow-900' :
+                    index === 1 ? 'bg-gray-300 text-gray-700' :
+                      index === 2 ? 'bg-amber-600 text-white' :
+                        'bg-gray-200 text-gray-600'
+                  }`}>
                   {student.rank}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -558,7 +557,7 @@ function AdminDashboard({ stats, loading }) {
               { icon: FileText, label: 'Reports', color: 'bg-pink-500', path: '/reports' },
               { icon: Bell, label: 'Announce', color: 'bg-indigo-500', path: '/announcements' },
             ].map((action, index) => (
-              <button 
+              <button
                 key={index}
                 onClick={() => navigate(action.path)}
                 className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition group"
@@ -578,10 +577,36 @@ function AdminDashboard({ stats, loading }) {
 
 function TeacherDashboard({ user }) {
   const navigate = useNavigate();
+  const [nextLesson, setNextLesson] = useState(null);
+  const [myClasses, setMyClasses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [lessonRes, classesRes] = await Promise.all([
+          api.get('/timetable/next-lesson').catch(() => ({ data: { data: null } })),
+          api.get('/staff/my-classes').catch(() => ({ data: { data: [] } }))
+        ]);
+        setNextLesson(lessonRes.data.data);
+        setMyClasses(classesRes.data.data);
+      } catch (e) { console.error(e); } finally { setLoading(false); }
+    };
+    fetchData();
+  }, []);
+
   const quickStats = [
-    { label: 'My Classes', value: '3', icon: BookOpen, color: 'text-blue-600', bgColor: 'bg-blue-100' },
-    { label: 'Total Students', value: '120', icon: Users, color: 'text-green-600', bgColor: 'bg-green-100' },
-    { label: 'Today\'s Attendance', value: '95%', icon: CheckCircle, color: 'text-purple-600', bgColor: 'bg-purple-100' },
+    {
+      label: 'Next Lesson',
+      value: nextLesson ? `${nextLesson.subject.name}` : 'No lessons',
+      subtitle: nextLesson ? `${nextLesson.class.grade.name} ${nextLesson.class.stream.name} @ ${nextLesson.startTime}` : 'Relax!',
+      icon: Clock,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100',
+      onClick: () => navigate('/timetable')
+    },
+    { label: 'My Classes', value: loading ? '...' : myClasses.length, icon: BookOpen, color: 'text-purple-600', bgColor: 'bg-purple-100', onClick: () => navigate('/classes') },
+    { label: 'Today\'s Attendance', value: 'Mark Now', icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-100', onClick: () => navigate('/attendance') },
     { label: 'Pending Tasks', value: '2', icon: ClipboardList, color: 'text-orange-600', bgColor: 'bg-orange-100' },
   ];
 
@@ -603,8 +628,8 @@ function TeacherDashboard({ user }) {
               { icon: Users, label: 'View Students', color: 'bg-purple-500', path: '/students' },
               { icon: Award, label: 'Generate Reports', color: 'bg-orange-500', path: '/reports' },
             ].map((action, index) => (
-              <button 
-                key={index} 
+              <button
+                key={index}
                 onClick={() => navigate(action.path)}
                 className="flex flex-col items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition"
               >
@@ -620,31 +645,30 @@ function TeacherDashboard({ user }) {
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">My Classes</h2>
           <div className="space-y-3">
-            {[
-              { name: 'Grade 4 East', subject: 'Mathematics', students: 40 },
-              { name: 'Grade 4 West', subject: 'Mathematics', students: 38 },
-              { name: 'Grade 5 East', subject: 'Mathematics', students: 42 },
-            ].map((cls, index) => (
-              <div 
-                key={index} 
-                onClick={() => navigate('/classes')}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="bg-blue-100 p-2 rounded-lg">
-                    <BookOpen className="w-5 h-5 text-blue-600" />
+            {loading ? <div className="p-4 text-center text-gray-500">Loading classes...</div> :
+              myClasses.length === 0 ? <div className="p-4 text-center text-gray-500">No classes assigned.</div> :
+                myClasses.map((cls, index) => (
+                  <div
+                    key={index}
+                    onClick={() => navigate('/classes')} // Or specific class view
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="bg-blue-100 p-2 rounded-lg">
+                        <BookOpen className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{cls.grade.name} {cls.stream.name}</p>
+                        {/* Assuming backend returns subject or we fetch it? getMyClasses in controller returns classes. */}
+                        {/* We might need to adjust getMyClasses to include subject info if derived from assignments */}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-gray-900">{cls._count?.students || 0}</p>
+                      <p className="text-xs text-gray-500">students</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{cls.name}</p>
-                    <p className="text-sm text-gray-500">{cls.subject}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-gray-900">{cls.students}</p>
-                  <p className="text-xs text-gray-500">students</p>
-                </div>
-              </div>
-            ))}
+                ))}
           </div>
         </div>
       </div>
@@ -679,8 +703,8 @@ function BursarDashboard() {
               { icon: AlertCircle, label: 'Fee Defaulters', color: 'bg-red-500', path: '/fees' },
               { icon: Award, label: 'Fee Reports', color: 'bg-purple-500', path: '/reports' },
             ].map((action, index) => (
-              <button 
-                key={index} 
+              <button
+                key={index}
                 onClick={() => navigate(action.path)}
                 className="flex flex-col items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition"
               >
@@ -701,8 +725,8 @@ function BursarDashboard() {
               { name: 'Brian Ochieng', amount: 'KES 22,000', method: 'Bank Transfer', time: '5 hours ago' },
               { name: 'Carol Muthoni', amount: 'KES 18,500', method: 'M-PESA', time: '1 day ago' },
             ].map((payment, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 onClick={() => navigate('/fees')}
                 className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 cursor-pointer transition"
               >

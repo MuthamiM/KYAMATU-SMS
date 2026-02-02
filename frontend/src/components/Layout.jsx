@@ -24,17 +24,17 @@ import {
 
 const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/students', icon: Users, label: 'Students', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER'] },
+  { path: '/students', icon: Users, label: 'Students', roles: ['SUPER_ADMIN', 'ADMIN'] },
   { path: '/admissions', icon: UserPlus, label: 'Admissions', roles: ['SUPER_ADMIN', 'ADMIN'] },
   { path: '/staff', icon: UserCog, label: 'Staff', roles: ['SUPER_ADMIN', 'ADMIN'] },
-  { path: '/classes', icon: BookOpen, label: 'Classes', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER'] },
+  { path: '/classes', icon: BookOpen, label: 'Classes', roles: ['SUPER_ADMIN', 'ADMIN'] },
   { path: '/attendance', icon: CalendarCheck, label: 'Attendance', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER'] },
   { path: '/timetable', icon: Calendar, label: 'Timetable', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER'] },
-  { path: '/assessments', icon: ClipboardList, label: 'Assessments', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER'] },
-  { path: '/reports', icon: FileText, label: 'Reports', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'BURSAR'] },
+  { path: '/assessments', icon: ClipboardList, label: 'Assessments', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'STUDENT'] },
+  { path: '/reports', icon: FileText, label: 'Reports', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'BURSAR', 'STUDENT'] },
   { path: '/fees', icon: Wallet, label: 'Fees', roles: ['SUPER_ADMIN', 'ADMIN', 'BURSAR'] },
-  { path: '/announcements', icon: Bell, label: 'Announcements' },
-  { path: '/settings', icon: Settings, label: 'Settings' },
+  { path: '/announcements', icon: Bell, label: 'Announcements', roles: ['SUPER_ADMIN', 'ADMIN'] },
+  { path: '/settings', icon: Settings, label: 'Settings', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'BURSAR'] },
 ];
 
 function NotificationDropdown() {
@@ -149,18 +149,31 @@ function Layout() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+      {/* Mobile Backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
       <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 dark:bg-slate-950 text-white transform transition-transform duration-200 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } print:hidden flex flex-col`}>
-        <div className="flex h-16 items-center justify-center border-b border-slate-800">
+        <div className="flex h-16 items-center justify-between px-4 border-b border-slate-800">
           <Link to="/dashboard" className="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition-opacity">
             <School className="h-8 w-8 text-secondary-400" />
-            <span>Kyamatu SMS</span>
+            <span>Kyamatu</span>
           </Link>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 lg:hidden"
+          >
+            <X className="h-6 w-6" />
+          </button>
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4">
           <ul className="space-y-1 px-3">
-            {navItems.map((item) => {
+            {filteredNavItems.map((item) => {
               const Icon = item.icon;
               const active = location.pathname === item.path;
               return (

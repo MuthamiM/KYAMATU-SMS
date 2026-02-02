@@ -120,7 +120,7 @@ export const generateTimetable = async () => {
 
   // Pre-calculate needed slots for all classes
   const allClassesNeeded = [];
-  
+
   for (const cls of classes) {
     const classNeeded = [];
     for (const assign of cls.teacherAssignments) {
@@ -140,21 +140,21 @@ export const generateTimetable = async () => {
 
   // Greedy Assignment
   // Track teacher busy times: teacherId -> Set("day-time")
-  const teacherBusy = new Set(); 
+  const teacherBusy = new Set();
 
   for (const day of days) {
     for (const time of times) {
       for (const clsData of allClassesNeeded) {
         // Try to find a lesson for this class, this day, this time
         const lessonIndex = clsData.needed.findIndex(lesson => {
-           // Check if teacher is free
-           if (!lesson.teacherId) return true; // No teacher assigned yet? Allow.
-           return !teacherBusy.has(`${lesson.teacherId}-${day}-${time}`);
+          // Check if teacher is free
+          if (!lesson.teacherId) return true; // No teacher assigned yet? Allow.
+          return !teacherBusy.has(`${lesson.teacherId}-${day}-${time}`);
         });
 
         if (lessonIndex !== -1) {
           const lesson = clsData.needed[lessonIndex];
-          
+
           // Assign it
           slotsToCreate.push({
             dayOfWeek: day,
@@ -181,10 +181,45 @@ export const generateTimetable = async () => {
   if (slotsToCreate.length > 0) {
     await prisma.timetableSlot.createMany({ data: slotsToCreate });
   }
-  
+
   return { generated: slotsToCreate.length };
 };
 
 export const deleteTimetableSlot = async (id) => {
   await prisma.timetableSlot.delete({ where: { id } });
+};
+
+export const getNextLesson = async (teacherId) => {
+  const date = new Date();
+  const currentDay = date.getDay(); // 0=Sun, 1=Mon... 
+  // Note: System uses 1-5 for Mon-Fri. If Sun(0) or Sat(6), we treat as weekend.
+
+  const currentTime = date.toTimeString().slice(0, 5); // "HH:MM"
+
+  // Fetch all slots for teacher, sorted by week schedule
+  const slots = await prisma.timetableSlot.findMany({
+    where: { teacherId },
+    include: {
+      subject: true,
+      class: { include: { grade: true, stream: true } }
+    },
+    orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }]
+  });
+
+  if (slots.length === 0) return null;
+
+  // 1. Check later today
+  let next = slots.find(s => s.dayOfWeek === currentDay && s.startTime > currentTime);
+
+  // 2. Check later this week
+  if (!next) {
+    next = slots.find(s => s.dayOfWeek > currentDay);
+  }
+
+  // 3. Wrap around to next week (first slot)
+  if (!next) {
+    next = slots[0];
+  }
+
+  return next;
 };

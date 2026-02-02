@@ -6,6 +6,7 @@ import { Plus, Search, Filter, MoreVertical, Eye, Edit, Trash2 } from 'lucide-re
 
 function Students() {
   const [page, setPage] = useState(1);
+  const [allStudents, setAllStudents] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -19,16 +20,46 @@ function Students() {
 
   useEffect(() => {
     fetchStudents();
-  }, [page, search]);
+  }, []); // Run only on mount
+
+  useEffect(() => {
+    if (loading) return;
+
+    // 1. Filter
+    const filtered = allStudents.filter(s => {
+      const query = search.toLowerCase();
+      const fullName = `${s.firstName} ${s.lastName}`.toLowerCase();
+      const admission = s.admissionNumber?.toLowerCase() || '';
+      return fullName.includes(query) || admission.includes(query);
+    });
+
+    // 2. Paginate
+    const ITEMS_PER_PAGE = 10;
+    const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
+    const currentPage = Math.min(Math.max(1, page), totalPages);
+
+    // Slice for current page
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const paginated = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+    setStudents(paginated);
+    setMeta({
+      total: filtered.length,
+      page: currentPage,
+      lastPage: totalPages,
+      hasPrev: currentPage > 1,
+      hasNext: currentPage < totalPages
+    });
+
+  }, [search, page, allStudents, loading]);
 
   const fetchStudents = async () => {
     try {
       setLoading(true);
       const response = await api.get('/students', {
-        params: { search, page, limit: 10 },
+        params: { limit: 1000 },
       });
-      setStudents(response.data.data);
-      setMeta(response.data.meta);
+      setAllStudents(response.data.data);
     } catch (error) {
       toast.error('Failed to fetch students');
     } finally {
@@ -38,7 +69,7 @@ function Students() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchStudents();
+    setPage(1);
   };
 
   const fetchClasses = async () => {
@@ -114,7 +145,10 @@ function Students() {
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               placeholder="Search by name or admission number..."
               className="input pl-10"
             />

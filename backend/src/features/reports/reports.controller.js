@@ -23,7 +23,14 @@ export const generateClassReports = async (req, res, next) => {
 
 export const getReportCards = async (req, res, next) => {
   try {
-    const reports = await reportsService.getReportCards(req.query);
+    const filters = { ...req.query };
+
+    // If user is a student, force the studentId filter
+    if (req.user.role === 'STUDENT') {
+      filters.studentId = req.user.student.id;
+    }
+
+    const reports = await reportsService.getReportCards(filters);
     sendSuccess(res, reports);
   } catch (error) {
     next(error);

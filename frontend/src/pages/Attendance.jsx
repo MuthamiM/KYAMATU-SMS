@@ -4,15 +4,23 @@ import toast from 'react-hot-toast';
 import { Calendar, Check, X, Clock, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
+import { useAuthStore } from '../stores/authStore';
+
 function Attendance() {
+  const { user } = useAuthStore();
   const [classes, setClasses] = useState([]);
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [attendance, setAttendance] = useState([]);
+  const [myStats, setMyStats] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchClasses();
+    if (user.role === 'TEACHER' || user.role === 'ADMIN') {
+      fetchClasses();
+    } else if (user.role === 'STUDENT') {
+      fetchMyStats();
+    }
   }, []);
 
   useEffect(() => {
@@ -42,6 +50,19 @@ function Attendance() {
       setAttendance(response.data.data);
     } catch (error) {
       toast.error('Failed to fetch attendance');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMyStats = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/attendance/my-stats');
+      setMyStats(response.data.data);
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to fetch your attendance stats');
     } finally {
       setLoading(false);
     }
@@ -103,6 +124,43 @@ function Attendance() {
     late: attendance.filter((a) => a.attendance?.status === 'LATE').length,
     total: attendance.length,
   };
+
+  return (
+  if (user.role === 'STUDENT') {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">My Attendance</h1>
+          <p className="text-gray-500">Your attendance record for this term</p>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-8">Loading stats...</div>
+        ) : myStats ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="card p-4 bg-success-50 border-success-200">
+              <p className="text-sm text-success-600 font-medium">Present</p>
+              <p className="text-2xl font-bold text-success-700">{myStats.present}</p>
+            </div>
+            <div className="card p-4 bg-danger-50 border-danger-200">
+              <p className="text-sm text-danger-600 font-medium">Absent</p>
+              <p className="text-2xl font-bold text-danger-700">{myStats.absent}</p>
+            </div>
+            <div className="card p-4 bg-warning-50 border-warning-200">
+              <p className="text-sm text-warning-600 font-medium">Late</p>
+              <p className="text-2xl font-bold text-warning-700">{myStats.late}</p>
+            </div>
+            <div className="card p-4 bg-primary-50 border-primary-200">
+              <p className="text-sm text-primary-600 font-medium">Attendance Rate</p>
+              <p className="text-2xl font-bold text-primary-700">{myStats.attendanceRate}%</p>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 text-center text-gray-500">No attendance records found.</div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -192,12 +250,11 @@ function Attendance() {
                       {item.student.admissionNumber}
                     </td>
                     <td>
-                      <span className={`badge ${
-                        item.attendance?.status === 'PRESENT' ? 'badge-success' :
-                        item.attendance?.status === 'ABSENT' ? 'badge-danger' :
-                        item.attendance?.status === 'LATE' ? 'badge-warning' :
-                        'badge-primary'
-                      }`}>
+                      <span className={`badge ${item.attendance?.status === 'PRESENT' ? 'badge-success' :
+                          item.attendance?.status === 'ABSENT' ? 'badge-danger' :
+                            item.attendance?.status === 'LATE' ? 'badge-warning' :
+                              'badge-primary'
+                        }`}>
                         {item.attendance?.status || 'Not Marked'}
                       </span>
                     </td>
@@ -207,11 +264,10 @@ function Attendance() {
                           <button
                             key={status}
                             onClick={() => updateStatus(item.student.id, status)}
-                            className={`p-2 rounded transition-colors ${
-                              item.attendance?.status === status
+                            className={`p-2 rounded transition-colors ${item.attendance?.status === status
                                 ? 'bg-primary-100 text-primary-600'
                                 : 'hover:bg-gray-100 text-gray-500'
-                            }`}
+                              }`}
                             title={status}
                           >
                             {getStatusIcon(status)}
