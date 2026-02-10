@@ -11,6 +11,8 @@ import prisma from './config/database.js';
 import { sanitizeInputs } from './middleware/sanitize.js';
 import { requestId } from './middleware/requestId.js';
 import { auditLog } from './middleware/auditLog.js';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './config/swagger.js';
 
 import authRoutes from './features/auth/auth.routes.js';
 import studentsRoutes from './features/students/students.routes.js';
@@ -47,13 +49,13 @@ app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     // Check if origin matches allowed production origin or is a preview deployment
     const allowedOrigin = config.cors.origin;
     if (origin === allowedOrigin || origin.endsWith('.kyamatu-frontend.pages.dev') || origin.startsWith('http://localhost')) {
       return callback(null, true);
     }
-    
+
     // For debugging connection issues, you might want to log blocked origins
     // console.log('Blocked CORS origin:', origin);
     return callback(new Error('Not allowed by CORS'), false);
@@ -69,7 +71,7 @@ app.use(sanitizeInputs);
 // Initialize Redis and create rate limiters
 const initializeApp = async () => {
   const redisClient = await connectRedis();
-  
+
   // Create Redis store if available, otherwise use memory
   const createStore = (prefix) => {
     if (redisClient) {
@@ -121,24 +123,26 @@ app.use(auditLog);
 
 // Root routes for health checks and status
 app.get('/', (req, res) => {
-  res.json({ 
-    message: 'KYAMATU-SMS API is running', 
+  res.json({
+    message: 'KYAMATU-SMS API is running',
     version: '1.0.0',
     status: 'ok',
     env: config.env,
-    requestId: req.id 
+    requestId: req.id
   });
 });
 
 app.get('/api', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'KYAMATU-SMS API Base Endpoint',
     docs: '/api/docs', // if any
     health: '/api/health',
     status: 'ok',
-    requestId: req.id 
+    requestId: req.id
   });
 });
+
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get('/api/health', async (req, res) => {
   const start = Date.now();
@@ -154,9 +158,9 @@ app.get('/api/health', async (req, res) => {
   }
 
   const memory = process.memoryUsage();
-  
-  res.json({ 
-    status: 'ok', 
+
+  res.json({
+    status: 'ok',
     timestamp: new Date().toISOString(),
     requestId: req.id,
     dbStatus,
@@ -172,7 +176,7 @@ app.get('/api/health', async (req, res) => {
 // Admin seed endpoint - requires secret key
 app.post('/api/admin/reseed', async (req, res) => {
   const { secretKey } = req.body;
-  
+
   // Simple secret key check
   if (secretKey !== 'kyamatu-reseed-2026') {
     return res.status(403).json({ success: false, message: 'Invalid secret key' });
@@ -216,8 +220,8 @@ app.post('/api/admin/reseed', async (req, res) => {
     const term1 = await prisma.term.create({
       data: { name: 'Term 1', termNumber: 1, startDate: new Date('2026-01-05'), endDate: new Date('2026-04-10'), academicYearId: currentYear.id }
     });
-    await prisma.term.create({ data: { name: 'Term 2', termNumber: 2, startDate: new Date('2026-05-02'), endDate: new Date('2026-08-10'), academicYearId: currentYear.id }});
-    await prisma.term.create({ data: { name: 'Term 3', termNumber: 3, startDate: new Date('2026-09-01'), endDate: new Date('2026-11-25'), academicYearId: currentYear.id }});
+    await prisma.term.create({ data: { name: 'Term 2', termNumber: 2, startDate: new Date('2026-05-02'), endDate: new Date('2026-08-10'), academicYearId: currentYear.id } });
+    await prisma.term.create({ data: { name: 'Term 3', termNumber: 3, startDate: new Date('2026-09-01'), endDate: new Date('2026-11-25'), academicYearId: currentYear.id } });
 
     // Grades
     const grades = [];
@@ -239,7 +243,7 @@ app.post('/api/admin/reseed', async (req, res) => {
     const classes = [];
     for (const grade of grades) {
       for (const subj of subjects) {
-        await prisma.subject.create({ data: { name: subj, code: `${subjectCodes[subj]}${grade.level}`, gradeId: grade.id }});
+        await prisma.subject.create({ data: { name: subj, code: `${subjectCodes[subj]}${grade.level}`, gradeId: grade.id } });
       }
       const streamsForGrade = grade.level === 4 ? [streamEast, streamWest] : [streamEast];
       for (const stream of streamsForGrade) {
@@ -251,19 +255,19 @@ app.post('/api/admin/reseed', async (req, res) => {
     }
 
     // Headmaster
-    const headUser = await prisma.user.create({ data: { email: 'headmaster@kyamatu.ac.ke', password: hashedPassword, role: 'SUPER_ADMIN', phone: '+254700000001' }});
-    await prisma.staff.create({ data: { userId: headUser.id, employeeNumber: 'ADM001', firstName: 'Joseph', lastName: 'Mutua', gender: 'Male', qualification: 'M.Ed', specialization: 'Administration' }});
+    const headUser = await prisma.user.create({ data: { email: 'headmaster@kyamatu.ac.ke', password: hashedPassword, role: 'SUPER_ADMIN', phone: '+254700000001' } });
+    await prisma.staff.create({ data: { userId: headUser.id, employeeNumber: 'ADM001', firstName: 'Joseph', lastName: 'Mutua', gender: 'Male', qualification: 'M.Ed', specialization: 'Administration' } });
 
     // Deputy
-    const depUser = await prisma.user.create({ data: { email: 'deputy@kyamatu.ac.ke', password: hashedPassword, role: 'ADMIN', phone: '+254700000002' }});
-    await prisma.staff.create({ data: { userId: depUser.id, employeeNumber: 'ADM002', firstName: 'Margaret', lastName: 'Wambua', gender: 'Female', qualification: 'B.Ed', specialization: 'Curriculum' }});
+    const depUser = await prisma.user.create({ data: { email: 'deputy@kyamatu.ac.ke', password: hashedPassword, role: 'ADMIN', phone: '+254700000002' } });
+    await prisma.staff.create({ data: { userId: depUser.id, employeeNumber: 'ADM002', firstName: 'Margaret', lastName: 'Wambua', gender: 'Female', qualification: 'B.Ed', specialization: 'Curriculum' } });
 
     // System Admin
-    await prisma.user.create({ data: { email: 'admin@kyamatu.ac.ke', password: hashedPassword, role: 'SUPER_ADMIN', phone: '+254700000000' }});
+    await prisma.user.create({ data: { email: 'admin@kyamatu.ac.ke', password: hashedPassword, role: 'SUPER_ADMIN', phone: '+254700000000' } });
 
     // Bursar
-    const bursarUser = await prisma.user.create({ data: { email: 'bursar@kyamatu.ac.ke', password: hashedPassword, role: 'BURSAR', phone: '+254700000003' }});
-    await prisma.staff.create({ data: { userId: bursarUser.id, employeeNumber: 'FIN001', firstName: 'Samuel', lastName: 'Kioko', gender: 'Male', qualification: 'B.Com', specialization: 'Finance' }});
+    const bursarUser = await prisma.user.create({ data: { email: 'bursar@kyamatu.ac.ke', password: hashedPassword, role: 'BURSAR', phone: '+254700000003' } });
+    await prisma.staff.create({ data: { userId: bursarUser.id, employeeNumber: 'FIN001', firstName: 'Samuel', lastName: 'Kioko', gender: 'Male', qualification: 'B.Com', specialization: 'Finance' } });
 
     // 10 Teachers
     const teachers = [
@@ -279,23 +283,23 @@ app.post('/api/admin/reseed', async (req, res) => {
       { email: 'akinya@kyamatu.ac.ke', emp: 'TSC010', first: 'Alice', last: 'Kinya', spec: 'Home Science' },
     ];
     for (const t of teachers) {
-      const u = await prisma.user.create({ data: { email: t.email, password: hashedPassword, role: 'TEACHER', phone: `+2547${Math.floor(Math.random()*100000000).toString().padStart(8,'0')}` }});
-      await prisma.staff.create({ data: { userId: u.id, employeeNumber: t.emp, firstName: t.first, lastName: t.last, gender: t.first === 'Mary' || t.first === 'Grace' || t.first === 'Faith' || t.first === 'Esther' || t.first === 'Alice' ? 'Female' : 'Male', specialization: t.spec }});
+      const u = await prisma.user.create({ data: { email: t.email, password: hashedPassword, role: 'TEACHER', phone: `+2547${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}` } });
+      await prisma.staff.create({ data: { userId: u.id, employeeNumber: t.emp, firstName: t.first, lastName: t.last, gender: t.first === 'Mary' || t.first === 'Grace' || t.first === 'Faith' || t.first === 'Esther' || t.first === 'Alice' ? 'Female' : 'Male', specialization: t.spec } });
     }
 
     // 3 Support Staff (non-teaching)
-    const sup1 = await prisma.user.create({ data: { email: 'jmutiso@kyamatu.ac.ke', password: hashedPassword, role: 'ADMIN', phone: '+254700000010' }});
-    await prisma.staff.create({ data: { userId: sup1.id, employeeNumber: 'SUP001', firstName: 'James', lastName: 'Mutiso', gender: 'Male', specialization: 'Security' }});
-    const sup2 = await prisma.user.create({ data: { email: 'rmuthoni@kyamatu.ac.ke', password: hashedPassword, role: 'ADMIN', phone: '+254700000011' }});
-    await prisma.staff.create({ data: { userId: sup2.id, employeeNumber: 'SUP002', firstName: 'Rose', lastName: 'Muthoni', gender: 'Female', specialization: 'Cook' }});
-    const sup3 = await prisma.user.create({ data: { email: 'pkamau@kyamatu.ac.ke', password: hashedPassword, role: 'ADMIN', phone: '+254700000012' }});
-    await prisma.staff.create({ data: { userId: sup3.id, employeeNumber: 'SUP003', firstName: 'Patrick', lastName: 'Kamau', gender: 'Male', specialization: 'Groundskeeper' }});
+    const sup1 = await prisma.user.create({ data: { email: 'jmutiso@kyamatu.ac.ke', password: hashedPassword, role: 'ADMIN', phone: '+254700000010' } });
+    await prisma.staff.create({ data: { userId: sup1.id, employeeNumber: 'SUP001', firstName: 'James', lastName: 'Mutiso', gender: 'Male', specialization: 'Security' } });
+    const sup2 = await prisma.user.create({ data: { email: 'rmuthoni@kyamatu.ac.ke', password: hashedPassword, role: 'ADMIN', phone: '+254700000011' } });
+    await prisma.staff.create({ data: { userId: sup2.id, employeeNumber: 'SUP002', firstName: 'Rose', lastName: 'Muthoni', gender: 'Female', specialization: 'Cook' } });
+    const sup3 = await prisma.user.create({ data: { email: 'pkamau@kyamatu.ac.ke', password: hashedPassword, role: 'ADMIN', phone: '+254700000012' } });
+    await prisma.staff.create({ data: { userId: sup3.id, employeeNumber: 'SUP003', firstName: 'Patrick', lastName: 'Kamau', gender: 'Male', specialization: 'Groundskeeper' } });
 
     // 10 Students per class
     const firstNamesMale = ['James', 'John', 'Peter', 'David', 'Michael', 'Brian', 'Kevin', 'Dennis', 'Collins', 'Victor'];
     const firstNamesFemale = ['Mary', 'Grace', 'Faith', 'Joy', 'Mercy', 'Alice', 'Sarah', 'Rose', 'Esther', 'Nancy'];
     const lastNames = ['Mwangi', 'Otieno', 'Kamau', 'Wanjiku', 'Ochieng', 'Njoroge', 'Kipchoge', 'Wambui', 'Kimani', 'Mutua'];
-    
+
     let studentNum = 1;
     const createdStudents = [];
     for (const cls of classes) {
@@ -304,7 +308,7 @@ app.post('/api/admin/reseed', async (req, res) => {
         const firstName = isMale ? firstNamesMale[i % 10] : firstNamesFemale[i % 10];
         const lastName = lastNames[Math.floor(Math.random() * 10)];
         const admissionNumber = `KPS/${new Date().getFullYear()}/${String(studentNum).padStart(4, '0')}`;
-        
+
         const studentUser = await prisma.user.create({
           data: { email: `student${studentNum}@kyamatu.ac.ke`, password: hashedPassword, role: 'STUDENT', phone: null }
         });
@@ -315,7 +319,7 @@ app.post('/api/admin/reseed', async (req, res) => {
             firstName,
             lastName,
             gender: isMale ? 'Male' : 'Female',
-            dateOfBirth: new Date(2020 - cls.grade.level, Math.floor(Math.random()*12), Math.floor(Math.random()*28)+1),
+            dateOfBirth: new Date(2020 - cls.grade.level, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1),
             admissionDate: new Date('2026-01-05'),
             classId: cls.id,
             admissionStatus: 'APPROVED'
@@ -410,10 +414,10 @@ app.post('/api/admin/reseed', async (req, res) => {
       for (const subject of gradeSubjects) {
         for (const assessmentType of assessmentTypes) {
           const weight = assessmentType.includes('End-Term') ? 0.4 : (assessmentType.includes('Mid-Term') ? 0.3 : 0.15);
-          const assessmentDate = assessmentType === 'CAT 1' ? new Date('2026-01-25') : 
-                                  assessmentType === 'CAT 2' ? new Date('2026-02-15') :
-                                  assessmentType === 'Mid-Term' ? new Date('2026-02-28') : new Date('2026-03-30');
-          
+          const assessmentDate = assessmentType === 'CAT 1' ? new Date('2026-01-25') :
+            assessmentType === 'CAT 2' ? new Date('2026-02-15') :
+              assessmentType === 'Mid-Term' ? new Date('2026-02-28') : new Date('2026-03-30');
+
           const assessment = await prisma.assessment.create({
             data: {
               name: `${subject.name} ${assessmentType}`,
@@ -452,10 +456,10 @@ app.post('/api/admin/reseed', async (req, res) => {
     logger.info(`Created ${assessmentCount} assessments and ${scoreCount} scores`);
 
     logger.info('Database reseed completed successfully');
-    res.json({ 
-      success: true, 
-      message: 'Database reseeded successfully', 
-      data: { 
+    res.json({
+      success: true,
+      message: 'Database reseeded successfully',
+      data: {
         grades: grades.length,
         classes: classes.length,
         teachers: teachers.length,

@@ -156,36 +156,76 @@ function Layout() {
           onClick={() => setSidebarOpen(false)}
         />
       )}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 dark:bg-slate-950 text-white transform transition-transform duration-200 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800 transform transition-transform duration-200 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } print:hidden flex flex-col`}>
-        <div className="flex h-16 items-center justify-between px-4 border-b border-slate-800">
-          <Link to="/dashboard" className="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition-opacity">
-            <School className="h-8 w-8 text-secondary-400" />
-            <span>Kyamatu</span>
+        <div className="flex h-20 items-center px-6">
+          <Link to="/dashboard" className="flex items-center gap-2 font-bold text-xl text-gray-900 dark:text-white hover:opacity-80 transition-opacity">
+            <School className="h-8 w-8 text-primary-600" />
+            <span>SchoolHub</span>
+            <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full ml-1 font-medium">V 1.0</span>
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 lg:hidden"
+            className="ml-auto p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 lg:hidden"
           >
             <X className="h-6 w-6" />
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4">
-          <ul className="space-y-1 px-3">
-            {filteredNavItems.map((item) => {
+        <nav className="flex-1 overflow-y-auto py-4 px-4">
+          <div className="mb-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            Menu
+          </div>
+          <ul className="space-y-1 mb-8">
+            {filteredNavItems.filter(item => !['Settings'].includes(item.label)).map((item) => {
               const Icon = item.icon;
               const active = location.pathname === item.path;
               return (
                 <li key={item.path}>
                   <Link
                     to={item.path}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${active
-                      ? 'bg-primary-600 text-white'
-                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${active
+                      ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
+                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-white'
                       }`}
                   >
-                    <Icon className="h-5 w-5" />
+                    <Icon className={`h-5 w-5 ${active ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`} />
+                    {item.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="mb-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            Other
+          </div>
+          <ul className="space-y-1">
+            <li key="profile">
+              <Link
+                to="/profile"
+                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${location.pathname === '/profile'
+                  ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-white'
+                  }`}
+              >
+                <UserCog className={`h-5 w-5 ${location.pathname === '/profile' ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`} />
+                Profile
+              </Link>
+            </li>
+            {filteredNavItems.filter(item => ['Settings'].includes(item.label)).map((item) => {
+              const Icon = item.icon;
+              const active = location.pathname === item.path;
+              return (
+                <li key={item.path}>
+                  <Link
+                    to={item.path}
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${active
+                      ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
+                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-white'
+                      }`}
+                  >
+                    <Icon className={`h-5 w-5 ${active ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`} />
                     {item.label}
                   </Link>
                 </li>
@@ -194,16 +234,16 @@ function Layout() {
           </ul>
         </nav>
 
-        <div className="border-t border-slate-800 p-4">
-          <div className="flex items-center gap-3 rounded-lg bg-slate-800 p-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-600 font-bold text-white">
+        <div className="p-4 mt-auto">
+          <div className="bg-primary-50 dark:bg-slate-800 rounded-2xl p-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-600 text-white font-bold">
               {user?.firstName?.[0] || 'U'}
             </div>
             <div className="overflow-hidden">
-              <p className="truncate text-sm font-medium text-white">
+              <p className="truncate text-sm font-bold text-gray-900 dark:text-white">
                 {user?.firstName} {user?.lastName}
               </p>
-              <p className="truncate text-xs text-slate-400">{user?.role}</p>
+              <p className="truncate text-xs text-gray-500 dark:text-gray-400">{user?.role}</p>
             </div>
           </div>
         </div>

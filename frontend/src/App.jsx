@@ -17,7 +17,9 @@ import Announcements from './pages/Announcements';
 import Settings from './pages/Settings';
 import Admissions from './pages/Admissions';
 import Timetable from './pages/Timetable';
+import Timetable from './pages/Timetable';
 import SystemStatus from './pages/SystemStatus';
+import Profile from './pages/Profile';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, user } = useAuthStore();
@@ -144,6 +146,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="profile" element={<Profile />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

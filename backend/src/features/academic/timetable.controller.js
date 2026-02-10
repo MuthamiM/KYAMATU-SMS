@@ -25,44 +25,44 @@ export const getTeacherTimetable = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
 
-
-  export const getMyClassTimetable = async (req, res, next) => {
-    try {
-      const student = req.user.student;
-      if (!student || !student.classId) {
-        throw new Error('Student class not found');
-      }
-      const timetable = await timetableService.getTimetable(student.classId);
-      sendSuccess(res, timetable);
-    } catch (error) {
-      next(error);
+export const getMyClassTimetable = async (req, res, next) => {
+  try {
+    const student = req.user.student;
+    if (!student || !student.classId) {
+      throw new Error('Student class not found');
     }
-  };
+    const timetable = await timetableService.getTimetable(student.classId);
+    sendSuccess(res, timetable);
+  } catch (error) {
+    next(error);
+  }
+};
 
-  export const upsertSlot = async (req, res, next) => {
-    try {
-      const slot = await timetableService.upsertTimetableSlot(req.body);
-      sendSuccess(res, slot, 'Timetable slot saved');
-    } catch (error) {
-      next(error);
-    }
-  };
+export const upsertSlot = async (req, res, next) => {
+  try {
+    const slot = await timetableService.upsertTimetableSlot(req.body);
+    sendSuccess(res, slot, 'Timetable slot saved');
+  } catch (error) {
+    next(error);
+  }
+};
 
-  export const generate = async (req, res, next) => {
-    try {
-      const result = await timetableService.generateTimetable();
-      sendSuccess(res, result, 'Timetable generated successfully');
-    } catch (error) {
-      next(error);
-    }
-  };
+export const generate = async (req, res, next) => {
+  try {
+    const result = await timetableService.generateTimetable();
+    sendSuccess(res, result, 'Timetable generated successfully');
+  } catch (error) {
+    next(error);
+  }
+};
 
-  export const deleteSlot = async (req, res, next) => {
-    try {
-      await timetableService.deleteTimetableSlot(req.params.id);
-      sendSuccess(res, null, 'Slot deleted');
-    } catch (error) {
-      next(error);
-    }
-  };
+export const deleteSlot = async (req, res, next) => {
+  try {
+    await timetableService.deleteTimetableSlot(req.params.id);
+    sendSuccess(res, null, 'Slot deleted');
+  } catch (error) {
+    next(error);
+  }
+};
