@@ -160,9 +160,10 @@ function Layout() {
         } print:hidden flex flex-col`}>
         <div className="flex h-20 items-center px-6">
           <Link to="/dashboard" className="flex items-center gap-2 font-bold text-xl text-gray-900 dark:text-white hover:opacity-80 transition-opacity">
-            <School className="h-8 w-8 text-primary-600" />
-            <span>SchoolHub</span>
-            <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full ml-1 font-medium">V 1.0</span>
+            <span className="text-xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
+              Kyamatu Primary
+            </span>
+            <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full font-medium">v1.0</span>
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}

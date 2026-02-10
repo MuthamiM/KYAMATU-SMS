@@ -66,3 +66,23 @@ export const deleteSlot = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getMasterTimetable = async (req, res, next) => {
+  try {
+    const timetable = await timetableService.getMasterTimetable();
+    sendSuccess(res, timetable);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getNextLesson = async (req, res, next) => {
+  try {
+    const teacherId = req.user.staff?.id;
+    if (!teacherId) throw new Error('Teacher profile not found');
+    const lesson = await timetableService.getNextLesson(teacherId);
+    sendSuccess(res, lesson);
+  } catch (error) {
+    next(error);
+  }
+};

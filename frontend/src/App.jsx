@@ -17,7 +17,6 @@ import Announcements from './pages/Announcements';
 import Settings from './pages/Settings';
 import Admissions from './pages/Admissions';
 import Timetable from './pages/Timetable';
-import Timetable from './pages/Timetable';
 import SystemStatus from './pages/SystemStatus';
 import Profile from './pages/Profile';
 

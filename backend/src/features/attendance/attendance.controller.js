@@ -66,3 +66,16 @@ export const getClassReport = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getMyStats = async (req, res, next) => {
+  try {
+    const student = req.user.student;
+    if (!student) {
+      throw new Error('Student profile not found');
+    }
+    const stats = await attendanceService.getAttendanceStats(student.id, req.query.termId);
+    sendSuccess(res, stats);
+  } catch (error) {
+    next(error);
+  }
+};
