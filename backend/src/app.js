@@ -52,7 +52,7 @@ app.use(cors({
 
     // Check if origin matches allowed production origin or is a preview deployment
     const allowedOrigin = config.cors.origin;
-    if (origin === allowedOrigin || origin.endsWith('.kyamatu-frontend.pages.dev') || origin.startsWith('http://localhost')) {
+    if (origin === allowedOrigin || origin.endsWith('.kyamatu-frontend.pages.dev') || origin.startsWith('http://localhost') || origin === 'https://kyamatu-sms-backend.onrender.com') {
       return callback(null, true);
     }
 
