@@ -21,7 +21,7 @@ export const updateStudentValidator = [
 
 export const getStudentsValidator = [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be positive integer'),
-  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be 1-100'),
+  query('limit').optional().isInt({ min: 1, max: 1000 }).withMessage('Limit must be 1-1000'),
   query('classId').optional().isUUID().withMessage('Valid class ID required'),
   query('gradeId').optional().isUUID().withMessage('Valid grade ID required'),
   query('admissionStatus').optional().isIn(['PENDING', 'APPROVED', 'REJECTED']),
