@@ -67,7 +67,7 @@ function Timetable() {
     try {
       const res = await api.get('/academic/classes');
       setClasses(res.data.data);
-      if (res.data.data.length > 0 && user.role === 'ADMIN') {
+      if (res.data.data.length > 0 && ['ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
         setSelectedClassId(res.data.data[0].id);
       }
     } catch (err) {
@@ -166,7 +166,7 @@ function Timetable() {
   };
 
   const handleSlotClick = (day, timeRange) => {
-    if (user.role !== 'ADMIN') return;
+    if (!['ADMIN', 'SUPER_ADMIN'].includes(user.role)) return;
     const [start, end] = timeRange.split(' - ');
     setSelectedSlot({ day, startTime: start, endTime: end });
 
@@ -287,7 +287,7 @@ function Timetable() {
         </div>
 
         <div className="flex flex-wrap gap-2 w-full xl:w-auto items-center">
-          {(user.role === 'ADMIN' || user.role === 'TEACHER') && (
+          {['ADMIN', 'SUPER_ADMIN', 'TEACHER'].includes(user.role) && (
             <button
               onClick={handleDownloadMaster}
               className="btn btn-secondary flex items-center gap-2"
@@ -307,7 +307,7 @@ function Timetable() {
             </button>
           )}
 
-          {(user.role === 'ADMIN' || user.role === 'TEACHER') && (
+          {['ADMIN', 'SUPER_ADMIN', 'TEACHER'].includes(user.role) && (
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <div className="flex bg-gray-100 dark:bg-slate-800 rounded-lg p-1">
                 <button
@@ -444,7 +444,7 @@ function Timetable() {
                       {DAYS.map(day => (
                         <td
                           key={`${day}-${time}`}
-                          className={`px-2 py-2 border dark:border-slate-700 relative h-16 align-top transition-colors ${!isBreak(time) && user.role === 'ADMIN' && viewMode === 'class' ? 'hover:bg-primary-50 dark:hover:bg-slate-800 cursor-pointer' : ''
+                          className={`px-2 py-2 border dark:border-slate-700 relative h-16 align-top transition-colors ${!isBreak(time) && ['ADMIN', 'SUPER_ADMIN'].includes(user.role) && viewMode === 'class' ? 'hover:bg-primary-50 dark:hover:bg-slate-800 cursor-pointer' : ''
                             }`}
                           onClick={() => !isBreak(time) && viewMode === 'class' && handleSlotClick(day, time)}
                         >

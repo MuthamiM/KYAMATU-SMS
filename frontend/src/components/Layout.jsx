@@ -236,17 +236,7 @@ function Layout() {
         </nav>
 
         <div className="p-4 mt-auto">
-          <div className="bg-primary-50 dark:bg-slate-800 rounded-2xl p-4 flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-600 text-white font-bold">
-              {user?.firstName?.[0] || 'U'}
-            </div>
-            <div className="overflow-hidden">
-              <p className="truncate text-sm font-bold text-gray-900 dark:text-white">
-                {user?.firstName} {user?.lastName}
-              </p>
-              <p className="truncate text-xs text-gray-500 dark:text-gray-400">{user?.role}</p>
-            </div>
-          </div>
+          {/* User profile removed as per request */}
         </div>
       </div>
 

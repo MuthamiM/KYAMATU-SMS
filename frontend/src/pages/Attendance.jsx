@@ -16,7 +16,7 @@ function Attendance() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user.role === 'TEACHER' || user.role === 'ADMIN') {
+    if (['TEACHER', 'ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
       fetchClasses();
     } else if (user.role === 'STUDENT') {
       fetchMyStats();

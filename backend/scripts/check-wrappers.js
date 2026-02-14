@@ -6,7 +6,7 @@ async function checkWrappers() {
         });
         const token = (await loginRes.json()).data.accessToken;
 
-        const endpoints = ['students', 'academic/classes', 'academic/grades'];
+        const endpoints = ['academic/classes'];
 
         for (const ep of endpoints) {
             const res = await fetch(`https://kyamatu-sms-backend.onrender.com/api/${ep}`, {
@@ -15,13 +15,13 @@ async function checkWrappers() {
             const json = await res.json();
 
             console.log(`--- ${ep} ---`);
-            if (json.data && !Array.isArray(json.data)) {
-                console.log(`Keys in data:`, Object.keys(json.data));
-                console.log(`Is Wrapped? YES`);
-            } else if (Array.isArray(json.data)) {
-                console.log(`Is Wrapped? NO (Array detected)`);
+            console.log(`Status: ${res.status}`);
+            if (Array.isArray(json.data)) {
+                console.log(`Structure: Array (Length: ${json.data.length})`);
+                if (json.data.length > 0) console.log('Sample:', JSON.stringify(json.data[0]));
             } else {
-                console.log(`Unknown structure:`, typeof json.data);
+                console.log(`Structure: Object`);
+                console.log(`Keys:`, Object.keys(json.data));
             }
         }
 
