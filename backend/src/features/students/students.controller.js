@@ -26,8 +26,7 @@ export const getStudents = async (req, res, next) => {
     }
 
     const { students, meta } = await studentsService.getStudents(filters);
-    // Wrap in object so frontend receives { data: { students: [...] } }
-    sendPaginated(res, { students }, meta);
+    sendPaginated(res, students, meta);
   } catch (error) {
     next(error);
   }
