@@ -12,8 +12,8 @@ export const createAcademicYear = async (req, res, next) => {
 
 export const getAcademicYears = async (req, res, next) => {
   try {
-    const years = await academicService.getAcademicYears();
-    sendSuccess(res, years);
+    const academicYears = await academicService.getAcademicYears();
+    sendSuccess(res, { academicYears });
   } catch (error) {
     next(error);
   }
@@ -49,7 +49,7 @@ export const createTerm = async (req, res, next) => {
 export const getTerms = async (req, res, next) => {
   try {
     const terms = await academicService.getTerms(req.query.academicYearId);
-    sendSuccess(res, terms);
+    sendSuccess(res, { terms });
   } catch (error) {
     next(error);
   }
@@ -67,7 +67,7 @@ export const createGrade = async (req, res, next) => {
 export const getGrades = async (req, res, next) => {
   try {
     const grades = await academicService.getGrades();
-    sendSuccess(res, grades);
+    sendSuccess(res, { grades });
   } catch (error) {
     next(error);
   }
@@ -85,7 +85,7 @@ export const createStream = async (req, res, next) => {
 export const getStreams = async (req, res, next) => {
   try {
     const streams = await academicService.getStreams();
-    sendSuccess(res, streams);
+    sendSuccess(res, { streams });
   } catch (error) {
     next(error);
   }
@@ -103,7 +103,8 @@ export const createClass = async (req, res, next) => {
 export const getClasses = async (req, res, next) => {
   try {
     const { classes, meta } = await academicService.getClasses(req.query);
-    sendPaginated(res, classes, meta);
+    // Wrap classes in object
+    sendPaginated(res, { classes }, meta);
   } catch (error) {
     next(error);
   }
@@ -130,7 +131,7 @@ export const createSubject = async (req, res, next) => {
 export const getSubjects = async (req, res, next) => {
   try {
     const subjects = await academicService.getSubjects(req.query.gradeId);
-    sendSuccess(res, subjects);
+    sendSuccess(res, { subjects });
   } catch (error) {
     next(error);
   }
