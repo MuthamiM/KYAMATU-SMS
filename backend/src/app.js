@@ -190,6 +190,7 @@ app.post('/api/admin/reseed', async (req, res) => {
 
     // Clean up
     await prisma.timetableSlot.deleteMany();
+    await prisma.teacherAssignment.deleteMany(); // Moved to top
     await prisma.payment.deleteMany();
     await prisma.invoiceItem.deleteMany();
     await prisma.studentInvoice.deleteMany();
@@ -207,7 +208,6 @@ app.post('/api/admin/reseed', async (req, res) => {
     await prisma.grade.deleteMany();
     await prisma.term.deleteMany();
     await prisma.academicYear.deleteMany();
-    await prisma.teacherAssignment.deleteMany();
     await prisma.staff.deleteMany();
     await prisma.user.deleteMany();
     logger.info('Cleaned up old data');
