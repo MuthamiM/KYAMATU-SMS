@@ -243,7 +243,12 @@ app.post('/api/admin/reseed', async (req, res) => {
     const subjects = Object.keys(subjectCodes);
     const classes = [];
     for (const grade of grades) {
-      // Get subjects for this grade
+      // Create subjects for this grade
+      for (const subj of subjects) {
+        await prisma.subject.create({ data: { name: subj, code: `${subjectCodes[subj]}${grade.level}`, gradeId: grade.id } });
+      }
+
+      // Get subjects for this grade (now they exist)
       const gradeSubjects = await prisma.subject.findMany({ where: { gradeId: grade.id } });
 
       const streamsForGrade = grade.level === 4 ? [streamEast, streamWest] : [streamEast];
