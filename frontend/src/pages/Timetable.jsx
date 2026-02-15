@@ -200,7 +200,7 @@ function Timetable() {
       <div className="text-xs">
         <div className="font-bold text-primary-700">{slot.subject?.name}</div>
         <div className="text-gray-500 truncate">
-          {(viewMode === 'teacher' || user.role === 'TEACHER')
+          {viewMode === 'teacher'
             ? `${slot.class?.grade?.name} ${slot.class?.stream?.name}`
             : `${slot.teacher?.firstName || slot.teacher?.user?.firstName || ''} ${slot.teacher?.lastName || slot.teacher?.user?.lastName || ''}`
           }
