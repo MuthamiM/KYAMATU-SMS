@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
+import { generateTimetable } from '../src/features/academic/timetable.service.js';
 
 const prisma = new PrismaClient();
 
@@ -23,7 +24,7 @@ const LAST_NAMES = ['Mwangi', 'Otieno', 'Kamau', 'Wanjiku', 'Ochieng', 'Njoroge'
 
 async function main() {
   console.log('Starting fresh seed with 10 students per class...');
-  
+
   // Clean up everything
   await prisma.timetableSlot.deleteMany();
   await prisma.payment.deleteMany();
@@ -67,7 +68,7 @@ async function main() {
     { name: 'Term 2', num: 2, start: '2026-05-02', end: '2026-08-10' },
     { name: 'Term 3', num: 3, start: '2026-09-01', end: '2026-11-25' },
   ];
-  
+
   for (const t of termDates) {
     const term = await prisma.term.create({
       data: {
@@ -107,7 +108,7 @@ async function main() {
   // 4. Create Classes (One stream per grade, except Grade 4 has two)
   console.log('Creating classes...');
   const createdClasses = [];
-  
+
   for (const grade of createdGrades) {
     // Create subjects for this grade
     const gradeSubjects = [];
@@ -123,8 +124,8 @@ async function main() {
     }
 
     // Determine streams for this grade
-    const streamsForGrade = grade.name === 'Grade 4' 
-      ? [streamEast, streamWest] 
+    const streamsForGrade = grade.name === 'Grade 4'
+      ? [streamEast, streamWest]
       : [streamEast];
 
     for (const stream of streamsForGrade) {
@@ -152,20 +153,20 @@ async function main() {
 
   // 5. Create Admin & Management Staff
   console.log('Creating admin and management staff...');
-  
+
   // Headmaster (SUPER_ADMIN)
   const headmasterUser = await prisma.user.create({
     data: { email: 'headmaster@kyamatu.ac.ke', password: hashedPassword, role: 'SUPER_ADMIN', phone: '+254700000001' },
   });
   await prisma.staff.create({
-    data: { 
-      userId: headmasterUser.id, 
-      employeeNumber: 'ADM001', 
-      firstName: 'Joseph', 
-      lastName: 'Mutua', 
-      gender: 'Male', 
+    data: {
+      userId: headmasterUser.id,
+      employeeNumber: 'ADM001',
+      firstName: 'Joseph',
+      lastName: 'Mutua',
+      gender: 'Male',
       qualification: 'M.Ed Administration',
-      specialization: 'School Administration' 
+      specialization: 'School Administration'
     }
   });
 
@@ -174,14 +175,14 @@ async function main() {
     data: { email: 'deputy@kyamatu.ac.ke', password: hashedPassword, role: 'ADMIN', phone: '+254700000002' },
   });
   await prisma.staff.create({
-    data: { 
-      userId: deputyUser.id, 
-      employeeNumber: 'ADM002', 
-      firstName: 'Margaret', 
-      lastName: 'Wambua', 
-      gender: 'Female', 
+    data: {
+      userId: deputyUser.id,
+      employeeNumber: 'ADM002',
+      firstName: 'Margaret',
+      lastName: 'Wambua',
+      gender: 'Female',
       qualification: 'B.Ed',
-      specialization: 'Curriculum & Instruction' 
+      specialization: 'Curriculum & Instruction'
     }
   });
 
@@ -195,14 +196,14 @@ async function main() {
     data: { email: 'bursar@kyamatu.ac.ke', password: hashedPassword, role: 'BURSAR', phone: '+254700000003' },
   });
   await prisma.staff.create({
-    data: { 
-      userId: bursarUser.id, 
-      employeeNumber: 'FIN001', 
-      firstName: 'Samuel', 
-      lastName: 'Kioko', 
-      gender: 'Male', 
+    data: {
+      userId: bursarUser.id,
+      employeeNumber: 'FIN001',
+      firstName: 'Samuel',
+      lastName: 'Kioko',
+      gender: 'Male',
       qualification: 'B.Com Accounting',
-      specialization: 'Finance & Accounting' 
+      specialization: 'Finance & Accounting'
     }
   });
 
@@ -226,14 +227,14 @@ async function main() {
       data: { email: t.email, password: hashedPassword, role: 'TEACHER', phone: `+2547${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}` },
     });
     await prisma.staff.create({
-      data: { 
-        userId: teacherUser.id, 
-        employeeNumber: t.empNo, 
-        firstName: t.first, 
-        lastName: t.last, 
+      data: {
+        userId: teacherUser.id,
+        employeeNumber: t.empNo,
+        firstName: t.first,
+        lastName: t.last,
         gender: t.gender,
         qualification: t.qual,
-        specialization: t.spec 
+        specialization: t.spec
       }
     });
   }
@@ -250,10 +251,10 @@ async function main() {
   for (const s of supportStaff) {
     // Support staff don't need system login, so no user account
     await prisma.staff.create({
-      data: { 
-        employeeNumber: s.empNo, 
-        firstName: s.first, 
-        lastName: s.last, 
+      data: {
+        employeeNumber: s.empNo,
+        firstName: s.first,
+        lastName: s.last,
         gender: s.gender,
         specialization: s.role,
         userId: null, // No system access
@@ -269,29 +270,29 @@ async function main() {
 
   for (const cls of createdClasses) {
     console.log(`   Adding 10 students to ${cls.name}...`);
-    
+
     for (let i = 0; i < 10; i++) {
       const isMale = Math.random() > 0.5;
-      const firstName = isMale 
+      const firstName = isMale
         ? FIRST_NAMES_MALE[Math.floor(Math.random() * FIRST_NAMES_MALE.length)]
         : FIRST_NAMES_FEMALE[Math.floor(Math.random() * FIRST_NAMES_FEMALE.length)];
       const lastName = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
-      
+
       // Random admission date in Jan 2026
       const admitDay = Math.floor(Math.random() * 10) + 5;
       const admitDate = new Date(2026, 0, admitDay);
 
       const studentUser = await prisma.user.create({
-        data: { 
-          email: `student${studentCounter}@kyamatu.ac.ke`, 
-          password: hashedPassword, 
+        data: {
+          email: `student${studentCounter}@kyamatu.ac.ke`,
+          password: hashedPassword,
           role: 'STUDENT',
         }
       });
 
       // Calculate birth year based on grade (roughly age 6-12)
       const birthYear = 2026 - (cls.grade.level + 5);
-      
+
       const student = await prisma.student.create({
         data: {
           userId: studentUser.id,
@@ -305,7 +306,7 @@ async function main() {
           admissionDate: admitDate
         }
       });
-      
+
       allStudents.push(student);
       studentCounter++;
     }
@@ -315,15 +316,15 @@ async function main() {
 
   // 7. Create Fee Structure and Invoices
   console.log('Creating fee structures and invoices...');
-  
+
   // Fee structure for all grades
   for (const grade of createdGrades) {
     await prisma.feeStructure.create({
-      data: { 
-        name: 'Tuition Fee', 
-        amount: 15000, 
-        gradeId: grade.id, 
-        termId: currentTerm.id 
+      data: {
+        name: 'Tuition Fee',
+        amount: 15000,
+        gradeId: grade.id,
+        termId: currentTerm.id
       }
     });
   }
@@ -355,12 +356,12 @@ async function main() {
           paidAt: new Date(2026, 0, Math.floor(Math.random() * 14) + 1)
         }
       });
-      
+
       await prisma.studentInvoice.update({
         where: { id: invoice.id },
-        data: { 
-          paidAmount: paymentAmount, 
-          balance: Math.max(0, 15000 - paymentAmount) 
+        data: {
+          paidAmount: paymentAmount,
+          balance: Math.max(0, 15000 - paymentAmount)
         }
       });
     }
