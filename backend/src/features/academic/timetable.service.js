@@ -9,8 +9,7 @@ export const getTimetable = async (classId) => {
       teacher: {
         select: {
           firstName: true,
-          lastName: true,
-          user: { select: { firstName: true, lastName: true } }
+          lastName: true
         }
       }
     },
