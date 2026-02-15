@@ -52,13 +52,14 @@ function Timetable() {
   }, []);
 
   useEffect(() => {
-    if (viewMode === 'class' && selectedClassId) {
-      fetchTimetable();
-      fetchSubjects(selectedClassId);
-    } else if (viewMode === 'teacher' && selectedTeacherId) {
-      fetchTimetable();
+    // Clear data when switching views to prevent state leakage
+    setTimetable([]);
+    if (viewMode === 'class') {
+      if (selectedClassId) fetchTimetable();
+    } else if (viewMode === 'teacher') {
+      if (selectedTeacherId) fetchTimetable();
     } else if (viewMode === 'master') {
-      // Master view handled by its own effect/logic
+      // Master view handled by its own effect
     }
   }, [selectedClassId, selectedTeacherId, viewMode]);
 
