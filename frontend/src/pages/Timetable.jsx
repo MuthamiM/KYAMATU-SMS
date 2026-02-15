@@ -117,7 +117,7 @@ function Timetable() {
           `${s.startTime} - ${s.endTime}`,
           `${s.class.grade.name} ${s.class.stream.name}`,
           s.subject.name,
-          `${s.teacher?.user?.firstName || 'Unknown'} ${s.teacher?.user?.lastName || ''}`
+          `${s.teacher?.firstName || s.teacher?.user?.firstName || 'Unknown'} ${s.teacher?.lastName || s.teacher?.user?.lastName || ''}`
         ]);
 
         tableData.sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]));
@@ -202,7 +202,7 @@ function Timetable() {
         <div className="text-gray-500 truncate">
           {(viewMode === 'teacher' || user.role === 'TEACHER')
             ? `${slot.class?.grade?.name} ${slot.class?.stream?.name}`
-            : `${slot.teacher?.user?.firstName || ''} ${slot.teacher?.user?.lastName || ''}`
+            : `${slot.teacher?.firstName || slot.teacher?.user?.firstName || ''} ${slot.teacher?.lastName || slot.teacher?.user?.lastName || ''}`
           }
         </div>
       </div>
