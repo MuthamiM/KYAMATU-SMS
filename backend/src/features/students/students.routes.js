@@ -11,7 +11,7 @@ const router = Router();
 router.use(authenticate);
 
 router.post('/', isAdmin, validators.createStudentValidator, validate, studentsController.createStudent);
-router.get('/', academicController ? isStaff : studentsController.getStudents, validators.getStudentsValidator, validate, studentsController.getStudents);
+router.get('/', isStaff, validators.getStudentsValidator, validate, studentsController.getStudents);
 router.get('/:id', validateId(), validate, studentsController.getStudent);
 router.put('/:id', validateId(), isAdmin, validators.updateStudentValidator, validate, studentsController.updateStudent);
 router.delete('/:id', validateId(), validate, isAdmin, studentsController.deleteStudent);

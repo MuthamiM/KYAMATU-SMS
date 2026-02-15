@@ -15,7 +15,7 @@ function Reports() {
   const [searching, setSearching] = useState(false);
   const [rankings, setRankings] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('rankings');
+  const [activeTab, setActiveTab] = useState(user?.role === 'STUDENT' ? 'documents' : 'rankings');
 
   const isAdmin = ['SUPER_ADMIN', 'ADMIN', 'BURSAR'].includes(user?.role);
 
@@ -48,12 +48,12 @@ function Reports() {
       toast.error('Enter an admission number');
       return;
     }
-    
+
     setSearching(true);
     try {
       const response = await api.get(`/students?search=${searchAdmNo.trim()}`);
       const results = response.data.data || [];
-      
+
       if (results.length > 0) {
         const student = results[0];
         setFoundStudent(student);
@@ -114,7 +114,7 @@ function Reports() {
 
       const response = await api.post('/reports/generate', { studentId, termId });
       const report = response.data.data;
-      
+
       const printWindow = window.open('', '_blank');
       printWindow.document.write(`
         <html>
@@ -785,7 +785,7 @@ function Reports() {
       // Generate academic history from admission to current grade
       const currentGradeLevel = student.class?.grade?.level || 7;
       const startGrade = Math.max(1, currentGradeLevel - yearsAttended);
-      
+
       const academicHistory = [];
       for (let i = startGrade; i <= currentGradeLevel; i++) {
         const year = admissionYear + (i - startGrade);
@@ -949,17 +949,16 @@ function Reports() {
       <div className="border-b border-gray-200 dark:border-slate-700">
         <nav className="flex gap-4">
           {[
-            { id: 'rankings', label: 'Class Rankings', icon: TrendingUp },
+            { id: 'rankings', label: 'Class Rankings', icon: TrendingUp, minRole: 'TEACHER' },
             { id: 'documents', label: 'Student Documents', icon: FileText },
-          ].map((tab) => (
+          ].filter(tab => !tab.minRole || (user?.role && ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'BURSAR'].includes(user.role))).map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
-                activeTab === tab.id
+              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${activeTab === tab.id
                   ? 'border-primary-500 text-primary-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
-              }`}
+                }`}
             >
               <tab.icon className="w-4 h-4" />
               {tab.label}
@@ -1018,115 +1017,114 @@ function Reports() {
                   onChange={(e) => setSelectedClass(e.target.value)}
                   className="input"
                 >
-              <option value="">Choose a class</option>
-              {classes.map((cls) => (
-                <option key={cls.id} value={cls.id}>
-                  {cls.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button
-            onClick={fetchRankings}
-            disabled={!selectedClass || loading}
-            className="btn btn-primary"
-          >
-            View Rankings
-          </button>
-        </div>
-      </div>
-
-      {rankings && (
-        <div className="card">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-gray-900">Class Rankings</h2>
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-500">
-                  Class Mean: <strong className="text-gray-900">{rankings.classMean}%</strong>
-                </span>
-                <span className="text-sm text-gray-500">
-                  Students: <strong className="text-gray-900">{rankings.totalStudents}</strong>
-                </span>
+                  <option value="">Choose a class</option>
+                  {classes.map((cls) => (
+                    <option key={cls.id} value={cls.id}>
+                      {cls.name}
+                    </option>
+                  ))}
+                </select>
               </div>
+              <button
+                onClick={fetchRankings}
+                disabled={!selectedClass || loading}
+                className="btn btn-primary"
+              >
+                View Rankings
+              </button>
             </div>
           </div>
 
-          <div className="table-container">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Rank</th>
-                  <th>Student</th>
-                  <th>Admission No</th>
-                  <th>Average</th>
-                  <th>Grade</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {rankings.rankings?.map((item) => (
-                  <tr key={item.student?.id} className="hover:bg-gray-50">
-                    <td>
-                      <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold ${
-                        item.rank <= 3 ? 'bg-warning-100 text-warning-700' : 'bg-gray-100 text-gray-600'
-                      }`}>
-                        {item.rank}
-                      </span>
-                    </td>
-                    <td className="font-medium">
-                      {item.student?.firstName} {item.student?.lastName}
-                    </td>
-                    <td className="font-mono text-sm">
-                      {item.student?.admissionNumber}
-                    </td>
-                    <td className="font-semibold">{item.average}%</td>
-                    <td>
-                      <span className={`px-3 py-1 rounded-full font-bold ${getGradeColor(item.grade)}`}>
-                        {item.grade}
-                      </span>
-                    </td>
-                    <td>
-                      <button 
-                        onClick={() => handleGenerateReport(item.student?.id)}
-                        className="text-primary-600 hover:underline text-sm flex items-center gap-1"
-                      >
-                        <Download className="w-4 h-4" />
-                        Report Card
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {rankings?.subjectMeans && (
-        <div className="card p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">Subject Performance</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {rankings.subjectMeans.map((subject) => (
-              <div key={subject.subjectId} className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-medium text-gray-900">{subject.subjectName}</h3>
-                <div className="mt-2 flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Mean</span>
-                  <span className="font-semibold">{subject.mean}%</span>
-                </div>
-                <div className="mt-1 flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Highest</span>
-                  <span className="text-success-600">{subject.highest}%</span>
-                </div>
-                <div className="mt-1 flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Lowest</span>
-                  <span className="text-danger-600">{subject.lowest}%</span>
+          {rankings && (
+            <div className="card">
+              <div className="p-4 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-semibold text-gray-900">Class Rankings</h2>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm text-gray-500">
+                      Class Mean: <strong className="text-gray-900">{rankings.classMean}%</strong>
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      Students: <strong className="text-gray-900">{rankings.totalStudents}</strong>
+                    </span>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+
+              <div className="table-container">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Rank</th>
+                      <th>Student</th>
+                      <th>Admission No</th>
+                      <th>Average</th>
+                      <th>Grade</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {rankings.rankings?.map((item) => (
+                      <tr key={item.student?.id} className="hover:bg-gray-50">
+                        <td>
+                          <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold ${item.rank <= 3 ? 'bg-warning-100 text-warning-700' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                            {item.rank}
+                          </span>
+                        </td>
+                        <td className="font-medium">
+                          {item.student?.firstName} {item.student?.lastName}
+                        </td>
+                        <td className="font-mono text-sm">
+                          {item.student?.admissionNumber}
+                        </td>
+                        <td className="font-semibold">{item.average}%</td>
+                        <td>
+                          <span className={`px-3 py-1 rounded-full font-bold ${getGradeColor(item.grade)}`}>
+                            {item.grade}
+                          </span>
+                        </td>
+                        <td>
+                          <button
+                            onClick={() => handleGenerateReport(item.student?.id)}
+                            className="text-primary-600 hover:underline text-sm flex items-center gap-1"
+                          >
+                            <Download className="w-4 h-4" />
+                            Report Card
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {rankings?.subjectMeans && (
+            <div className="card p-6">
+              <h2 className="font-semibold text-gray-900 mb-4">Subject Performance</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {rankings.subjectMeans.map((subject) => (
+                  <div key={subject.subjectId} className="bg-gray-50 rounded-lg p-4">
+                    <h3 className="font-medium text-gray-900">{subject.subjectName}</h3>
+                    <div className="mt-2 flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Mean</span>
+                      <span className="font-semibold">{subject.mean}%</span>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Highest</span>
+                      <span className="text-success-600">{subject.highest}%</span>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Lowest</span>
+                      <span className="text-danger-600">{subject.lowest}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
 

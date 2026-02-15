@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '../stores/authStore';
 import { Plus, FileText, BarChart3 } from 'lucide-react';
 
 function Assessments() {
+  const { user } = useAuthStore();
+  const isStaff = ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'BURSAR'].includes(user?.role);
   const [assessments, setAssessments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -103,12 +106,12 @@ function Assessments() {
       // 1. Get full assessment details (marks)
       const assessmentRes = await api.get(`/assessments/${assessment.id}`);
       const fullAssessment = assessmentRes.data.data;
-      
+
       // 2. Get students for the subject's grade
       // Assuming subject has gradeId. If not, we might need a different strategy.
       // But based on our schema, Subject usually links Grade.
       const gradeId = fullAssessment.subject?.gradeId;
-      
+
       if (!gradeId) {
         toast.error('Could not determine grade for this assessment');
         setLoadingScores(false);
@@ -118,7 +121,7 @@ function Assessments() {
       const studentsRes = await api.get('/students', {
         params: { gradeId, limit: 100 }
       });
-      
+
       setScoreStudents(studentsRes.data.data);
 
       // 3. Map existing scores
@@ -171,13 +174,15 @@ function Assessments() {
           <h1 className="text-2xl font-bold text-gray-900">Assessments</h1>
           <p className="text-gray-500">Manage tests, exams, and CBC competencies</p>
         </div>
-        <button 
-          onClick={() => setShowModal(true)}
-          className="btn btn-primary flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Create Assessment
-        </button>
+        {isStaff && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="btn btn-primary flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Create Assessment
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -251,13 +256,15 @@ function Assessments() {
                     <td>{assessment._count?.scores || 0}</td>
                     <td>
                       <div className="flex gap-2">
-                        <button 
-                          onClick={() => openScoresModal(assessment)}
-                          className="text-primary-600 hover:underline text-sm"
-                        >
-                          Enter Scores
-                        </button>
-                        <button 
+                        {isStaff && (
+                          <button
+                            onClick={() => openScoresModal(assessment)}
+                            className="text-primary-600 hover:underline text-sm"
+                          >
+                            Enter Scores
+                          </button>
+                        )}
+                        <button
                           onClick={() => openScoresModal(assessment, 'view')}
                           className="text-gray-600 hover:underline text-sm"
                         >
@@ -428,7 +435,7 @@ function Assessments() {
                         scoreStudents.map((student) => {
                           const currentScore = scoresData[student.id]?.score || '';
                           const percentage = currentScore ? ((parseFloat(currentScore) / selectedAssessment.maxScore) * 100).toFixed(1) : '-';
-                          
+
                           return (
                             <tr key={student.id} className="hover:bg-gray-50">
                               <td className="font-mono text-sm">{student.admissionNumber}</td>
