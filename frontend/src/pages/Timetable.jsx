@@ -522,7 +522,6 @@ function Timetable() {
           </div>
         </div>
       )}
-      )}
       <div className="text-center text-xs text-gray-400 mt-8">
         Timetable Module v1.1 (Grid View & Fixes)
       </div>
