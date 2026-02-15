@@ -64,6 +64,7 @@ model Term {
   feeStructures   FeeStructure[]
   reportCards     ReportCard[]
   studentInvoices StudentInvoice[]
+  courseOutlines  CourseOutline[]
   academicYear    AcademicYear     @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
 
   @@index([academicYearId])
@@ -102,6 +103,7 @@ model Class {
   students           Student[]
   teacherAssignments TeacherAssignment[]
   timetableSlots     TimetableSlot[]
+  courseOutlines     CourseOutline[]
 
   @@unique([gradeId, streamId, academicYearId])
   @@index([gradeId])
@@ -120,6 +122,7 @@ model Subject {
   grade              Grade               @relation(fields: [gradeId], references: [id])
   teacherAssignments TeacherAssignment[]
   timetableSlots     TimetableSlot[]
+  courseOutlines     CourseOutline[]
 
   @@index([gradeId])
 }
@@ -152,6 +155,7 @@ model Staff {
   user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   teacherAssignments TeacherAssignment[]
   timetableSlots     TimetableSlot[]
+  courseOutlines     CourseOutline[]
 
   @@index([userId])
 }
