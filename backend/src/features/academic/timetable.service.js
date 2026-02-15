@@ -82,11 +82,60 @@ export const upsertTimetableSlot = async (data) => {
 };
 
 export const generateTimetable = async () => {
-  // 1. Clear existing timetable? For now, yes, to avoid conflicts with old data.
-  // In production, might want 'generate for specific class' or 'fill empty'.
+  // 1. Check if we have teacher assignments. If not, create them (Self-Healing).
+  const assignmentCount = await prisma.teacherAssignment.count();
+  if (assignmentCount === 0) {
+    console.log('No teacher assignments found. Auto-assigning...');
+
+    // Fetch classes and teachers
+    const classes = await prisma.class.findMany();
+    const allTeachers = await prisma.staff.findMany({
+      where: { user: { role: 'TEACHER' } },
+      include: { user: true }
+    });
+
+    if (allTeachers.length > 0 && classes.length > 0) {
+      for (const cls of classes) {
+        // Fetch subjects for this class
+        // Use classSubjects (assuming they exist from seed)
+        const classSubjects = await prisma.classSubject.findMany({
+          where: { classId: cls.id },
+          include: { subject: true }
+        });
+
+        if (classSubjects.length === 0) {
+          // Fallback: If no class subjects, maybe create them? 
+          // For now, assume subjects exist or we skip.
+          console.log(`Class ${cls.name} has no subjects.`);
+          continue;
+        }
+
+        for (const cs of classSubjects) {
+          const teacher = allTeachers[Math.floor(Math.random() * allTeachers.length)];
+          try {
+            await prisma.teacherAssignment.create({
+              data: {
+                staffId: teacher.id,
+                classId: cls.id,
+                subjectId: cs.subjectId,
+                isClassTeacher: false
+              }
+            });
+          } catch (e) {
+            // Ignore duplicates if any
+          }
+        }
+      }
+      console.log('Auto-assigned teachers.');
+    } else {
+      console.log('Cannot assign teachers: No teachers or classes found.');
+    }
+  }
+
+  // 2. Clear existing timetable
   await prisma.timetableSlot.deleteMany({});
 
-  // 2. Fetch all classes and their teacher assignments
+  // 3. Fetch all classes and their teacher assignments
   const classes = await prisma.class.findMany({
     include: {
       teacherAssignments: {
@@ -96,7 +145,6 @@ export const generateTimetable = async () => {
   });
 
   // Default lesson mapping (Subject Name -> Count per week)
-  // Adjust based on typical curriculum
   const lessonCounts = {
     'Mathematics': 5,
     'English': 5,
@@ -139,7 +187,6 @@ export const generateTimetable = async () => {
   }
 
   // Greedy Assignment
-  // Track teacher busy times: teacherId -> Set("day-time")
   const teacherBusy = new Set();
 
   for (const day of days) {
@@ -148,7 +195,7 @@ export const generateTimetable = async () => {
         // Try to find a lesson for this class, this day, this time
         const lessonIndex = clsData.needed.findIndex(lesson => {
           // Check if teacher is free
-          if (!lesson.teacherId) return true; // No teacher assigned yet? Allow.
+          if (!lesson.teacherId) return true; // No teacher assigned? Allow.
           return !teacherBusy.has(`${lesson.teacherId}-${day}-${time}`);
         });
 
@@ -179,6 +226,8 @@ export const generateTimetable = async () => {
 
   // Bulk create
   if (slotsToCreate.length > 0) {
+    // Avoid creating too many records at once if limits exist, but bulk is fine for < 1000
+    // Split chunks if huge
     await prisma.timetableSlot.createMany({ data: slotsToCreate });
   }
 
