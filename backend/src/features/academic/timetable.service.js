@@ -285,8 +285,7 @@ export const getMasterTimetable = async () => {
       teacher: {
         select: {
           firstName: true,
-          lastName: true,
-          user: { select: { firstName: true, lastName: true } }
+          lastName: true
         }
       }
     },
