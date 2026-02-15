@@ -243,15 +243,22 @@ app.post('/api/admin/reseed', async (req, res) => {
     const subjects = Object.keys(subjectCodes);
     const classes = [];
     for (const grade of grades) {
-      for (const subj of subjects) {
-        await prisma.subject.create({ data: { name: subj, code: `${subjectCodes[subj]}${grade.level}`, gradeId: grade.id } });
-      }
+      // Get subjects for this grade
+      const gradeSubjects = await prisma.subject.findMany({ where: { gradeId: grade.id } });
+
       const streamsForGrade = grade.level === 4 ? [streamEast, streamWest] : [streamEast];
       for (const stream of streamsForGrade) {
         const cls = await prisma.class.create({
           data: { name: `${grade.name} ${stream.name}`, capacity: 40, gradeId: grade.id, streamId: stream.id, academicYearId: currentYear.id }
         });
         classes.push({ ...cls, grade });
+
+        // Link subjects to class
+        for (const subj of gradeSubjects) {
+          await prisma.classSubject.create({
+            data: { classId: cls.id, subjectId: subj.id }
+          });
+        }
       }
     }
 
