@@ -240,6 +240,33 @@ async function main() {
   }
   console.log(`Created ${teacherData.length} teachers`);
 
+  // Assign teachers to classes/subjects
+  console.log('Assigning teachers to subjects...');
+  const teachers = await prisma.staff.findMany({
+    where: { user: { role: 'TEACHER' } },
+    include: { user: true }
+  });
+
+  const assignmentCount = {}; // Track assignments per teacher to balance load
+
+  for (const cls of createdClasses) {
+    for (const subj of cls.subjects) {
+      // Simple round-robin or random assignment based on specialization if possible
+      // For simplicity, assign random teacher
+      const teacher = teachers[Math.floor(Math.random() * teachers.length)];
+
+      await prisma.teacherAssignment.create({
+        data: {
+          staffId: teacher.id,
+          classId: cls.id,
+          subjectId: subj.id,
+          isClassTeacher: false // Could assign one per class later
+        }
+      });
+    }
+  }
+  console.log('Teachers assigned to subjects.');
+
   // 3 Non-Teaching Staff (Support Staff - isActive: false for system access)
   console.log('Creating 3 non-teaching support staff...');
   const supportStaff = [
