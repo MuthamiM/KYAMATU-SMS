@@ -115,8 +115,8 @@ function Timetable() {
 
         const tableData = daySlots.map(s => [
           `${s.startTime} - ${s.endTime}`,
-          `${s.class.grade.name} ${s.class.stream.name}`,
-          s.subject.name,
+          `${s.class?.grade?.name || ''} ${s.class?.stream?.name || ''}`,
+          s.subject?.name || 'Unknown Subject',
           `${s.teacher?.firstName || s.teacher?.user?.firstName || 'Unknown'} ${s.teacher?.lastName || s.teacher?.user?.lastName || ''}`
         ]);
 
