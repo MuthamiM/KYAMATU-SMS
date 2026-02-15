@@ -104,6 +104,12 @@ function Timetable() {
 
       const doc = new jsPDF('l', 'mm', 'a4');
 
+      const timeHeaders = TIMES.map(t => {
+        const [start] = t.split(' - ');
+        return start;
+      });
+      const headers = ['Teacher', ...timeHeaders];
+
       for (let i = 0; i < DAYS.length; i++) {
         if (i > 0) doc.addPage();
 
@@ -111,31 +117,57 @@ function Timetable() {
         doc.setFontSize(16);
         doc.text(`${dayName} - Master Timetable`, 14, 15);
 
-        const daySlots = allSlots.filter(s => s.dayOfWeek === i + 1);
+        const body = [];
+        // Ensure teachers are sorted
+        const sortedTeachers = [...teachers].sort((a, b) => a.firstName.localeCompare(b.firstName));
 
-        const tableData = daySlots.map(s => [
-          `${s.startTime} - ${s.endTime}`,
-          `${s.class?.grade?.name || ''} ${s.class?.stream?.name || ''}`,
-          s.subject?.name || 'Unknown Subject',
-          `${s.teacher?.firstName || s.teacher?.user?.firstName || 'Unknown'} ${s.teacher?.lastName || s.teacher?.user?.lastName || ''}`
-        ]);
+        for (const teacher of sortedTeachers) {
+          const row = [`${teacher.firstName} ${teacher.lastName}`];
+          for (const time of TIMES) {
+            const [start] = time.split(' - ');
 
-        tableData.sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]));
+            // Check for break/lunch
+            if (time.includes('Break') || time.includes('Lunch')) {
+              row.push('---');
+              continue;
+            }
+
+            const slot = allSlots.find(s =>
+              s.teacherId === teacher.id &&
+              s.dayOfWeek === i + 1 &&
+              s.startTime === start
+            );
+
+            if (slot) {
+              const subject = slot.subject?.code || slot.subject?.name?.substring(0, 3) || '?';
+              const className = `${slot.class?.grade?.name || ''} ${slot.class?.stream?.name || ''}`;
+              row.push(`${subject}\n(${className})`);
+            } else {
+              row.push('');
+            }
+          }
+          body.push(row);
+        }
 
         autoTable(doc, {
-          head: [['Time', 'Class', 'Subject', 'Teacher']],
-          body: tableData,
+          head: [headers],
+          body: body,
           startY: 20,
-          theme: 'striped'
+          theme: 'grid',
+          styles: { fontSize: 7, cellPadding: 1, overflow: 'linebreak' },
+          headStyles: { fillColor: [66, 133, 244], textColor: 255 },
+          columnStyles: {
+            0: { cellWidth: 30, fontStyle: 'bold' } // Teacher column
+          }
         });
       }
 
-      doc.save('Master_Timetable.pdf');
+      doc.save('Master_Timetable_Grid.pdf');
       toast.dismiss();
       toast.success('Download ready');
     } catch (err) {
       toast.dismiss();
-      toast.error('Failed to download master timetable');
+      toast.error(`Download failed: ${err.message}`);
       console.error(err);
     }
   };
