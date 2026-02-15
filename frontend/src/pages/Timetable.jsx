@@ -201,8 +201,8 @@ function Timetable() {
         <div className="font-bold text-primary-700">{slot.subject?.name}</div>
         <div className="text-gray-500 truncate">
           {viewMode === 'teacher'
-            ? `${slot.class?.grade?.name} ${slot.class?.stream?.name}`
-            : `${slot.teacher?.firstName || slot.teacher?.user?.firstName || ''} ${slot.teacher?.lastName || slot.teacher?.user?.lastName || ''}`
+            ? `${slot.class?.grade?.name || ''} ${slot.class?.stream?.name || ''}`
+            : `${slot.teacher?.firstName || slot.teacher?.user?.firstName || 'No Teacher'} ${slot.teacher?.lastName || slot.teacher?.user?.lastName || ''}`
           }
         </div>
       </div>
