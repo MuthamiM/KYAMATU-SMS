@@ -23,6 +23,7 @@ import assessmentsRoutes from './features/assessments/assessments.routes.js';
 import reportsRoutes from './features/reports/reports.routes.js';
 import feesRoutes from './features/fees/fees.routes.js';
 import communicationRoutes from './features/communication/communication.routes.js';
+import * as timetableService from './features/academic/timetable.service.js';
 import timetableRoutes from './features/academic/timetable.routes.js';
 import dashboardRoutes from './features/dashboard/dashboard.routes.js';
 
@@ -454,6 +455,11 @@ app.post('/api/admin/reseed', async (req, res) => {
       }
     }
     logger.info(`Created ${assessmentCount} assessments and ${scoreCount} scores`);
+
+    // Generate Timetable
+    logger.info('Generating timetable...');
+    const timetableStats = await timetableService.generateTimetable();
+    logger.info(`Generated timetable with ${timetableStats.generated} slots`);
 
     logger.info('Database reseed completed successfully');
     res.json({

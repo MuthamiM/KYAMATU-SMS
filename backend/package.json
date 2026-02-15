@@ -8,6 +8,7 @@
     "start": "node src/app.js",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
+    "postinstall": "prisma generate",
     "db:seed": "node prisma/seed.js",
     "test": "vitest",
     "audit": "npm audit --audit-level=moderate",
