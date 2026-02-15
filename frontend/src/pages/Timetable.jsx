@@ -45,21 +45,20 @@ function Timetable() {
 
   useEffect(() => {
     fetchClasses();
-    fetchMetaData(); // Fetch teachers/subjects early for admin dropdowns
+    fetchTeachers();
     if (user.role === 'TEACHER' && user.staff?.id) {
-      setSelectedTeacherId(user.staff.id);
+      setSelectedTeacherId(user.staff.id); // Default to self
     }
   }, []);
 
   useEffect(() => {
     if (viewMode === 'class' && selectedClassId) {
       fetchTimetable();
+      fetchSubjects(selectedClassId);
     } else if (viewMode === 'teacher' && selectedTeacherId) {
       fetchTimetable();
     } else if (viewMode === 'master') {
-      // Typically master is for download, but if we want to show something, maybe show empty or a notice
-      // Or we can just let 'fetchTimetable' handle it if we have a master view endpoint for JSON
-      // processing. For now, master view is button-driven download mostly.
+      // Master view handled by its own effect/logic
     }
   }, [selectedClassId, selectedTeacherId, viewMode]);
 
@@ -72,52 +71,28 @@ function Timetable() {
       }
     } catch (err) {
       console.error(err);
+      toast.error('Failed to fetch classes');
     }
   };
 
-  const fetchTimetable = async () => {
-    if ((viewMode === 'class' && !selectedClassId) || (viewMode === 'teacher' && !selectedTeacherId)) return;
-
-    setLoading(true);
-    setTimetable([]);
+  const fetchTeachers = async () => {
     try {
-      let url = '/timetable';
-      if (viewMode === 'class') {
-        url += `?classId=${selectedClassId}`;
-      } else {
-        url = `/timetable/my?staffId=${selectedTeacherId}`;
-      }
-
-      const res = await api.get(url);
-      setTimetable(res.data.data);
+      const res = await api.get('/staff?role=TEACHER&limit=100');
+      setTeachers(res.data.data || []);
     } catch (err) {
-      toast.error('Failed to load timetable');
-    } finally {
-      setLoading(false);
+      console.error(err);
+      toast.error('Failed to fetch teachers');
     }
   };
 
-  const fetchMyTimetable = async () => {
-    setLoading(true);
+  const fetchSubjects = async (classId) => {
+    if (!classId) return;
     try {
-      const res = await api.get('/timetable/my');
-      setTimetable(res.data.data);
+      const res = await api.get(`/academic/subjects?classId=${classId}`);
+      setSubjects(res.data.data || []);
     } catch (err) {
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchMetaData = async (classId) => {
-    try {
-      const [subRes, staffRes] = await Promise.all([
-        api.get(`/academic/subjects?classId=${classId}`),
-        api.get('/staff?role=TEACHER&limit=100')
-      ]);
-      setSubjects(subRes.data.data || []);
-      setTeachers(staffRes.data.data || []);
-    } catch (err) {
-      console.log("Error fetching metadata");
+      console.error(err);
+      // toast.error('Failed to fetch subjects'); // Optional: don't spam if it fails often
     }
   };
 
