@@ -23,7 +23,13 @@ export const getTeacherTimetable = async (staffId) => {
     where: { teacherId: staffId },
     include: {
       subject: true,
-      class: { include: { grade: true, stream: true } }
+      class: { include: { grade: true, stream: true } },
+      teacher: {
+        select: {
+          firstName: true,
+          lastName: true
+        }
+      }
     },
     orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }]
   });

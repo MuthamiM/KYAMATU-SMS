@@ -14,12 +14,20 @@ export const getTimetable = async (req, res, next) => {
 
 export const getTeacherTimetable = async (req, res, next) => {
   try {
-    const staffId = req.user.role === 'TEACHER' ? req.user.staff.id : req.query.staffId;
-    // Assuming req.user is populated with staff info if Teacher, or we query DB. 
-    // Usually req.user has userId. Need to fetch staffId if not present.
-    // Ideally middleware adds user.staff.
+    const staffId = req.params.staffId;
     if (!staffId) throw new Error('Staff ID required');
 
+    const timetable = await timetableService.getTeacherTimetable(staffId);
+    sendSuccess(res, timetable);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getMyTimetable = async (req, res, next) => {
+  try {
+    const staffId = req.user.staff?.id;
+    if (!staffId) throw new Error('Staff profile not found');
     const timetable = await timetableService.getTeacherTimetable(staffId);
     sendSuccess(res, timetable);
   } catch (error) {
