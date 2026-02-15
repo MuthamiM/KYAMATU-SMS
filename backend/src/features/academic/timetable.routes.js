@@ -5,7 +5,7 @@ import { isTeacher, isAdmin, isStaff, isStudent } from '../../middleware/rbac.js
 
 const router = express.Router();
 
-router.get('/', isAuth, isStaff, timetableController.getTimetable);
+router.get('/', isAuth, timetableController.getTimetable);
 router.get('/master', isAuth, isTeacher, timetableController.getMasterTimetable);
 router.get('/teacher/:staffId', isAuth, isStaff, timetableController.getTeacherTimetable);
 router.get('/my', isAuth, isTeacher, timetableController.getMyTimetable);

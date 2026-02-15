@@ -35,3 +35,13 @@ export const getAttendanceCharts = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getStudentDashboard = async (req, res, next) => {
+  try {
+    const data = await dashboardService.getStudentDashboardData(req.user.id);
+    res.json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+

@@ -19,6 +19,7 @@ import Admissions from './pages/Admissions';
 import Timetable from './pages/Timetable';
 import SystemStatus from './pages/SystemStatus';
 import Profile from './pages/Profile';
+import CoursePlanner from './pages/academic/CoursePlanner';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, user } = useAuthStore();
@@ -138,10 +139,10 @@ function App() {
           }
         />
         <Route
-          path="system-status"
+          path="course-planner"
           element={
-            <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}>
-              <SystemStatus />
+            <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'TEACHER']}>
+              <CoursePlanner />
             </ProtectedRoute>
           }
         />
@@ -149,7 +150,7 @@ function App() {
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+    </Routes >
   );
 }
 

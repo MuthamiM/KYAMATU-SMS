@@ -43,6 +43,7 @@ import {
   AreaChart,
   Legend,
 } from 'recharts';
+import StudentDashboardRedesigned from '../components/dashboard/StudentDashboardRedesigned';
 
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -491,9 +492,9 @@ function AdminDashboard({ stats, loading }) {
                 className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition cursor-pointer"
               >
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${index === 0 ? 'bg-yellow-400 text-yellow-900' :
-                    index === 1 ? 'bg-gray-300 text-gray-700' :
-                      index === 2 ? 'bg-amber-600 text-white' :
-                        'bg-gray-200 text-gray-600'
+                  index === 1 ? 'bg-gray-300 text-gray-700' :
+                    index === 2 ? 'bg-amber-600 text-white' :
+                      'bg-gray-200 text-gray-600'
                   }`}>
                   {student.rank}
                 </div>
@@ -624,6 +625,7 @@ function TeacherDashboard({ user }) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { icon: Calendar, label: 'Take Attendance', color: 'bg-blue-500', path: '/attendance' },
+              { icon: BookOpen, label: 'Course Planner', color: 'bg-indigo-500', path: '/course-planner' },
               { icon: ClipboardList, label: 'Enter Scores', color: 'bg-green-500', path: '/assessments' },
               { icon: Users, label: 'View Students', color: 'bg-purple-500', path: '/students' },
               { icon: Award, label: 'Generate Reports', color: 'bg-orange-500', path: '/reports' },
@@ -772,6 +774,7 @@ function StudentDashboard({ user }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* 
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">Subject Performance</h2>
           <div className="h-64">
@@ -786,6 +789,7 @@ function StudentDashboard({ user }) {
             </ResponsiveContainer>
           </div>
         </div>
+*/}
 
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">My Subjects</h2>
@@ -825,8 +829,12 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    if (user?.role !== 'STUDENT' && user?.role !== 'PARENT') {
+      fetchDashboardData();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
 
   const fetchDashboardData = async () => {
     try {
@@ -864,9 +872,9 @@ function Dashboard() {
       case 'BURSAR':
         return <BursarDashboard />;
       case 'STUDENT':
-        return <StudentDashboard user={user} />;
+        return <StudentDashboardRedesigned user={user} />;
       case 'PARENT':
-        return <StudentDashboard user={user} />;
+        return <StudentDashboardRedesigned user={user} />;
       default:
         return <AdminDashboard stats={stats} loading={loading} />;
     }

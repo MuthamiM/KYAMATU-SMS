@@ -6,11 +6,14 @@ import { requireRole } from '../../middleware/rbac.js';
 const router = Router();
 
 router.use(authenticate);
-router.use(requireRole('SUPER_ADMIN', 'ADMIN', 'BURSAR')); // Restrict to admin roles
 
-router.get('/summary', dashboardController.getDashboardSummary);
-router.get('/charts/students', dashboardController.getStudentCharts);
-router.get('/charts/fees', dashboardController.getFeeCharts);
-router.get('/charts/attendance', dashboardController.getAttendanceCharts);
+// Admin/Bursar roles
+router.get('/summary', requireRole('SUPER_ADMIN', 'ADMIN', 'BURSAR'), dashboardController.getDashboardSummary);
+router.get('/charts/students', requireRole('SUPER_ADMIN', 'ADMIN', 'BURSAR'), dashboardController.getStudentCharts);
+router.get('/charts/fees', requireRole('SUPER_ADMIN', 'ADMIN', 'BURSAR'), dashboardController.getFeeCharts);
+router.get('/charts/attendance', requireRole('SUPER_ADMIN', 'ADMIN', 'BURSAR'), dashboardController.getAttendanceCharts);
+
+// Student role
+router.get('/student', requireRole('STUDENT'), dashboardController.getStudentDashboard);
 
 export default router;

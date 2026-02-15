@@ -461,6 +461,28 @@ model AuditLog {
   @@index([createdAt])
 }
 
+model CourseOutline {
+  id        String   @id @default(uuid())
+  title     String?  // Optional title, e.g. "Term 1 Syllabus"
+  content   Json     // Stores modules: [{ title, date, description, type: 'CAT'|'LESSON'|'ASSIGNMENT' }]
+  classId   String
+  subjectId String
+  teacherId String
+  termId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacher   Staff    @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  term      Term     @relation(fields: [termId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, subjectId, termId]) // One outline per subject per class per term
+  @@index([classId])
+  @@index([subjectId])
+  @@index([teacherId])
+}
+
 enum Role {
   SUPER_ADMIN
   ADMIN
@@ -502,3 +524,4 @@ enum PaymentStatus {
   FAILED
   REFUNDED
 }
+

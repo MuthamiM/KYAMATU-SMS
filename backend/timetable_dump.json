@@ -1,0 +1,453 @@
+[
+  {
+    "id": "1e2add9a-64f4-4b25-8af0-dde99fdfe0f8",
+    "dayOfWeek": 1,
+    "startTime": "08:00",
+    "endTime": "08:40",
+    "classId": "cde2f5a6-4c23-4b91-b1c4-3a0d3ab18c86",
+    "subjectId": "e8216b48-3a2a-4718-a43f-55a7de0116ac",
+    "teacherId": "aa56ed22-5510-4acd-9764-7e0056f165df",
+    "createdAt": "2026-02-15T02:44:44.875Z",
+    "subject": {
+      "id": "e8216b48-3a2a-4718-a43f-55a7de0116ac",
+      "name": "Science and Technology",
+      "code": "SCI4",
+      "gradeId": "caf60a12-0e80-44e7-8269-9a109c41b6c6",
+      "createdAt": "2026-02-15T02:31:34.810Z"
+    },
+    "class": {
+      "id": "cde2f5a6-4c23-4b91-b1c4-3a0d3ab18c86",
+      "name": "Grade 4 West",
+      "capacity": 40,
+      "gradeId": "caf60a12-0e80-44e7-8269-9a109c41b6c6",
+      "streamId": "896d542f-0eed-45f6-aca3-f7121e6b9d34",
+      "academicYearId": "09b59923-709a-42b7-b69a-3f4566e6a227",
+      "createdAt": "2026-02-15T02:31:37.073Z",
+      "grade": {
+        "id": "caf60a12-0e80-44e7-8269-9a109c41b6c6",
+        "name": "Grade 4",
+        "level": 4,
+        "createdAt": "2026-02-15T02:31:25.286Z"
+      },
+      "stream": {
+        "id": "896d542f-0eed-45f6-aca3-f7121e6b9d34",
+        "name": "West",
+        "createdAt": "2026-02-15T02:31:25.879Z"
+      }
+    },
+    "teacher": {
+      "firstName": "Alice",
+      "lastName": "Kinya"
+    }
+  },
+  {
+    "id": "9e6c948f-c6a5-4761-b35a-6a9087538658",
+    "dayOfWeek": 1,
+    "startTime": "09:20",
+    "endTime": "10:00",
+    "classId": "d90baec2-da39-4a13-8930-3ee24ca5b3d8",
+    "subjectId": "892474b7-7b31-4ad1-82d6-e3782be7f444",
+    "teacherId": "aa56ed22-5510-4acd-9764-7e0056f165df",
+    "createdAt": "2026-02-15T02:44:44.875Z",
+    "subject": {
+      "id": "892474b7-7b31-4ad1-82d6-e3782be7f444",
+      "name": "Kiswahili",
+      "code": "KIS5",
+      "gradeId": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+      "createdAt": "2026-02-15T02:31:38.622Z"
+    },
+    "class": {
+      "id": "d90baec2-da39-4a13-8930-3ee24ca5b3d8",
+      "name": "Grade 5 East",
+      "capacity": 40,
+      "gradeId": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+      "streamId": "65e2f93d-23ca-493a-acff-38fd9b811c65",
+      "academicYearId": "09b59923-709a-42b7-b69a-3f4566e6a227",
+      "createdAt": "2026-02-15T02:31:39.693Z",
+      "grade": {
+        "id": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+        "name": "Grade 5",
+        "level": 5,
+        "createdAt": "2026-02-15T02:31:25.405Z"
+      },
+      "stream": {
+        "id": "65e2f93d-23ca-493a-acff-38fd9b811c65",
+        "name": "East",
+        "createdAt": "2026-02-15T02:31:25.642Z"
+      }
+    },
+    "teacher": {
+      "firstName": "Alice",
+      "lastName": "Kinya"
+    }
+  },
+  {
+    "id": "17e9d83d-9c6b-47fe-8d7f-30ddb502d4db",
+    "dayOfWeek": 1,
+    "startTime": "11:00",
+    "endTime": "11:40",
+    "classId": "d90baec2-da39-4a13-8930-3ee24ca5b3d8",
+    "subjectId": "400fa0f6-9a44-45e5-91f9-fa16d9a39dbc",
+    "teacherId": "aa56ed22-5510-4acd-9764-7e0056f165df",
+    "createdAt": "2026-02-15T02:44:44.875Z",
+    "subject": {
+      "id": "400fa0f6-9a44-45e5-91f9-fa16d9a39dbc",
+      "name": "Social Studies",
+      "code": "SST5",
+      "gradeId": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+      "createdAt": "2026-02-15T02:31:38.860Z"
+    },
+    "class": {
+      "id": "d90baec2-da39-4a13-8930-3ee24ca5b3d8",
+      "name": "Grade 5 East",
+      "capacity": 40,
+      "gradeId": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+      "streamId": "65e2f93d-23ca-493a-acff-38fd9b811c65",
+      "academicYearId": "09b59923-709a-42b7-b69a-3f4566e6a227",
+      "createdAt": "2026-02-15T02:31:39.693Z",
+      "grade": {
+        "id": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+        "name": "Grade 5",
+        "level": 5,
+        "createdAt": "2026-02-15T02:31:25.405Z"
+      },
+      "stream": {
+        "id": "65e2f93d-23ca-493a-acff-38fd9b811c65",
+        "name": "East",
+        "createdAt": "2026-02-15T02:31:25.642Z"
+      }
+    },
+    "teacher": {
+      "firstName": "Alice",
+      "lastName": "Kinya"
+    }
+  },
+  {
+    "id": "e59d5992-a87d-432e-a227-c13f455a3d63",
+    "dayOfWeek": 2,
+    "startTime": "08:40",
+    "endTime": "09:20",
+    "classId": "cde2f5a6-4c23-4b91-b1c4-3a0d3ab18c86",
+    "subjectId": "e8216b48-3a2a-4718-a43f-55a7de0116ac",
+    "teacherId": "aa56ed22-5510-4acd-9764-7e0056f165df",
+    "createdAt": "2026-02-15T02:44:44.875Z",
+    "subject": {
+      "id": "e8216b48-3a2a-4718-a43f-55a7de0116ac",
+      "name": "Science and Technology",
+      "code": "SCI4",
+      "gradeId": "caf60a12-0e80-44e7-8269-9a109c41b6c6",
+      "createdAt": "2026-02-15T02:31:34.810Z"
+    },
+    "class": {
+      "id": "cde2f5a6-4c23-4b91-b1c4-3a0d3ab18c86",
+      "name": "Grade 4 West",
+      "capacity": 40,
+      "gradeId": "caf60a12-0e80-44e7-8269-9a109c41b6c6",
+      "streamId": "896d542f-0eed-45f6-aca3-f7121e6b9d34",
+      "academicYearId": "09b59923-709a-42b7-b69a-3f4566e6a227",
+      "createdAt": "2026-02-15T02:31:37.073Z",
+      "grade": {
+        "id": "caf60a12-0e80-44e7-8269-9a109c41b6c6",
+        "name": "Grade 4",
+        "level": 4,
+        "createdAt": "2026-02-15T02:31:25.286Z"
+      },
+      "stream": {
+        "id": "896d542f-0eed-45f6-aca3-f7121e6b9d34",
+        "name": "West",
+        "createdAt": "2026-02-15T02:31:25.879Z"
+      }
+    },
+    "teacher": {
+      "firstName": "Alice",
+      "lastName": "Kinya"
+    }
+  },
+  {
+    "id": "be812664-36a0-4586-93b0-c54b076aec42",
+    "dayOfWeek": 2,
+    "startTime": "11:40",
+    "endTime": "12:20",
+    "classId": "d90baec2-da39-4a13-8930-3ee24ca5b3d8",
+    "subjectId": "400fa0f6-9a44-45e5-91f9-fa16d9a39dbc",
+    "teacherId": "aa56ed22-5510-4acd-9764-7e0056f165df",
+    "createdAt": "2026-02-15T02:44:44.875Z",
+    "subject": {
+      "id": "400fa0f6-9a44-45e5-91f9-fa16d9a39dbc",
+      "name": "Social Studies",
+      "code": "SST5",
+      "gradeId": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+      "createdAt": "2026-02-15T02:31:38.860Z"
+    },
+    "class": {
+      "id": "d90baec2-da39-4a13-8930-3ee24ca5b3d8",
+      "name": "Grade 5 East",
+      "capacity": 40,
+      "gradeId": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+      "streamId": "65e2f93d-23ca-493a-acff-38fd9b811c65",
+      "academicYearId": "09b59923-709a-42b7-b69a-3f4566e6a227",
+      "createdAt": "2026-02-15T02:31:39.693Z",
+      "grade": {
+        "id": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+        "name": "Grade 5",
+        "level": 5,
+        "createdAt": "2026-02-15T02:31:25.405Z"
+      },
+      "stream": {
+        "id": "65e2f93d-23ca-493a-acff-38fd9b811c65",
+        "name": "East",
+        "createdAt": "2026-02-15T02:31:25.642Z"
+      }
+    },
+    "teacher": {
+      "firstName": "Alice",
+      "lastName": "Kinya"
+    }
+  },
+  {
+    "id": "a657351e-c118-44cb-8528-795c91dd6e4d",
+    "dayOfWeek": 2,
+    "startTime": "15:20",
+    "endTime": "16:00",
+    "classId": "d90baec2-da39-4a13-8930-3ee24ca5b3d8",
+    "subjectId": "892474b7-7b31-4ad1-82d6-e3782be7f444",
+    "teacherId": "aa56ed22-5510-4acd-9764-7e0056f165df",
+    "createdAt": "2026-02-15T02:44:44.875Z",
+    "subject": {
+      "id": "892474b7-7b31-4ad1-82d6-e3782be7f444",
+      "name": "Kiswahili",
+      "code": "KIS5",
+      "gradeId": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+      "createdAt": "2026-02-15T02:31:38.622Z"
+    },
+    "class": {
+      "id": "d90baec2-da39-4a13-8930-3ee24ca5b3d8",
+      "name": "Grade 5 East",
+      "capacity": 40,
+      "gradeId": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+      "streamId": "65e2f93d-23ca-493a-acff-38fd9b811c65",
+      "academicYearId": "09b59923-709a-42b7-b69a-3f4566e6a227",
+      "createdAt": "2026-02-15T02:31:39.693Z",
+      "grade": {
+        "id": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+        "name": "Grade 5",
+        "level": 5,
+        "createdAt": "2026-02-15T02:31:25.405Z"
+      },
+      "stream": {
+        "id": "65e2f93d-23ca-493a-acff-38fd9b811c65",
+        "name": "East",
+        "createdAt": "2026-02-15T02:31:25.642Z"
+      }
+    },
+    "teacher": {
+      "firstName": "Alice",
+      "lastName": "Kinya"
+    }
+  },
+  {
+    "id": "d273efcb-228e-4101-bdd4-60dcadaed248",
+    "dayOfWeek": 3,
+    "startTime": "08:00",
+    "endTime": "08:40",
+    "classId": "cde2f5a6-4c23-4b91-b1c4-3a0d3ab18c86",
+    "subjectId": "e8216b48-3a2a-4718-a43f-55a7de0116ac",
+    "teacherId": "aa56ed22-5510-4acd-9764-7e0056f165df",
+    "createdAt": "2026-02-15T02:44:44.875Z",
+    "subject": {
+      "id": "e8216b48-3a2a-4718-a43f-55a7de0116ac",
+      "name": "Science and Technology",
+      "code": "SCI4",
+      "gradeId": "caf60a12-0e80-44e7-8269-9a109c41b6c6",
+      "createdAt": "2026-02-15T02:31:34.810Z"
+    },
+    "class": {
+      "id": "cde2f5a6-4c23-4b91-b1c4-3a0d3ab18c86",
+      "name": "Grade 4 West",
+      "capacity": 40,
+      "gradeId": "caf60a12-0e80-44e7-8269-9a109c41b6c6",
+      "streamId": "896d542f-0eed-45f6-aca3-f7121e6b9d34",
+      "academicYearId": "09b59923-709a-42b7-b69a-3f4566e6a227",
+      "createdAt": "2026-02-15T02:31:37.073Z",
+      "grade": {
+        "id": "caf60a12-0e80-44e7-8269-9a109c41b6c6",
+        "name": "Grade 4",
+        "level": 4,
+        "createdAt": "2026-02-15T02:31:25.286Z"
+      },
+      "stream": {
+        "id": "896d542f-0eed-45f6-aca3-f7121e6b9d34",
+        "name": "West",
+        "createdAt": "2026-02-15T02:31:25.879Z"
+      }
+    },
+    "teacher": {
+      "firstName": "Alice",
+      "lastName": "Kinya"
+    }
+  },
+  {
+    "id": "0e9d476e-0ec3-41b6-b697-97d12f9aedef",
+    "dayOfWeek": 3,
+    "startTime": "08:40",
+    "endTime": "09:20",
+    "classId": "d90baec2-da39-4a13-8930-3ee24ca5b3d8",
+    "subjectId": "892474b7-7b31-4ad1-82d6-e3782be7f444",
+    "teacherId": "aa56ed22-5510-4acd-9764-7e0056f165df",
+    "createdAt": "2026-02-15T02:44:44.875Z",
+    "subject": {
+      "id": "892474b7-7b31-4ad1-82d6-e3782be7f444",
+      "name": "Kiswahili",
+      "code": "KIS5",
+      "gradeId": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+      "createdAt": "2026-02-15T02:31:38.622Z"
+    },
+    "class": {
+      "id": "d90baec2-da39-4a13-8930-3ee24ca5b3d8",
+      "name": "Grade 5 East",
+      "capacity": 40,
+      "gradeId": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+      "streamId": "65e2f93d-23ca-493a-acff-38fd9b811c65",
+      "academicYearId": "09b59923-709a-42b7-b69a-3f4566e6a227",
+      "createdAt": "2026-02-15T02:31:39.693Z",
+      "grade": {
+        "id": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+        "name": "Grade 5",
+        "level": 5,
+        "createdAt": "2026-02-15T02:31:25.405Z"
+      },
+      "stream": {
+        "id": "65e2f93d-23ca-493a-acff-38fd9b811c65",
+        "name": "East",
+        "createdAt": "2026-02-15T02:31:25.642Z"
+      }
+    },
+    "teacher": {
+      "firstName": "Alice",
+      "lastName": "Kinya"
+    }
+  },
+  {
+    "id": "c366b1a5-1e81-4326-a410-6c1e62312f33",
+    "dayOfWeek": 3,
+    "startTime": "10:20",
+    "endTime": "11:00",
+    "classId": "d90baec2-da39-4a13-8930-3ee24ca5b3d8",
+    "subjectId": "892474b7-7b31-4ad1-82d6-e3782be7f444",
+    "teacherId": "aa56ed22-5510-4acd-9764-7e0056f165df",
+    "createdAt": "2026-02-15T02:44:44.875Z",
+    "subject": {
+      "id": "892474b7-7b31-4ad1-82d6-e3782be7f444",
+      "name": "Kiswahili",
+      "code": "KIS5",
+      "gradeId": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+      "createdAt": "2026-02-15T02:31:38.622Z"
+    },
+    "class": {
+      "id": "d90baec2-da39-4a13-8930-3ee24ca5b3d8",
+      "name": "Grade 5 East",
+      "capacity": 40,
+      "gradeId": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+      "streamId": "65e2f93d-23ca-493a-acff-38fd9b811c65",
+      "academicYearId": "09b59923-709a-42b7-b69a-3f4566e6a227",
+      "createdAt": "2026-02-15T02:31:39.693Z",
+      "grade": {
+        "id": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+        "name": "Grade 5",
+        "level": 5,
+        "createdAt": "2026-02-15T02:31:25.405Z"
+      },
+      "stream": {
+        "id": "65e2f93d-23ca-493a-acff-38fd9b811c65",
+        "name": "East",
+        "createdAt": "2026-02-15T02:31:25.642Z"
+      }
+    },
+    "teacher": {
+      "firstName": "Alice",
+      "lastName": "Kinya"
+    }
+  },
+  {
+    "id": "c4870998-4125-4626-852e-204b5b671b7e",
+    "dayOfWeek": 3,
+    "startTime": "14:00",
+    "endTime": "14:40",
+    "classId": "d90baec2-da39-4a13-8930-3ee24ca5b3d8",
+    "subjectId": "400fa0f6-9a44-45e5-91f9-fa16d9a39dbc",
+    "teacherId": "aa56ed22-5510-4acd-9764-7e0056f165df",
+    "createdAt": "2026-02-15T02:44:44.875Z",
+    "subject": {
+      "id": "400fa0f6-9a44-45e5-91f9-fa16d9a39dbc",
+      "name": "Social Studies",
+      "code": "SST5",
+      "gradeId": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+      "createdAt": "2026-02-15T02:31:38.860Z"
+    },
+    "class": {
+      "id": "d90baec2-da39-4a13-8930-3ee24ca5b3d8",
+      "name": "Grade 5 East",
+      "capacity": 40,
+      "gradeId": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+      "streamId": "65e2f93d-23ca-493a-acff-38fd9b811c65",
+      "academicYearId": "09b59923-709a-42b7-b69a-3f4566e6a227",
+      "createdAt": "2026-02-15T02:31:39.693Z",
+      "grade": {
+        "id": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+        "name": "Grade 5",
+        "level": 5,
+        "createdAt": "2026-02-15T02:31:25.405Z"
+      },
+      "stream": {
+        "id": "65e2f93d-23ca-493a-acff-38fd9b811c65",
+        "name": "East",
+        "createdAt": "2026-02-15T02:31:25.642Z"
+      }
+    },
+    "teacher": {
+      "firstName": "Alice",
+      "lastName": "Kinya"
+    }
+  },
+  {
+    "id": "23790d5a-b3ad-42f0-8e8b-c9f68d337118",
+    "dayOfWeek": 3,
+    "startTime": "14:40",
+    "endTime": "15:20",
+    "classId": "d90baec2-da39-4a13-8930-3ee24ca5b3d8",
+    "subjectId": "892474b7-7b31-4ad1-82d6-e3782be7f444",
+    "teacherId": "aa56ed22-5510-4acd-9764-7e0056f165df",
+    "createdAt": "2026-02-15T02:44:44.875Z",
+    "subject": {
+      "id": "892474b7-7b31-4ad1-82d6-e3782be7f444",
+      "name": "Kiswahili",
+      "code": "KIS5",
+      "gradeId": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+      "createdAt": "2026-02-15T02:31:38.622Z"
+    },
+    "class": {
+      "id": "d90baec2-da39-4a13-8930-3ee24ca5b3d8",
+      "name": "Grade 5 East",
+      "capacity": 40,
+      "gradeId": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+      "streamId": "65e2f93d-23ca-493a-acff-38fd9b811c65",
+      "academicYearId": "09b59923-709a-42b7-b69a-3f4566e6a227",
+      "createdAt": "2026-02-15T02:31:39.693Z",
+      "grade": {
+        "id": "01cd9b1f-9e57-41ab-8486-d62d89cef037",
+        "name": "Grade 5",
+        "level": 5,
+        "createdAt": "2026-02-15T02:31:25.405Z"
+      },
+      "stream": {
+        "id": "65e2f93d-23ca-493a-acff-38fd9b811c65",
+        "name": "East",
+        "createdAt": "2026-02-15T02:31:25.642Z"
+      }
+    },
+    "teacher": {
+      "firstName": "Alice",
+      "lastName": "Kinya"
+    }
+  }
+]
