@@ -112,9 +112,22 @@ const StudentDashboardRedesigned = ({ user }) => {
                     {/* Header GPA Card */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="bg-white rounded-[32px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 flex flex-col justify-between">
-                            <h3 className="text-sm font-bold text-gray-800 mb-6">Great GPA! keep it up!, {student?.firstName}</h3>
+                            <div className="flex justify-between items-start mb-6">
+                                <div>
+                                    <h3 className="text-sm font-bold text-gray-800">Great GPA! keep it up!, {student?.firstName}</h3>
+                                    {data?.classTeacher && (
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">
+                                            Class Teacher: {data.classTeacher.firstName} {data.classTeacher.lastName}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase">Class</p>
+                                    <p className="text-xs font-bold text-gray-900">{student?.class?.name}</p>
+                                </div>
+                            </div>
                             <div className="flex justify-around items-end">
-                                <CircularProgress value={gpa} max={10} label="Total GPA" sublabel="6.3/7" color="#475569" />
+                                <CircularProgress value={gpa} max={10} label="Total GPA" sublabel={`${gpa}/10`} color="#475569" />
                                 <CircularProgress value={72} max={100} label="Completed credits" sublabel="credits" color="#475569" />
                             </div>
                         </div>
@@ -166,18 +179,29 @@ const StudentDashboardRedesigned = ({ user }) => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="space-y-0 relative">
-                                {[8, 9, 10, 11, 12].map(time => (
-                                    <div key={time} className="relative h-16 border-t border-gray-50 flex items-start pt-2">
-                                        <span className="text-[10px] font-bold text-gray-300 uppercase w-12">{time}AM</span>
-                                        {timetable?.find(s => parseInt(s.startTime) === time) && (
-                                            <div className="absolute left-16 right-0 top-1 p-3 bg-[#f8fafc] rounded-xl border-l-4 border-[#99CBB9] group cursor-pointer hover:shadow-md transition-all">
-                                                <p className="text-xs font-bold text-gray-900">{timetable.find(s => parseInt(s.startTime) === time).subject.name}</p>
-                                                <p className="text-[10px] text-gray-500">Room 302 | {time}:00 - {time + 1}:00</p>
+                            <div className="space-y-4">
+                                {timetable?.length > 0 ? (
+                                    timetable.map((slot, idx) => (
+                                        <div key={idx} className="flex items-start gap-4 p-4 bg-[#f8fafc] rounded-2xl border-l-4 border-[#99CBB9] group cursor-pointer hover:shadow-md transition-all">
+                                            <div className="w-12 pt-1">
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase leading-none">{slot.startTime}</p>
+                                                <p className="text-[8px] text-gray-300 uppercase mt-0.5">{slot.endTime}</p>
                                             </div>
-                                        )}
+                                            <div className="flex-1">
+                                                <p className="text-xs font-bold text-gray-900">{slot.subject.name}</p>
+                                                <p className="text-[10px] text-gray-500">
+                                                    {slot.teacher ? `${slot.teacher.firstName} ${slot.teacher.lastName}` : 'TBA'} | {slot.room || 'Room TBA'}
+                                                </p>
+                                            </div>
+                                            <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-teal-600 self-center" />
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="py-8 text-center bg-gray-50 rounded-2xl">
+                                        <CalendarIcon className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                                        <p className="text-xs font-bold text-gray-400 uppercase">No more classes today</p>
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </div>
 

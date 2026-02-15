@@ -171,6 +171,14 @@ export const getStudentDashboardData = async (userId) => {
             include: {
               subject: true
             }
+          },
+          teacherAssignments: {
+            where: { isClassTeacher: true },
+            include: {
+              staff: {
+                select: { firstName: true, lastName: true }
+              }
+            }
           }
         }
       }
@@ -184,15 +192,25 @@ export const getStudentDashboardData = async (userId) => {
     orderBy: { startDate: 'desc' }
   });
 
-  // 1. Timetable Slots
+  // Calculate current Day of Week (0-6, where 0 is Sunday, but our timetable might use 1-7 or 0-6)
+  // Let's assume dayOfWeek Int where 1=Monday, ..., 7=Sunday
+  const today = new Date();
+  const dayOfWeek = today.getDay() === 0 ? 7 : today.getDay();
+
+  // 1. Timetable Slots (Brief - Today only, sorted by time)
   const timetable = await prisma.timetableSlot.findMany({
-    where: { classId: student.classId },
+    where: {
+      classId: student.classId,
+      dayOfWeek: dayOfWeek
+    },
     include: {
       subject: true,
       teacher: {
         select: { firstName: true, lastName: true }
       }
-    }
+    },
+    orderBy: { startTime: 'asc' },
+    take: 6 // Brief view
   });
 
   // 2. Exam Scores (Audit)
@@ -212,7 +230,7 @@ export const getStudentDashboardData = async (userId) => {
     orderBy: { createdAt: 'desc' }
   });
 
-  // 4. Attendance Summary (This termite)
+  // 4. Attendance Summary (This term)
   const attendance = await prisma.attendance.groupBy({
     by: ['status'],
     where: { studentId: student.id, termId: term?.id },
@@ -241,6 +259,7 @@ export const getStudentDashboardData = async (userId) => {
 
   return {
     student,
+    classTeacher: student.class?.teacherAssignments?.[0]?.staff || null,
     timetable,
     scores: scores.map(s => ({
       id: s.id,
