@@ -97,6 +97,33 @@ function Timetable() {
     }
   };
 
+  const fetchTimetable = async () => {
+    if (!selectedClassId && viewMode === 'class') {
+      setTimetable([]);
+      return;
+    }
+    if (!selectedTeacherId && viewMode === 'teacher') {
+      setTimetable([]);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let res;
+      if (viewMode === 'class') {
+        res = await api.get(`/timetable?classId=${selectedClassId}`);
+      } else if (viewMode === 'teacher') {
+        res = await api.get(`/timetable/teacher/${selectedTeacherId}`);
+      }
+      setTimetable(res?.data?.data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to fetch timetable');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDownloadMaster = async () => {
     try {
       toast.loading("Generating Master Timetable...");
