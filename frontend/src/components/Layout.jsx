@@ -20,18 +20,19 @@ import {
   GraduationCap,
   School,
   Calendar,
+  Search,
 } from 'lucide-react';
 
 const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { path: '/assessments', icon: ClipboardList, label: 'Assessments', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'STUDENT'] },
+  { path: '/reports', icon: FileText, label: 'Reports', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'BURSAR', 'STUDENT'] },
+  { path: '/timetable', icon: Calendar, label: 'Timetable', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'STUDENT'] },
   { path: '/students', icon: Users, label: 'Students', roles: ['SUPER_ADMIN', 'ADMIN'] },
   { path: '/admissions', icon: UserPlus, label: 'Admissions', roles: ['SUPER_ADMIN', 'ADMIN'] },
   { path: '/staff', icon: UserCog, label: 'Staff', roles: ['SUPER_ADMIN', 'ADMIN'] },
   { path: '/classes', icon: BookOpen, label: 'Classes', roles: ['SUPER_ADMIN', 'ADMIN'] },
   { path: '/attendance', icon: CalendarCheck, label: 'Attendance', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER'] },
-  { path: '/timetable', icon: Calendar, label: 'Timetable', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER'] },
-  { path: '/assessments', icon: ClipboardList, label: 'Assessments', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'STUDENT'] },
-  { path: '/reports', icon: FileText, label: 'Reports', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'BURSAR', 'STUDENT'] },
   { path: '/fees', icon: Wallet, label: 'Fees', roles: ['SUPER_ADMIN', 'ADMIN', 'BURSAR'] },
   { path: '/announcements', icon: Bell, label: 'Announcements', roles: ['SUPER_ADMIN', 'ADMIN'] },
   { path: '/settings', icon: Settings, label: 'Settings', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'BURSAR'] },
@@ -148,118 +149,65 @@ function Layout() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
-      {/* Mobile Backdrop */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800 transform transition-transform duration-200 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } print:hidden flex flex-col`}>
-        <div className="flex h-20 items-center px-6">
-          <Link to="/dashboard" className="flex items-center gap-2 font-bold text-xl text-gray-900 dark:text-white hover:opacity-80 transition-opacity">
-            <span className="text-xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
-              Kyamatu Primary
-            </span>
-            <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full font-medium">v1.0</span>
-          </Link>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="ml-auto p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 lg:hidden"
-          >
-            <X className="h-6 w-6" />
-          </button>
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-900 flex">
+      {/* Sidebar - Slim and Teal for Students */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 transition-all duration-300 transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } ${user?.role === 'STUDENT' ? 'w-20 bg-[#99CBB9]' : 'w-64 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800'} flex flex-col items-center py-6`}
+      >
+        <div className="mb-10">
+          <GraduationCap className={`w-8 h-8 ${user?.role === 'STUDENT' ? 'text-white' : 'text-primary-600'}`} />
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4 px-4">
-          <div className="mb-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-            Menu
-          </div>
-          <ul className="space-y-1 mb-8">
-            {filteredNavItems.filter(item => !['Settings'].includes(item.label)).map((item) => {
-              const Icon = item.icon;
-              const active = location.pathname === item.path;
-              return (
-                <li key={item.path}>
-                  <Link
-                    to={item.path}
-                    className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${active
-                      ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
-                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-white'
-                      }`}
-                  >
-                    <Icon className={`h-5 w-5 ${active ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`} />
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-
-          <div className="mb-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-            Other
-          </div>
-          <ul className="space-y-1">
-            <li key="profile">
+        <nav className="flex-1 w-full space-y-4 px-2">
+          {filteredNavItems.map((item) => {
+            const Icon = item.icon;
+            const active = location.pathname === item.path;
+            return (
               <Link
-                to="/profile"
-                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${location.pathname === '/profile'
-                  ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-white'
+                key={item.path}
+                to={item.path}
+                title={item.label}
+                className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all ${active
+                  ? (user?.role === 'STUDENT' ? 'bg-white/20 text-white' : 'bg-primary-50 text-primary-600')
+                  : (user?.role === 'STUDENT' ? 'text-white/70 hover:bg-white/10 hover:text-white' : 'text-gray-500 hover:bg-gray-50')
                   }`}
               >
-                <UserCog className={`h-5 w-5 ${location.pathname === '/profile' ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`} />
-                Profile
+                <Icon className="w-6 h-6" />
+                {user?.role !== 'STUDENT' && <span className="text-xs mt-1">{item.label}</span>}
               </Link>
-            </li>
-            {filteredNavItems.filter(item => ['Settings'].includes(item.label)).map((item) => {
-              const Icon = item.icon;
-              const active = location.pathname === item.path;
-              return (
-                <li key={item.path}>
-                  <Link
-                    to={item.path}
-                    className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${active
-                      ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
-                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-white'
-                      }`}
-                  >
-                    <Icon className={`h-5 w-5 ${active ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`} />
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+            );
+          })}
         </nav>
 
-        <div className="p-4 mt-auto">
-          {/* User profile removed as per request */}
+        <div className="mt-auto">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className={`p-2 rounded-lg ${user?.role === 'STUDENT' ? 'text-white/70 hover:bg-white/10' : 'text-gray-400'}`}
+          >
+            <Menu className="w-6 h-6" />
+          </button>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className={`flex min-h-screen flex-col transition-all duration-200 ease-in-out ${sidebarOpen ? 'lg:pl-64' : 'lg:pl-0'} print:pl-0`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${user?.role === 'STUDENT' ? 'lg:ml-20' : sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}`}>
         {/* Top Header */}
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 shadow-sm print:hidden">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="rounded-lg p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between px-6 bg-white border-b border-gray-100">
+          <div className="flex items-center flex-1 max-w-md bg-gray-50 rounded-lg px-4 py-2 border border-gray-100">
+            <Search className="w-4 h-4 text-gray-400 mr-2" />
+            <input type="text" placeholder="Search..." className="bg-transparent border-none outline-none text-sm w-full" />
+          </div>
 
-          <div className="flex items-center gap-4 ml-auto">
+          <div className="flex items-center gap-6">
+            <School className="w-5 h-5 text-gray-500 cursor-pointer hover:text-teal-600" />
             <NotificationDropdown />
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700"
-            >
-              <LogOut className="h-5 w-5" />
-              <span className="hidden sm:inline">Logout</span>
-            </button>
+            <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
+              <span className="text-sm font-medium text-gray-700 hidden sm:inline">{user?.staff?.firstName || user?.student?.firstName || user?.email.split('@')[0]}</span>
+              <div onClick={handleLogout} className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-200">
+                <UserCog className="w-4 h-4 text-gray-600" />
+              </div>
+            </div>
           </div>
         </header>
 

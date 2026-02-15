@@ -3,7 +3,7 @@ import {
     BookOpen, Calendar as CalendarIcon, Award, Download,
     ChevronRight, ExternalLink, Clock, User, Bell, Search,
     Layout, Book, MessageSquare, Menu, X, Link as LinkIcon,
-    FileText
+    FileText, Plus, School, ChevronLeft
 } from 'lucide-react';
 import {
     ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
@@ -12,6 +12,48 @@ import {
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import CourseOutlineView from './CourseOutlineView';
+
+const CircularProgress = ({ value, max, label, sublabel, color = '#99CBB9' }) => {
+    const radius = 35;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (value / max) * circumference;
+
+    return (
+        <div className="flex flex-col items-center">
+            <div className="relative w-24 h-24">
+                <svg className="w-full h-full transform -rotate-90">
+                    <circle
+                        cx="48"
+                        cy="48"
+                        r={radius}
+                        stroke="#f1f5f9"
+                        strokeWidth="8"
+                        fill="transparent"
+                    />
+                    <circle
+                        cx="48"
+                        cy="48"
+                        r={radius}
+                        stroke={color}
+                        strokeWidth="8"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={offset}
+                        strokeLinecap="round"
+                        fill="transparent"
+                        className="transition-all duration-1000 ease-out"
+                    />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-xl font-bold text-gray-900">{value}</span>
+                </div>
+            </div>
+            <div className="mt-2 text-center">
+                <p className="text-[10px] font-bold text-gray-900 uppercase tracking-tight">{label}</p>
+                <p className="text-[10px] text-gray-400 leading-none">{sublabel}</p>
+            </div>
+        </div>
+    );
+};
 
 const StudentDashboardRedesigned = ({ user }) => {
     const [data, setData] = useState(null);
@@ -30,7 +72,7 @@ const StudentDashboardRedesigned = ({ user }) => {
             setData(res.data.data);
         } catch (error) {
             console.error('Error fetching student dashboard:', error);
-            toast.error('Failed to load dashboard data');
+            // toast.error('Failed to load dashboard data');
         } finally {
             setLoading(false);
         }
@@ -51,248 +93,158 @@ const StudentDashboardRedesigned = ({ user }) => {
         }
     };
 
-    const generateReport = async () => {
-        try {
-            const termRes = await api.get('/academic/terms');
-            const termId = termRes.data.data[0]?.id;
-            if (!termId) return toast.error('No active term');
-
-            const res = await api.post('/reports/generate', { studentId: data.student.id, termId });
-            const report = res.data.data;
-
-            const win = window.open('', '_blank');
-            // Simplified version of the Reports.jsx template
-            win.document.write(`
-        <html>
-          <head><title>Report - ${data.student.firstName}</title>
-          <style>body{font-family:sans-serif;padding:40px} table{width:100%;border-collapse:collapse} th,td{border:1px solid #ddd;padding:8px;text-align:left} th{background:#f4f4f4}</style>
-          </head>
-          <body>
-            <h1>Report Card: ${data.student.firstName} ${data.student.lastName}</h1>
-            <p>Class: ${data.student.class.name} | Term: ${report.term.name}</p>
-            <table>
-              <thead><tr><th>Subject</th><th>Score</th><th>Grade</th><th>Remarks</th></tr></thead>
-              <tbody>
-                ${report.subjects.map(s => `<tr><td>${s.subjectName}</td><td>${s.average}%</td><td>${s.grade}</td><td>${s.remark}</td></tr>`).join('')}
-              </tbody>
-            </table>
-            <h3>Average: ${report.summary.averageScore}% | Rank: ${report.summary.rank || '-'} / ${report.summary.outOf}</h3>
-            <script>window.onload = () => window.print()</script>
-          </body>
-        </html>
-      `);
-            win.document.close();
-        } catch (e) { toast.error('Report generation failed'); }
-    };
-
-    const generateExamAudit = async () => {
-        // Similar to generateReport but with more detail
-        toast.success('Generating official audit...');
-        generateReport(); // For now, reusing report card as "Audit"
-    };
-
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
-                <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-8 h-8 border-4 border-[#99CBB9] border-t-transparent rounded-full animate-spin"></div>
             </div>
         );
     }
 
-    const { student, timetable, scores, fees, attendance, courses } = data || {};
+    const { student, timetable, scores, courses } = data || {};
+    const gpa = (scores?.reduce((acc, s) => acc + s.score, 0) / (scores?.length || 1) / 10).toFixed(1);
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            {/* Top Header Card */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-8 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
-                    <div className="relative">
-                        <div className="w-32 h-32 rounded-full bg-primary-100 flex items-center justify-center border-4 border-white shadow-lg">
-                            <span className="text-4xl">🎓</span>
-                        </div>
-                    </div>
-                    <div className="flex-1 text-center md:text-left z-10">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-2">Great Progress, {student?.firstName}!</h1>
-                        <p className="text-gray-500 text-lg mb-6">Stay focused and keep achieving your goals. You're doing excellent!</p>
-                        <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                            <div className="bg-blue-50 px-4 py-2 rounded-xl">
-                                <p className="text-xs text-blue-600 font-bold uppercase tracking-wider">Academic Year</p>
-                                <p className="text-lg font-bold text-blue-900">2026</p>
-                            </div>
-                            <div className="bg-purple-50 px-4 py-2 rounded-xl">
-                                <p className="text-xs text-purple-600 font-bold uppercase tracking-wider">Class</p>
-                                <p className="text-lg font-bold text-purple-900">{student?.class?.name || 'N/A'}</p>
+        <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Left Side (8/12) */}
+                <div className="lg:col-span-8 space-y-8">
+                    {/* Header GPA Card */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="bg-white rounded-[32px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 flex flex-col justify-between">
+                            <h3 className="text-sm font-bold text-gray-800 mb-6">Great GPA! keep it up!, {student?.firstName}</h3>
+                            <div className="flex justify-around items-end">
+                                <CircularProgress value={gpa} max={10} label="Total GPA" sublabel="6.3/7" color="#475569" />
+                                <CircularProgress value={72} max={100} label="Completed credits" sublabel="credits" color="#475569" />
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <div className="bg-primary-600 rounded-3xl p-8 shadow-lg text-white flex flex-col justify-between">
-                    <div>
-                        <h3 className="text-xl font-semibold mb-1 opacity-90">Term 1 Fees</h3>
-                        <p className="text-3xl font-bold">KES {fees?.balance.toLocaleString()}</p>
-                        <p className="text-sm opacity-75 mt-2">Outstanding balance</p>
-                    </div>
-                    <button className="mt-6 w-full py-3 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-xl font-semibold transition-all border border-white/20">
-                        View Statement
-                    </button>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* Left Column: Calendar & Downloads */}
-                <div className="lg:col-span-4 space-y-6">
-                    {/* My Calendar Section */}
-                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold text-gray-900">My Calendar</h2>
-                            <button className="text-primary-600 text-sm font-semibold hover:underline">Today</button>
-                        </div>
-                        <div className="space-y-4">
-                            {timetable?.length > 0 ? (
-                                timetable
-                                    .filter(slot => slot.dayOfWeek === new Date().getDay() || 1) // Default to Monday for demo
-                                    .sort((a, b) => a.startTime.localeCompare(b.startTime))
-                                    .map((slot, i) => (
-                                        <div key={i} className="flex gap-4 group">
-                                            <div className="flex flex-col items-center">
-                                                <div className="text-xs font-bold text-gray-400 w-12">{slot.startTime}</div>
-                                                <div className="w-0.5 h-full bg-gray-100 mt-2 rounded-full relative">
-                                                    <div className="absolute top-0 -left-1 w-2.5 h-2.5 rounded-full bg-primary-400 ring-4 ring-white"></div>
-                                                </div>
-                                            </div>
-                                            <div className="flex-1 pb-6">
-                                                <div className="bg-gray-50 p-4 rounded-2xl group-hover:bg-primary-50 transition-colors border border-transparent group-hover:border-primary-100">
-                                                    <p className="text-sm font-bold text-gray-900">{slot.subject.name}</p>
-                                                    <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
-                                                        <User className="w-3 h-3" />
-                                                        <span>{slot.teacher ? `${slot.teacher.firstName} ${slot.teacher.lastName}` : 'TBA'}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
-                            ) : (
-                                <p className="text-gray-500 text-center py-8">No classes scheduled for today.</p>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Downloads Section */}
-                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                        <h2 className="text-xl font-bold text-gray-900 mb-6">Documents</h2>
-                        <div className="space-y-3">
-                            <button
-                                onClick={generateReport}
-                                className="w-full flex items-center justify-between p-4 bg-blue-50 hover:bg-blue-100 rounded-2xl transition-all group"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-blue-600 shadow-sm">
-                                        <FileText className="w-5 h-5" />
+                        <div className="bg-white rounded-[32px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-sm font-bold text-gray-800">My Bookmarks</h3>
+                                <button className="p-1.5 hover:bg-gray-50 rounded-lg text-gray-400 transition-colors">
+                                    <X className="w-4 h-4 rotate-45" />
+                                </button>
+                            </div>
+                            <div className="flex gap-4">
+                                <div className="flex flex-col items-center gap-2 group cursor-pointer">
+                                    <div className="w-14 h-14 bg-[#f8fafc] rounded-xl flex items-center justify-center border border-gray-100 group-hover:bg-[#99CBB9]/10 transition-all">
+                                        <School className="w-6 h-6 text-indigo-900" />
                                     </div>
-                                    <div className="text-left">
-                                        <p className="text-sm font-bold text-blue-900">Report Card</p>
-                                        <p className="text-[10px] text-blue-600 font-medium">Term 1 2026</p>
+                                    <span className="text-[10px] font-bold text-gray-500 group-hover:text-gray-900 transition-colors">MyUni</span>
+                                </div>
+                                <div className="flex flex-col items-center gap-2 group cursor-pointer">
+                                    <div className="w-14 h-14 bg-[#f8fafc] rounded-xl flex items-center justify-center border border-gray-100 group-hover:bg-[#99CBB9]/10 transition-all">
+                                        <LinkIcon className="w-6 h-6 text-green-600" />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-gray-500 group-hover:text-gray-900 transition-colors">Campus</span>
+                                </div>
+                                <button className="w-14 h-14 bg-white rounded-xl flex items-center justify-center border-2 border-dashed border-gray-100 text-gray-300 hover:border-gray-300 hover:text-gray-500 transition-all">
+                                    <Plus className="w-6 h-6" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* My Calendar & My Courses Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* My Calendar Card */}
+                        <div className="bg-white rounded-[32px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50">
+                            <div className="flex items-center justify-between mb-8">
+                                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">My Calendar</h3>
+                                <div className="flex items-center gap-6">
+                                    <div className="flex items-center gap-2 text-xs text-gray-400 font-bold uppercase">
+                                        {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        <Menu className="w-4 h-4 rotate-90" />
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-[10px] font-bold text-teal-600 tracking-wider">TODAY</span>
+                                        <div className="flex gap-4">
+                                            <ChevronRight className="w-4 h-4 rotate-180 text-gray-300 cursor-pointer hover:text-gray-600" />
+                                            <ChevronRight className="w-4 h-4 text-gray-300 cursor-pointer hover:text-gray-600" />
+                                        </div>
                                     </div>
                                 </div>
-                                <Download className="w-4 h-4 text-blue-400 group-hover:text-blue-600" />
-                            </button>
-
-                            <button
-                                onClick={generateExamAudit}
-                                className="w-full flex items-center justify-between p-4 bg-purple-50 hover:bg-purple-100 rounded-2xl transition-all group"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-purple-600 shadow-sm">
-                                        <Award className="w-5 h-5" />
-                                    </div>
-                                    <div className="text-left">
-                                        <p className="text-sm font-bold text-purple-900">Exam Audit</p>
-                                        <p className="text-[10px] text-purple-600 font-medium">Official Transcripts</p>
-                                    </div>
-                                </div>
-                                <Download className="w-4 h-4 text-purple-400 group-hover:text-purple-600" />
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Messages Section */}
-                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                        <h2 className="text-xl font-bold text-gray-900 mb-4">Social</h2>
-                        <div className="flex gap-3 p-3 bg-gray-50 rounded-2xl">
-                            <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600">
-                                <MessageSquare className="w-5 h-5" />
                             </div>
-                            <div>
-                                <p className="text-xs font-bold text-gray-900">Science Fair</p>
-                                <p className="text-[10px] text-gray-500 mt-1">Don't forget to submit your projects by Friday!</p>
+                            <div className="space-y-0 relative">
+                                {[8, 9, 10, 11, 12].map(time => (
+                                    <div key={time} className="relative h-16 border-t border-gray-50 flex items-start pt-2">
+                                        <span className="text-[10px] font-bold text-gray-300 uppercase w-12">{time}AM</span>
+                                        {timetable?.find(s => parseInt(s.startTime) === time) && (
+                                            <div className="absolute left-16 right-0 top-1 p-3 bg-[#f8fafc] rounded-xl border-l-4 border-[#99CBB9] group cursor-pointer hover:shadow-md transition-all">
+                                                <p className="text-xs font-bold text-gray-900">{timetable.find(s => parseInt(s.startTime) === time).subject.name}</p>
+                                                <p className="text-[10px] text-gray-500">Room 302 | {time}:00 - {time + 1}:00</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* My Courses Card */}
+                        <div className="bg-white rounded-[32px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50">
+                            <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-8">My Courses</h3>
+                            <div className="space-y-4">
+                                {courses?.map((course, i) => (
+                                    <div key={i} className="border border-gray-50 rounded-2xl overflow-hidden group">
+                                        <div className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors cursor-pointer">
+                                            <span className="text-xs font-bold text-gray-700 tracking-tight">{course.code} | {course.name}</span>
+                                            <ChevronRight className={`w-4 h-4 text-gray-300 transition-transform ${i === 0 ? 'rotate-90' : ''}`} />
+                                        </div>
+                                        {i === 0 && (
+                                            <div className="p-4 bg-[#f8fafc] border-t border-gray-50 flex gap-3">
+                                                <button
+                                                    onClick={() => handleViewOutline(course)}
+                                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all"
+                                                >
+                                                    <Download className="w-3.5 h-3.5" /> Syllabus
+                                                </button>
+                                                <button className="flex-1 bg-[#476C63] hover:bg-[#39564f] text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all">
+                                                    <ExternalLink className="w-3.5 h-3.5" /> Canvas
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Right Column: Courses & Performance */}
-                <div className="lg:col-span-8 space-y-6">
-                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold text-gray-900">My Courses</h2>
-                            <button className="p-2 hover:bg-gray-100 rounded-xl transition-all"><Layout className="w-5 h-5 text-gray-400" /></button>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {courses?.map((course, i) => (
-                                <div key={i} className="p-5 rounded-2xl border border-gray-100 hover:shadow-md transition-all group">
-                                    <div className="flex items-center gap-4 mb-4">
-                                        <div className="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center text-primary-600 group-hover:bg-primary-600 group-hover:text-white transition-all">
-                                            <BookOpen className="w-6 h-6" />
+                {/* Right Side Social (4/12) */}
+                <div className="lg:col-span-4 space-y-8">
+                    <div className="bg-white rounded-[32px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 min-h-[600px]">
+                        <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-8">My Social</h3>
+                        <div className="space-y-8">
+                            {[1, 2].map(post => (
+                                <div key={post} className="space-y-4 animate-in slide-in-from-right duration-500 delay-150">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-indigo-900 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-indigo-200">SU</div>
+                                            <div>
+                                                <p className="text-[10px] text-gray-400 font-bold">about 1 week ago</p>
+                                                <p className="text-[11px] font-bold text-gray-800">Squiz University</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h4 className="font-bold text-gray-900">{course.code}</h4>
-                                            <p className="text-xs text-gray-500 truncate w-40">{course.name}</p>
+                                        <button className="text-[#1DA1F2]"><svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" /></svg></button>
+                                    </div>
+                                    <p className="text-xs text-gray-600 leading-relaxed">
+                                        {post === 1
+                                            ? "Are you feeling ready for the upcoming exams? Our staff is here to help. Whether you need resources or just a pep talk, come see us!"
+                                            : "What have been some of your favorite moments on campus this week? Share your thoughts to get a chance to win $500."}
+                                    </p>
+                                    <button className="text-[11px] font-bold text-gray-900 border-b border-gray-900 pb-0.5 hover:text-[#99CBB9] hover:border-[#99CBB9] transition-all">show more</button>
+                                    {post === 1 && (
+                                        <div className="rounded-2xl overflow-hidden shadow-md mt-4">
+                                            <img src="https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=800" alt="Campus" className="w-full h-40 object-cover" />
                                         </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => handleViewOutline(course)}
-                                            className="flex-1 py-2 rounded-lg bg-gray-100 text-xs font-bold text-gray-700 hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
-                                        >
-                                            <Download className="w-3 h-3" /> Outline
-                                        </button>
-                                        <button className="flex-1 py-2 rounded-lg bg-primary-600 text-xs font-bold text-white hover:bg-primary-700 transition-all flex items-center justify-center gap-2">
-                                            <ExternalLink className="w-3 h-3" /> Portal
-                                        </button>
-                                    </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
                     </div>
-
-                    {/* Exam Audit Chart */}
-                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                        <h2 className="text-xl font-bold text-gray-900 mb-6">Performance Audit</h2>
-                        <div className="h-64 mt-4">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={scores || []}>
-                                    <defs>
-                                        <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
-                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                                    <XAxis dataKey="subject" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                                    <YAxis hide domain={[0, 100]} />
-                                    <Tooltip
-                                        contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                    />
-                                    <Area type="monotone" dataKey="score" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorScore)" />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
                 </div>
             </div>
-
 
             <CourseOutlineView
                 isOpen={isOutlineOpen}

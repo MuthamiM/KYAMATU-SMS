@@ -133,7 +133,7 @@ function App() {
         <Route
           path="timetable"
           element={
-            <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'TEACHER']}>
+            <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'STUDENT']}>
               <Timetable />
             </ProtectedRoute>
           }
