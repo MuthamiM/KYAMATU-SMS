@@ -7,7 +7,11 @@ export const getTimetable = async (classId) => {
     include: {
       subject: true,
       teacher: {
-        select: { firstName: true, lastName: true }
+        select: {
+          firstName: true,
+          lastName: true,
+          user: { select: { firstName: true, lastName: true } }
+        }
       }
     },
     orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }]
@@ -278,7 +282,13 @@ export const getMasterTimetable = async () => {
     include: {
       subject: true,
       class: { include: { grade: true, stream: true } },
-      teacher: { select: { firstName: true, lastName: true } }
+      teacher: {
+        select: {
+          firstName: true,
+          lastName: true,
+          user: { select: { firstName: true, lastName: true } }
+        }
+      }
     },
     orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }, { class: { name: 'asc' } }]
   });
