@@ -4,7 +4,7 @@ import { useAuthStore } from '../stores/authStore';
 import toast from 'react-hot-toast';
 import { Calendar, Clock, Plus, Trash2, Printer, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'];
 const TIMES = [
@@ -122,7 +122,7 @@ function Timetable() {
 
         tableData.sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]));
 
-        doc.autoTable({
+        autoTable(doc, {
           head: [['Time', 'Class', 'Subject', 'Teacher']],
           body: tableData,
           startY: 20,
