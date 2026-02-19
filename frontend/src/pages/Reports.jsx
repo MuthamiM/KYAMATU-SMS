@@ -189,22 +189,28 @@ function Reports() {
               <thead>
                 <tr>
                   <th>Subject</th>
-                  <th>Mid Term</th>
-                  <th>End Term</th>
+                  <th>Assessments</th>
                   <th>Average</th>
                   <th>Grade</th>
-                  <th>Remarks</th>
+                  <th>Remark</th>
                 </tr>
               </thead>
               <tbody>
                 ${report.subjects.map(s => `
                   <tr>
-                    <td style="font-weight: 500;">${s.subjectName}</td>
-                    <td>${s.assessments.find(a => a.name.includes('Mid'))?.percentage || '-'}%</td>
-                    <td>${s.assessments.find(a => a.name.includes('End'))?.percentage || '-'}%</td>
-                    <td style="font-weight: bold;">${s.average}%</td>
-                    <td><span style="font-weight: bold;">${s.grade}</span></td>
-                    <td>${s.remark}</td>
+                    <td style="font-weight: 500; vertical-align: top;">${s.subjectName}</td>
+                    <td>
+                      <div style="font-size: 11px; color: #444;">
+                        ${s.assessments.map(a => `
+                          <div style="margin-bottom: 2px;">
+                            ${a.name}: <span style="font-weight: 600;">${parseFloat(a.percentage).toFixed(2)}%</span>
+                          </div>
+                        `).join('')}
+                      </div>
+                    </td>
+                    <td style="font-weight: bold; vertical-align: top;">${s.average}%</td>
+                    <td style="vertical-align: top;"><span style="font-weight: bold;">${s.grade}</span></td>
+                    <td style="vertical-align: top;">${s.remark}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -1436,6 +1442,14 @@ function PerformanceTab({ user, foundStudent, performanceData, setPerformanceDat
                 <div className="flex items-center gap-4">
                   <span className="text-sm text-gray-500">Average: <strong className="text-gray-900 dark:text-white">{term.termAverage}%</strong></span>
                   <span className={`px-3 py-1 rounded-full font-bold text-sm ${getGradeColor(term.termGrade)}`}>{term.termGrade}</span>
+                  <button
+                    onClick={() => handleGenerateReport(foundStudent?.id || selectedStudent)}
+                    className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors text-primary-600 flex items-center gap-2 text-xs font-semibold"
+                    title="Download Report Card"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download
+                  </button>
                 </div>
               )}
             </div>
@@ -1462,12 +1476,12 @@ function PerformanceTab({ user, foundStudent, performanceData, setPerformanceDat
                     <tr key={subject.subjectId} className="hover:bg-gray-50 dark:hover:bg-slate-800">
                       <td className="font-medium text-gray-900 dark:text-white">{subject.subjectName}</td>
                       <td>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-col gap-1 py-1">
                           {subject.assessments.map((a, i) => (
-                            <span key={i} className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded text-xs">
-                              <span className="text-gray-500 dark:text-gray-400">{a.name}:</span>
-                              <span className="font-semibold text-gray-900 dark:text-white">{a.percentage}%</span>
-                            </span>
+                            <div key={i} className="text-xs flex items-center gap-2">
+                              <span className="text-gray-500 dark:text-gray-400 min-w-[120px]">{a.name}:</span>
+                              <span className="font-bold text-gray-900 dark:text-white">{parseFloat(a.percentage).toFixed(2)}%</span>
+                            </div>
                           ))}
                         </div>
                       </td>

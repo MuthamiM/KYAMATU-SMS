@@ -12,6 +12,7 @@ import {
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import CourseOutlineView from './CourseOutlineView';
+import CourseResourcesView from './CourseResourcesView';
 
 const CircularProgress = ({ value, max, label, sublabel, color = '#99CBB9' }) => {
     const radius = 35;
@@ -60,9 +61,11 @@ const StudentDashboardRedesigned = ({ user }) => {
     const [loading, setLoading] = useState(true);
     const [selectedOutline, setSelectedOutline] = useState(null);
     const [isOutlineOpen, setIsOutlineOpen] = useState(false);
+    const [isResourcesOpen, setIsResourcesOpen] = useState(false);
     const [currentSubject, setCurrentSubject] = useState('');
+    const [selectedTeacher, setSelectedTeacher] = useState(null);
     const [expandedLesson, setExpandedLesson] = useState(null);
-    const [expandedCourse, setExpandedCourse] = useState(0); // Default first one expanded like original code
+    const [expandedCourse, setExpandedCourse] = useState(0);
 
 
     useEffect(() => {
@@ -85,6 +88,7 @@ const StudentDashboardRedesigned = ({ user }) => {
         try {
             setLoading(true);
             setCurrentSubject(course.name);
+            setSelectedTeacher(course.teacher);
             const res = await api.get(`/academic/outlines/${data.student.classId}/${course.id}`);
             setSelectedOutline(res.data.data);
             setIsOutlineOpen(true);
@@ -94,6 +98,12 @@ const StudentDashboardRedesigned = ({ user }) => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleViewResources = (course) => {
+        setCurrentSubject(course.name);
+        setSelectedTeacher(course.teacher);
+        setIsResourcesOpen(true);
     };
 
     if (loading) {
@@ -262,7 +272,7 @@ const StudentDashboardRedesigned = ({ user }) => {
                                                         <Download className="w-3.5 h-3.5" /> Syllabus
                                                     </button>
                                                     <button
-                                                        onClick={(e) => e.stopPropagation()}
+                                                        onClick={(e) => { e.stopPropagation(); handleViewResources(course); }}
                                                         className="flex-1 bg-[#476C63] hover:bg-[#39564f] text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all"
                                                     >
                                                         <ExternalLink className="w-3.5 h-3.5" /> Resources
@@ -317,6 +327,12 @@ const StudentDashboardRedesigned = ({ user }) => {
                 onClose={() => setIsOutlineOpen(false)}
                 outline={selectedOutline}
                 subjectName={currentSubject}
+            />
+            <CourseResourcesView
+                isOpen={isResourcesOpen}
+                onClose={() => setIsResourcesOpen(false)}
+                subjectName={currentSubject}
+                teacher={selectedTeacher}
             />
         </div>
     );
