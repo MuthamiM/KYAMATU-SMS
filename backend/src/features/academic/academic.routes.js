@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as academicController from './academic.controller.js';
 import outlineRoutes from './outline.routes.js';
+import resourceRoutes from './resource.routes.js';
 import { authenticate } from '../../middleware/auth.js';
 import { isAdmin, isStaff } from '../../middleware/rbac.js';
 
@@ -32,5 +33,6 @@ router.post('/subjects', isAdmin, academicController.createSubject);
 router.get('/subjects', academicController.getSubjects);
 
 router.use('/outlines', outlineRoutes);
+router.use('/resources', resourceRoutes);
 
 export default router;

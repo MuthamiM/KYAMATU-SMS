@@ -66,6 +66,7 @@ const StudentDashboardRedesigned = ({ user }) => {
     const [selectedTeacher, setSelectedTeacher] = useState(null);
     const [expandedLesson, setExpandedLesson] = useState(null);
     const [expandedCourse, setExpandedCourse] = useState(0);
+    const [currentSubjectId, setCurrentSubjectId] = useState('');
 
 
     useEffect(() => {
@@ -103,6 +104,7 @@ const StudentDashboardRedesigned = ({ user }) => {
     const handleViewResources = (course) => {
         setCurrentSubject(course.name);
         setSelectedTeacher(course.teacher);
+        setCurrentSubjectId(course.id);
         setIsResourcesOpen(true);
     };
 
@@ -333,6 +335,8 @@ const StudentDashboardRedesigned = ({ user }) => {
                 onClose={() => setIsResourcesOpen(false)}
                 subjectName={currentSubject}
                 teacher={selectedTeacher}
+                classId={data?.student?.classId}
+                subjectId={currentSubjectId}
             />
         </div>
     );

@@ -65,6 +65,7 @@ model Term {
   reportCards     ReportCard[]
   studentInvoices StudentInvoice[]
   courseOutlines  CourseOutline[]
+  courseResources CourseResource[]
   academicYear    AcademicYear     @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
 
   @@index([academicYearId])
@@ -104,6 +105,7 @@ model Class {
   teacherAssignments TeacherAssignment[]
   timetableSlots     TimetableSlot[]
   courseOutlines     CourseOutline[]
+  courseResources    CourseResource[]
 
   @@unique([gradeId, streamId, academicYearId])
   @@index([gradeId])
@@ -123,6 +125,7 @@ model Subject {
   teacherAssignments TeacherAssignment[]
   timetableSlots     TimetableSlot[]
   courseOutlines     CourseOutline[]
+  courseResources    CourseResource[]
 
   @@index([gradeId])
 }
@@ -156,6 +159,7 @@ model Staff {
   teacherAssignments TeacherAssignment[]
   timetableSlots     TimetableSlot[]
   courseOutlines     CourseOutline[]
+  courseResources    CourseResource[]
 
   @@index([userId])
 }
@@ -485,6 +489,29 @@ model CourseOutline {
   @@index([classId])
   @@index([subjectId])
   @@index([teacherId])
+}
+
+model CourseResource {
+  id          String   @id @default(uuid())
+  title       String
+  type        String   // PDF, DOCX, LINK, etc.
+  url         String   // URL to the file or link
+  size        String?  // e.g. "2.4 MB"
+  classId     String
+  subjectId   String
+  teacherId   String
+  termId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subject     Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacher     Staff    @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  term        Term     @relation(fields: [termId], references: [id], onDelete: Cascade)
+
+  @@index([classId])
+  @@index([subjectId])
+  @@index([termId])
 }
 
 enum Role {

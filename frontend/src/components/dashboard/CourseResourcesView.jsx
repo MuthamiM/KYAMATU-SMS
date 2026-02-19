@@ -1,15 +1,30 @@
-import { FileText, Download, ExternalLink, X, Book } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { FileText, Download, ExternalLink, X, Book, Loader2 } from 'lucide-react';
+import api from '../../services/api';
 
-const CourseResourcesView = ({ isOpen, onClose, subjectName, teacher }) => {
+const CourseResourcesView = ({ isOpen, onClose, subjectName, teacher, classId, subjectId }) => {
+    const [resources, setResources] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (isOpen && classId && subjectId) {
+            fetchResources();
+        }
+    }, [isOpen, classId, subjectId]);
+
+    const fetchResources = async () => {
+        try {
+            setLoading(true);
+            const res = await api.get(`/academic/resources/${classId}/${subjectId}`);
+            setResources(res.data.data);
+        } catch (error) {
+            console.error('Error fetching resources:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (!isOpen) return null;
-
-    // Mock resources for now, similar to how outlines are seeded
-    const resources = [
-        { id: 1, title: 'Term 1 Course Notes', type: 'PDF', size: '2.4 MB', date: 'Feb 10, 2026' },
-        { id: 2, title: 'Weekly Assignment Pack', type: 'DOCX', size: '1.2 MB', date: 'Feb 15, 2026' },
-        { id: 3, title: 'Reference Website', type: 'LINK', url: 'https://example.com/resources', date: 'Feb 05, 2026' },
-        { id: 4, title: 'Past Exam Papers', type: 'PDF', size: '5.8 MB', date: 'Jan 20, 2026' }
-    ];
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
@@ -44,42 +59,53 @@ const CourseResourcesView = ({ isOpen, onClose, subjectName, teacher }) => {
 
                 {/* Content */}
                 <div className="p-6 max-h-[70vh] overflow-y-auto">
-                    <div className="space-y-4">
-                        {resources.map((res) => (
-                            <div key={res.id} className="group p-4 bg-gray-50 dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 hover:border-teal-300 dark:hover:border-teal-500 transition-all hover:shadow-md cursor-pointer">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`p-3 rounded-xl ${res.type === 'PDF' ? 'bg-red-50 text-red-600' :
+                    {loading ? (
+                        <div className="py-20 flex flex-col items-center justify-center text-gray-500">
+                            <Loader2 className="w-10 h-10 animate-spin text-teal-500 mb-4" />
+                            <p className="font-medium">Loading resources...</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {resources.map((res) => (
+                                <div
+                                    key={res.id}
+                                    onClick={() => res.url && window.open(res.url, '_blank')}
+                                    className="group p-4 bg-gray-50 dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 hover:border-teal-300 dark:hover:border-teal-500 transition-all hover:shadow-md cursor-pointer"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`p-3 rounded-xl ${res.type === 'PDF' ? 'bg-red-50 text-red-600' :
                                                 res.type === 'LINK' ? 'bg-blue-50 text-blue-600' :
                                                     'bg-teal-50 text-teal-600'
-                                            }`}>
-                                            {res.type === 'LINK' ? <ExternalLink className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
-                                        </div>
-                                        <div>
-                                            <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-teal-600 transition-colors">
-                                                {res.title}
-                                            </h3>
-                                            <div className="flex items-center gap-3 mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                                <span>{res.type}</span>
-                                                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                                <span>{res.size || 'External'}</span>
-                                                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                                <span>{res.date}</span>
+                                                }`}>
+                                                {res.type === 'LINK' ? <ExternalLink className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-teal-600 transition-colors">
+                                                    {res.title}
+                                                </h3>
+                                                <div className="flex items-center gap-3 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                    <span>{res.type}</span>
+                                                    <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                                    <span>{res.size || 'External'}</span>
+                                                    <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                                    <span>{new Date(res.createdAt).toLocaleDateString()}</span>
+                                                </div>
                                             </div>
                                         </div>
+                                        <button className="p-2 bg-white dark:bg-slate-700 rounded-lg shadow-sm group-hover:bg-teal-600 group-hover:text-white transition-all">
+                                            {res.type === 'LINK' ? <ExternalLink className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                                        </button>
                                     </div>
-                                    <button className="p-2 bg-white dark:bg-slate-700 rounded-lg shadow-sm group-hover:bg-teal-600 group-hover:text-white transition-all">
-                                        {res.type === 'LINK' ? <ExternalLink className="w-4 h-4" /> : <Download className="w-4 h-4" />}
-                                    </button>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
 
-                    {resources.length === 0 && (
-                        <div className="py-12 text-center text-gray-500">
-                            <Book className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-                            <p>No resources have been uploaded yet.</p>
+                            {resources.length === 0 && (
+                                <div className="py-12 text-center text-gray-500">
+                                    <Book className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+                                    <p>No resources have been uploaded yet.</p>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
