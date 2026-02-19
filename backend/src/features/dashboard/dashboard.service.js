@@ -237,7 +237,20 @@ export const getStudentDashboardData = async (userId) => {
     _count: true
   });
 
-  // 5. Courses with Outlines
+  // 5. Latest Announcements
+  const announcements = await prisma.announcement.findMany({
+    where: {
+      isPublished: true,
+      OR: [
+        { targetRoles: { has: 'STUDENT' } },
+        { targetRoles: { isEmpty: true } }
+      ]
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 3
+  });
+
+  // 6. Courses with Outlines
   const subjectsWithOutlines = await Promise.all(
     (student.class?.classSubjects || []).map(async (cs) => {
       const [outline, assignment] = await Promise.all([
@@ -292,7 +305,13 @@ export const getStudentDashboardData = async (userId) => {
     attendance: attendance.reduce((acc, curr) => {
       acc[curr.status.toLowerCase()] = curr._count;
       return acc;
-    }, { present: 0, absent: 0, late: 0 }),
+    }, { present: 0, absent: 0, late: 0, excused: 0 }),
+    announcements: announcements.map(a => ({
+      id: a.id,
+      title: a.title,
+      content: a.content,
+      publishedAt: a.publishedAt || a.createdAt
+    })),
     courses: subjectsWithOutlines
   };
 };

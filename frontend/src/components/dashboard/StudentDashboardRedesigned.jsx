@@ -3,7 +3,7 @@ import {
     BookOpen, Calendar as CalendarIcon, Award, Download,
     ChevronRight, ExternalLink, Clock, User, Bell, Search,
     Layout, Book, MessageSquare, Menu, X, Link as LinkIcon,
-    FileText, Plus, School, ChevronLeft
+    FileText, Plus, School, ChevronLeft, Wallet
 } from 'lucide-react';
 import {
     ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
@@ -116,8 +116,13 @@ const StudentDashboardRedesigned = ({ user }) => {
         );
     }
 
-    const { student, timetable, scores, courses } = data || {};
+    const { student, timetable, scores, courses, attendance, fees, announcements } = data || {};
     const gpa = (scores?.reduce((acc, s) => acc + s.score, 0) / (scores?.length || 1) / 10).toFixed(1);
+
+    // Attendance Rate Calculation
+    const { present = 0, absent = 0, late = 0, excused = 0 } = attendance || {};
+    const totalAttendance = present + absent + late + excused;
+    const attendanceRate = totalAttendance > 0 ? Math.round(((present + late) / totalAttendance) * 100) : 0;
 
     return (
         <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
@@ -143,7 +148,7 @@ const StudentDashboardRedesigned = ({ user }) => {
                             </div>
                             <div className="flex justify-around items-end">
                                 <CircularProgress value={gpa} max={10} label="Total GPA" sublabel={`${gpa}/10`} color="#475569" />
-                                <CircularProgress value={72} max={100} label="Completed credits" sublabel="credits" color="#475569" />
+                                <CircularProgress value={attendanceRate} max={100} label="Attendance Rate" sublabel={`${attendanceRate}%`} color="#475569" />
                             </div>
                         </div>
 
@@ -167,6 +172,12 @@ const StudentDashboardRedesigned = ({ user }) => {
                                     </div>
                                     <span className="text-[10px] font-bold text-gray-500 group-hover:text-gray-900 transition-colors">Reports</span>
                                 </a>
+                                <div className="flex flex-col items-center gap-2 group cursor-pointer">
+                                    <div className="w-14 h-14 bg-[#f8fafc] rounded-xl flex items-center justify-center border border-gray-100 group-hover:bg-[#99CBB9]/10 transition-all">
+                                        <Wallet className="w-6 h-6 text-orange-600" />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-gray-500 group-hover:text-gray-900 transition-colors">Bal: {fees?.balance?.toLocaleString()}</span>
+                                </div>
                                 <button className="w-14 h-14 bg-white rounded-xl flex items-center justify-center border-2 border-dashed border-gray-100 text-gray-300 hover:border-gray-300 hover:text-gray-500 transition-all">
                                     <Plus className="w-6 h-6" />
                                 </button>
@@ -294,31 +305,35 @@ const StudentDashboardRedesigned = ({ user }) => {
                     <div className="bg-white rounded-[32px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 min-h-[600px]">
                         <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-8">My Social</h3>
                         <div className="space-y-8">
-                            {[1, 2].map(post => (
-                                <div key={post} className="space-y-4 animate-in slide-in-from-right duration-500 delay-150">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-indigo-900 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-indigo-200">KY</div>
-                                            <div>
-                                                <p className="text-[10px] text-gray-400 font-bold">about 1 week ago</p>
-                                                <p className="text-[11px] font-bold text-gray-800">Kyamatu Institute</p>
+                            {announcements?.length > 0 ? (
+                                announcements.map((ann, idx) => (
+                                    <div key={ann.id} className="space-y-4 animate-in slide-in-from-right duration-500 delay-150 border-b border-gray-50 pb-6 last:border-0 last:pb-0">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-[#476C63] rounded-full flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-teal-100">KY</div>
+                                                <div>
+                                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">
+                                                        {new Date(ann.publishedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                                                    </p>
+                                                    <p className="text-[11px] font-bold text-gray-800">Kyamatu Institute</p>
+                                                </div>
                                             </div>
+                                            <button className="text-[#1DA1F2] hover:scale-110 transition-transform"><MessageSquare className="w-4 h-4" /></button>
                                         </div>
-                                        <button className="text-[#1DA1F2]"><svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" /></svg></button>
+                                        <div className="space-y-2">
+                                            <h4 className="text-xs font-bold text-gray-900">{ann.title}</h4>
+                                            <p className="text-xs text-gray-600 leading-relaxed line-clamp-3">
+                                                {ann.content}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <p className="text-xs text-gray-600 leading-relaxed">
-                                        {post === 1
-                                            ? "Are you feeling ready for the upcoming exams? Our staff is here to help. Whether you need resources or just a pep talk, come see us!"
-                                            : "What have been some of your favorite moments on campus this week? Share your thoughts to get a chance to win $500."}
-                                    </p>
-                                    <button className="text-[11px] font-bold text-gray-900 border-b border-gray-900 pb-0.5 hover:text-[#99CBB9] hover:border-[#99CBB9] transition-all">show more</button>
-                                    {post === 1 && (
-                                        <div className="rounded-2xl overflow-hidden shadow-md mt-4">
-                                            <img src="https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=800" alt="Campus" className="w-full h-40 object-cover" onError={(e) => e.target.src = 'https://via.placeholder.com/800x400?text=Campus+Life'} />
-                                        </div>
-                                    )}
+                                ))
+                            ) : (
+                                <div className="py-12 text-center bg-gray-50 rounded-3xl">
+                                    <Bell className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">No New Announcements</p>
                                 </div>
-                            ))}
+                            )}
                         </div>
                     </div>
                 </div>
