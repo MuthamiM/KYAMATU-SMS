@@ -127,7 +127,7 @@ const StudentDashboardRedesigned = ({ user }) => {
                         <div className="bg-white rounded-[32px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 flex flex-col justify-between">
                             <div className="flex justify-between items-start mb-6">
                                 <div>
-                                    <h3 className="text-sm font-bold text-gray-800">Great GPA! keep it up!, {student?.firstName}</h3>
+                                    <h3 className="text-sm font-bold text-gray-800">Great GPA! keep it up!, {(student?.firstName || student?.name)?.replace(/Student$|Teacher$|Bursar$|Admin$|Staff$|SuperAdmin$/i, '').trim()}</h3>
                                     {data?.classTeacher && (
                                         <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">
                                             Class Teacher: {data.classTeacher.firstName} {data.classTeacher.lastName}

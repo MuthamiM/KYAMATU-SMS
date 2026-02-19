@@ -97,3 +97,7 @@ export const redactSensitiveFields = (obj) => {
   return redacted;
 };
 
+export const cleanName = (name) => {
+  if (!name) return '';
+  return name.replace(/Student$|Teacher$|Bursar$|Admin$|Staff$|SuperAdmin$/i, '').trim();
+};

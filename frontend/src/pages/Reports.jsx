@@ -113,10 +113,13 @@ function Reports() {
     return colors[grade] || 'text-gray-600 bg-gray-50';
   };
 
-  const handleGenerateReport = async (studentId) => {
+  const handleGenerateReport = async (studentId, specificTermId = null) => {
     try {
-      const termsRes = await api.get('/academic/terms');
-      const termId = termsRes.data.data[0]?.id;
+      let termId = specificTermId;
+      if (!termId) {
+        const termsRes = await api.get('/academic/terms');
+        termId = termsRes.data.data[0]?.id;
+      }
 
       if (!termId) {
         toast.error('No active term found');
@@ -1443,7 +1446,7 @@ function PerformanceTab({ user, foundStudent, performanceData, setPerformanceDat
                   <span className="text-sm text-gray-500">Average: <strong className="text-gray-900 dark:text-white">{term.termAverage}%</strong></span>
                   <span className={`px-3 py-1 rounded-full font-bold text-sm ${getGradeColor(term.termGrade)}`}>{term.termGrade}</span>
                   <button
-                    onClick={() => handleGenerateReport(foundStudent?.id || selectedStudent)}
+                    onClick={() => handleGenerateReport(foundStudent?.id || selectedStudent, term.termId)}
                     className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors text-primary-600 flex items-center gap-2 text-xs font-semibold"
                     title="Download Report Card"
                   >

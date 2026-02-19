@@ -9,7 +9,7 @@ const router = Router();
 
 router.use(authenticate);
 
-router.post('/generate', isTeacher, reportsController.generateReportCard);
+router.post('/generate', reportsController.generateReportCard);
 router.post('/generate-class', isAdmin, reportsController.generateClassReports);
 router.get('/', isStudent, reportsController.getReportCards);
 router.put('/:id/comments', validateId(), validate, isTeacher, reportsController.updateComments);

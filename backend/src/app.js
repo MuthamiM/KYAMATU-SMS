@@ -642,12 +642,13 @@ app.listen(PORT, async () => {
             });
 
             if (!existing) {
-              // Find assigned teacher or fallback to class teacher
+              // Find assigned teacher or fallback to class teacher or ANY staff
               const assignment = await prisma.teacherAssignment.findFirst({
                 where: { classId: cls.id, subjectId: subj.id }
               });
 
-              const teacherId = assignment?.staffId || cls.classTeacher?.id;
+              const anyStaff = await prisma.staff.findFirst();
+              const teacherId = assignment?.staffId || cls.classTeacher?.id || anyStaff?.id;
 
               if (teacherId) {
                 await prisma.courseOutline.create({

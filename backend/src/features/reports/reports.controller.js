@@ -4,6 +4,12 @@ import { sendSuccess, sendCreated } from '../../utils/response.js';
 export const generateReportCard = async (req, res, next) => {
   try {
     const { studentId, termId } = req.body;
+
+    // Security: Student can only generate their own report
+    if (req.user.role === 'STUDENT' && req.user.student.id !== studentId) {
+      throw new Error('You can only generate your own report card');
+    }
+
     const report = await reportsService.generateReportCard(studentId, termId);
     sendCreated(res, report, 'Report card generated');
   } catch (error) {
