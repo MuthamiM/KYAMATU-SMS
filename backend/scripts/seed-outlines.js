@@ -1,93 +1,65 @@
-import prisma from '../src/config/database.js';
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 
-async function seed() {
+async function main() {
     console.log('Seeding course outlines...');
 
-    const term = await prisma.term.findFirst({
-        where: { academicYear: { isCurrent: true } },
-        orderBy: { startDate: 'desc' }
-    });
+    const currentYear = await prisma.academicYear.findFirst({ where: { isCurrent: true } });
+    const currentTerm = await prisma.term.findFirst({ where: { academicYearId: currentYear.id, termNumber: 1 } });
 
-    if (!term) {
-        console.error('No current term found');
-        return;
-    }
+    const grade6 = await prisma.grade.findFirst({ where: { name: 'Grade 6' } });
+    const classes = await prisma.class.findMany({ where: { gradeId: grade6.id, academicYearId: currentYear.id } });
 
-    const classes = await prisma.class.findMany({
-        include: {
-            classSubjects: {
-                include: {
-                    subject: true
-                }
-            },
-            teacherAssignments: true
-        }
-    });
+    const subjects = await prisma.subject.findMany({ where: { gradeId: grade6.id } });
 
     for (const cls of classes) {
-        for (const cs of cls.classSubjects) {
-            const teacherAssignment = cls.teacherAssignments.find(ta => ta.subjectId === cs.subjectId) || cls.teacherAssignments[0];
-            const teacherId = teacherAssignment?.staffId;
+        const assignments = await prisma.teacherAssignment.findMany({
+            where: { classId: cls.id },
+            include: { subject: true, staff: true }
+        });
 
-            if (!teacherId) continue;
-
-            const content = [
-                {
-                    title: 'Introduction & Basics',
-                    date: 'Week 1-2',
-                    description: `Foundational concepts of ${cs.subject.name}. Key principles and initial assessments.`,
-                    type: 'LESSON'
-                },
-                {
-                    title: 'Core Methodologies',
-                    date: 'Week 3-5',
-                    description: 'In-depth study of specific techniques and practical applications.',
-                    type: 'LESSON'
-                },
-                {
-                    title: 'Mid-Term CAT',
-                    date: 'Week 6',
-                    description: 'Evaluation of progress covering all modules taught so far.',
-                    type: 'CAT'
-                },
-                {
-                    title: 'Advanced Topics',
-                    date: 'Week 7-9',
-                    description: 'Specialized areas and complex problem-solving scenarios.',
-                    type: 'LESSON'
-                },
-                {
-                    title: 'Final Project/Review',
-                    date: 'Week 10-12',
-                    description: 'Comprehensive review and preparation for end-of-term examinations.',
-                    type: 'ASSIGNMENT'
-                }
+        for (const assignment of assignments) {
+            const outlineContent = [
+                { title: 'Introduction to ' + assignment.subject.name, date: 'Week 1', description: 'Overview of the term syllabus and core concepts.', type: 'LESSON' },
+                { title: 'Core Competencies', date: 'Week 2-3', description: 'Deep dive into key topics for this grade level.', type: 'LESSON' },
+                { title: 'Mid-term CAT', date: 'Week 4', description: 'First continuous assessment test.', type: 'CAT' },
+                { title: 'Practical Applications', date: 'Week 5-8', description: 'Hands-on projects and collaborative learning.', type: 'LESSON' },
+                { title: 'Final Review', date: 'Week 9', description: 'Preparation for end of term examinations.', type: 'LESSON' }
             ];
 
             await prisma.courseOutline.upsert({
                 where: {
                     classId_subjectId_termId: {
                         classId: cls.id,
-                        subjectId: cs.id, // Wait, in ClassSubject it's subjectId. In CourseOutline it's subjectId.
-                        termId: term.id
+                        subjectId: assignment.subjectId,
+                        termId: currentTerm.id
                     }
                 },
-                update: { content },
+                update: {
+                    content: outlineContent,
+                    teacherId: assignment.staffId
+                },
                 create: {
                     classId: cls.id,
-                    subjectId: cs.subjectId,
-                    termId: term.id,
-                    teacherId,
-                    content,
-                    title: `${cs.subject.name} Syllabus - ${term.name}`
+                    subjectId: assignment.subjectId,
+                    termId: currentTerm.id,
+                    teacherId: assignment.staffId,
+                    content: outlineContent,
+                    title: 'Term 1 Syllabus'
                 }
             });
-            console.log(`Seeded outline for ${cs.subject.name} in ${cls.name}`);
+            console.log(`   - Seeded outline for ${assignment.subject.name} (Class: ${cls.name})`);
         }
     }
 
-    console.log('Seeding completed.');
-    process.exit(0);
+    console.log('Course outlines seeded successfully!');
 }
 
-seed();
+main()
+    .catch((e) => {
+        console.error(e);
+        process.exit(1);
+    })
+    .finally(async () => {
+        await prisma.$disconnect();
+    });

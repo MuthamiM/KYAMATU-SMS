@@ -612,6 +612,70 @@ app.listen(PORT, async () => {
         }
       }
 
+      // Repair Course Outlines if any missing for assigned subjects
+      const currentTerm = await prisma.term.findFirst({
+        where: { academicYear: { isCurrent: true } },
+        orderBy: { startDate: 'desc' },
+      });
+
+      if (currentTerm) {
+        const classes = await prisma.class.findMany({
+          include: {
+            classTeacher: { select: { id: true } },
+            students: { take: 1 } // To see if class has students
+          }
+        });
+        const subjects = await prisma.subject.findMany();
+
+        let created = 0;
+        for (const cls of classes) {
+          for (const subj of subjects) {
+            // Check specifically if this outline exists
+            const existing = await prisma.courseOutline.findUnique({
+              where: {
+                classId_subjectId_termId: {
+                  classId: cls.id,
+                  subjectId: subj.id,
+                  termId: currentTerm.id
+                }
+              }
+            });
+
+            if (!existing) {
+              // Find assigned teacher or fallback to class teacher
+              const assignment = await prisma.teacherAssignment.findFirst({
+                where: { classId: cls.id, subjectId: subj.id }
+              });
+
+              const teacherId = assignment?.staffId || cls.classTeacher?.id;
+
+              if (teacherId) {
+                await prisma.courseOutline.create({
+                  data: {
+                    classId: cls.id,
+                    subjectId: subj.id,
+                    termId: currentTerm.id,
+                    teacherId: teacherId,
+                    title: 'Term Outline',
+                    content: [
+                      { title: 'Introduction', description: `${subj.name} core goals and objectives.`, type: 'LESSON', date: 'Week 1' },
+                      { title: 'Core Modules', description: 'Exploring fundamental principles and practical applications.', type: 'LESSON', date: 'Weeks 2-5' },
+                      { title: 'Mid-term Assessment', description: 'Evaluating term progress and understanding.', type: 'CAT', date: 'Week 6' },
+                      { title: 'Advanced Topics', description: 'Building on foundations with specialized techniques.', type: 'LESSON', date: 'Weeks 7-9' },
+                      { title: 'Final Revision', description: 'Comprehensive review and exam preparation.', type: 'LESSON', date: 'Week 10' }
+                    ]
+                  }
+                });
+                created++;
+              }
+            }
+          }
+        }
+        if (created > 0) {
+          logger.info(`Auto-repair: created ${created} missing course outlines across all classes`);
+        }
+      }
+
       logger.info('Auto-repair: complete');
     }
   } catch (err) {

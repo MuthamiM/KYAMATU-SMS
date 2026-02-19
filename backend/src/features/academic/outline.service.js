@@ -12,8 +12,8 @@ export const getOutline = async (classId, subjectId) => {
 
     return prisma.courseOutline.findFirst({
         where: {
-            classId,
-            subjectId,
+            classId: classId,
+            subjectId: subjectId,
             termId: currentTerm.id,
         },
         include: {

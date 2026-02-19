@@ -240,19 +240,34 @@ export const getStudentDashboardData = async (userId) => {
   // 5. Courses with Outlines
   const subjectsWithOutlines = await Promise.all(
     (student.class?.classSubjects || []).map(async (cs) => {
-      const outline = await prisma.courseOutline.findUnique({
-        where: {
-          classId_subjectId_termId: {
-            classId: student.classId,
-            subjectId: cs.subjectId,
-            termId: term?.id
+      const [outline, assignment] = await Promise.all([
+        prisma.courseOutline.findUnique({
+          where: {
+            classId_subjectId_termId: {
+              classId: student.classId,
+              subjectId: cs.subjectId,
+              termId: term?.id
+            }
           }
-        }
-      });
+        }),
+        prisma.teacherAssignment.findFirst({
+          where: {
+            classId: student.classId,
+            subjectId: cs.subjectId
+          },
+          include: {
+            staff: {
+              select: { firstName: true, lastName: true }
+            }
+          }
+        })
+      ]);
+
       return {
         ...cs.subject,
         hasOutline: !!outline,
-        outlineId: outline?.id
+        outlineId: outline?.id,
+        teacher: assignment?.staff || null
       };
     })
   );

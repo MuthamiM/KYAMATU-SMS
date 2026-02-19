@@ -339,6 +339,7 @@ export const getStudentTermPerformance = async (studentId) => {
       subjects,
       termAverage: termAverage.toFixed(2),
       termGrade: calculateGrade(termAverage).grade,
+      termRemark: calculateGrade(termAverage).remark
     };
   });
 
