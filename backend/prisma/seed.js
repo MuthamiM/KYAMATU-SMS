@@ -470,7 +470,78 @@ async function main() {
   console.log('Generating timetable slots...');
   await generateTimetable();
 
-  // 9. Summary
+  // 11. Seed Course Outlines & Resources for all classes/subjects
+  console.log('Seeding course outlines and resources...');
+
+  const subjectResourceMap = {
+    'Mathematics': { url: 'https://www.khanacademy.org/math', title: 'Khan Academy Mathematics', type: 'LINK' },
+    'English': { url: 'https://learnenglish.britishcouncil.org/', title: 'British Council English Learning', type: 'LINK' },
+    'Kiswahili': { url: 'https://www.bbc.com/swahili', title: 'BBC Kiswahili Resources', type: 'LINK' },
+    'Science and Technology': { url: 'https://www.khanacademy.org/science', title: 'Khan Academy Science', type: 'LINK' },
+    'Social Studies': { url: 'https://www.nationalgeographic.org/education/resource-library/', title: 'National Geographic Social Studies', type: 'LINK' },
+    'CRE': { url: 'https://www.bible.com/', title: 'Bible Study Resources', type: 'LINK' },
+    'Creative Arts': { url: 'https://www.tate.org.uk/learn', title: 'Tate Art Learning', type: 'LINK' },
+    'PHE': { url: 'https://www.topendsports.com/resources/', title: 'Physical Education Resources', type: 'LINK' },
+    'Agriculture': { url: 'https://www.fao.org/home/en/', title: 'FAO Agriculture Resources', type: 'LINK' },
+    'Home Science': { url: 'https://extension.umn.edu/family-and-consumer-science', title: 'Home Science Resources', type: 'LINK' },
+  };
+
+  const anyStaff = await prisma.staff.findFirst();
+  let outlinesCreated = 0;
+  let resourcesCreated = 0;
+
+  for (const term of terms) {
+    for (const cls of createdClasses) {
+      for (const subj of cls.subjects) {
+        const assignment = await prisma.teacherAssignment.findFirst({
+          where: { classId: cls.id, subjectId: subj.id }
+        });
+        const teacherId = assignment?.staffId || anyStaff?.id;
+        if (!teacherId) continue;
+
+        await prisma.courseOutline.create({
+          data: {
+            classId: cls.id,
+            subjectId: subj.id,
+            termId: term.id,
+            teacherId,
+            title: `${subj.name} - ${term.name} Outline`,
+            content: [
+              { title: 'Introduction', description: `${subj.name} — core goals, objectives and term overview.`, type: 'LESSON', date: 'Week 1' },
+              { title: 'Core Modules', description: 'Exploring fundamental principles and practical applications of key concepts.', type: 'LESSON', date: 'Weeks 2-5' },
+              { title: 'Continuous Assessment (CAT)', description: 'Formal CAT evaluating term progress and understanding so far.', type: 'CAT', date: 'Week 6' },
+              { title: 'Advanced Topics', description: 'Building on foundations with specialized techniques and real-world applications.', type: 'LESSON', date: 'Weeks 7-9' },
+              { title: 'Group Assignments', description: 'Individual and group assignment submissions and presentations.', type: 'ASSIGNMENT', date: 'Week 9' },
+              { title: 'Final Revision & Exam Prep', description: 'Comprehensive review and preparation for end-of-term examinations.', type: 'LESSON', date: 'Week 10' }
+            ]
+          }
+        });
+        outlinesCreated++;
+
+        const baseName = Object.keys(subjectResourceMap).find(k => subj.name.startsWith(k)) || null;
+        const resourceInfo = baseName ? subjectResourceMap[baseName] : {
+          url: 'https://www.open.edu/openlearn/', title: `${subj.name} Study Materials`, type: 'LINK'
+        };
+
+        await prisma.courseResource.create({
+          data: {
+            classId: cls.id,
+            subjectId: subj.id,
+            termId: term.id,
+            teacherId,
+            title: resourceInfo.title,
+            type: resourceInfo.type,
+            url: resourceInfo.url,
+            size: null
+          }
+        });
+        resourcesCreated++;
+      }
+    }
+  }
+  console.log(`   Created ${outlinesCreated} outlines and ${resourcesCreated} resources`);
+
+  // 12. Summary
   const classCount = await prisma.class.count();
   const studentCount = await prisma.student.count();
   const staffCount = await prisma.staff.count();
