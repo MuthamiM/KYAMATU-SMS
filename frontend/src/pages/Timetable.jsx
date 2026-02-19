@@ -44,6 +44,8 @@ function Timetable() {
   const [selectedTeacherId, setSelectedTeacherId] = useState(user.role === 'TEACHER' ? user.staff?.id : ''); // Default to self
 
   useEffect(() => {
+    if (!user) return;
+
     if (user.role === 'STUDENT') {
       fetchStudentTimetable();
     } else {
@@ -53,7 +55,7 @@ function Timetable() {
         setSelectedTeacherId(user.staff.id);
       }
     }
-  }, []);
+  }, [user]);
 
   const fetchStudentTimetable = async () => {
     setLoading(true);

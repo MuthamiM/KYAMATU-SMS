@@ -112,17 +112,26 @@ function Assessments() {
       // But based on our schema, Subject usually links Grade.
       const gradeId = fullAssessment.subject?.gradeId;
 
-      if (!gradeId) {
-        toast.error('Could not determine grade for this assessment');
-        setLoadingScores(false);
-        return;
+      if (user?.role !== 'STUDENT') {
+        if (!gradeId) {
+          toast.error('Could not determine grade for this assessment');
+          setLoadingScores(false);
+          return;
+        }
+
+        const studentsRes = await api.get('/students', {
+          params: { gradeId, limit: 100 }
+        });
+
+        setScoreStudents(studentsRes.data.data);
+      } else {
+        // For students, the backend filters scores to only their own
+        const studentScores = fullAssessment.scores || [];
+        setScoreStudents(studentScores.map(s => ({
+          ...s.student,
+          id: s.studentId,
+        })));
       }
-
-      const studentsRes = await api.get('/students', {
-        params: { gradeId, limit: 100 }
-      });
-
-      setScoreStudents(studentsRes.data.data);
 
       // 3. Map existing scores
       const existingScores = {};
@@ -428,7 +437,9 @@ function Assessments() {
                       {scoreStudents.length === 0 ? (
                         <tr>
                           <td colSpan="5" className="text-center py-8 text-gray-500">
-                            No students found for this subject/grade
+                            {user?.role === 'STUDENT'
+                              ? 'Your score for this assessment has not been entered yet.'
+                              : 'No students found for this subject/grade'}
                           </td>
                         </tr>
                       ) : (
