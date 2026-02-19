@@ -417,6 +417,59 @@ async function main() {
     });
   }
 
+  // 9. Create Assessments and Scores
+  console.log('Creating assessments and scores...');
+  for (const cls of createdClasses) {
+    for (const subj of cls.subjects) {
+      // Create one CAT and one Exam per subject
+      const assessments = await Promise.all([
+        prisma.assessment.create({
+          data: {
+            name: 'CAT 1',
+            type: 'CAT',
+            maxScore: 30,
+            weight: 0.3,
+            date: new Date('2026-02-15'),
+            subjectId: subj.id,
+            termId: currentTerm.id
+          }
+        }),
+        prisma.assessment.create({
+          data: {
+            name: 'End of Term Exam',
+            type: 'EXAM',
+            maxScore: 70,
+            weight: 0.7,
+            date: new Date('2026-04-05'),
+            subjectId: subj.id,
+            termId: currentTerm.id
+          }
+        })
+      ]);
+
+      // Give 5 random students in each class a score for CAT 1
+      const classStudents = allStudents.filter(s => s.classId === cls.id);
+      const taggedStudents = classStudents.sort(() => 0.5 - Math.random()).slice(0, 5);
+
+      for (const student of taggedStudents) {
+        const score = Math.floor(Math.random() * 20) + 10; // 10-30
+        await prisma.assessmentScore.create({
+          data: {
+            studentId: student.id,
+            assessmentId: assessments[0].id,
+            score: score,
+            grade: score >= 24 ? 'A' : score >= 18 ? 'B' : 'C',
+            comment: 'Good effort'
+          }
+        });
+      }
+    }
+  }
+
+  // 10. Generate Timetable
+  console.log('Generating timetable slots...');
+  await generateTimetable();
+
   // 9. Summary
   const classCount = await prisma.class.count();
   const studentCount = await prisma.student.count();

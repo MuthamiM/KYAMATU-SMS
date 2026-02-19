@@ -27,12 +27,15 @@ export const getAssessments = async (filters = {}, user) => {
   if (subjectId) where.subjectId = subjectId;
   if (type) where.type = type;
 
-  // If student is requesting, they should only see assessments they have scores for
+  // If student is requesting, they should see assessments for their class grade
   if (user?.role === 'STUDENT') {
-    const student = await prisma.student.findUnique({ where: { userId: user.id } });
-    if (student) {
-      where.scores = {
-        some: { studentId: student.id }
+    const student = await prisma.student.findUnique({
+      where: { userId: user.id },
+      include: { class: true }
+    });
+    if (student && student.class) {
+      where.subject = {
+        gradeId: student.class.gradeId
       };
     }
   }

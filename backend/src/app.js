@@ -493,6 +493,65 @@ app.post('/api/admin/reseed', async (req, res) => {
   }
 });
 
+// Non-destructive repair endpoint
+app.post('/api/admin/repair', async (req, res) => {
+  const { secretKey } = req.body;
+  if (secretKey !== 'kyamatu-reseed-2026') {
+    return res.status(403).json({ success: false, message: 'Invalid secret key' });
+  }
+
+  try {
+    logger.info('Starting non-destructive repair...');
+    let timetableResult = { generated: 0 };
+    let assessmentCount = 0;
+
+    // 1. Repair Timetable if empty
+    const slotCount = await prisma.timetableSlot.count();
+    if (slotCount === 0) {
+      timetableResult = await timetableService.generateTimetable();
+    }
+
+    // 2. Repair Assessments if empty
+    const existingAssessments = await prisma.assessment.count();
+    if (existingAssessments === 0) {
+      const currentTerm = await prisma.term.findFirst({
+        where: { academicYear: { isCurrent: true } },
+        orderBy: { startDate: 'desc' }
+      });
+
+      if (currentTerm) {
+        const subjects = await prisma.subject.findMany();
+        for (const subj of subjects) {
+          await prisma.assessment.create({
+            data: {
+              name: 'Continuous Assessment 1',
+              type: 'CAT',
+              maxScore: 30,
+              weight: 0.3,
+              date: new Date(),
+              subjectId: subj.id,
+              termId: currentTerm.id
+            }
+          });
+          assessmentCount++;
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Repair completed successfully',
+      data: {
+        timetableSlotsGenerated: timetableResult.generated,
+        assessmentsCreated: assessmentCount
+      }
+    });
+  } catch (error) {
+    logger.error({ message: 'Repair error', error: error.message });
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentsRoutes);
 app.use('/api/staff', staffRoutes);
