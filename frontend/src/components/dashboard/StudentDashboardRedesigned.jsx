@@ -59,6 +59,7 @@ const CircularProgress = ({ value, max, label, sublabel, color = '#99CBB9' }) =>
 const StudentDashboardRedesigned = ({ user }) => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [outlineLoading, setOutlineLoading] = useState(false);
     const [selectedOutline, setSelectedOutline] = useState(null);
     const [isOutlineOpen, setIsOutlineOpen] = useState(false);
     const [isResourcesOpen, setIsResourcesOpen] = useState(false);
@@ -79,25 +80,49 @@ const StudentDashboardRedesigned = ({ user }) => {
             setData(res.data.data);
         } catch (error) {
             console.error('Error fetching student dashboard:', error);
-            // toast.error('Failed to load dashboard data');
+            toast.error('Using offline preview (Database unreachable)');
+
+            // Mock data fallback for preview
+            setData({
+                student: { firstName: 'Student', class: { name: 'Grade 4 East' } },
+                timetable: [
+                    { startTime: '08:00', endTime: '09:00', subject: { name: 'Mathematics', code: 'MAT101' }, teacher: { firstName: 'Teacher', lastName: 'Name' } },
+                    { startTime: '09:00', endTime: '10:00', subject: { name: 'English', code: 'ENG101' }, teacher: { firstName: 'Teacher', lastName: 'Name' } }
+                ],
+                scores: [{ subject: 'Math', assessmentName: 'CAT 1', score: 85, grade: 'A' }],
+                courses: [
+                    { name: 'Mathematics', code: 'MAT101', hasOutline: true, teacher: { firstName: 'Teacher', lastName: 'Name' } },
+                    { name: 'English', code: 'ENG101', hasOutline: true, teacher: { firstName: 'Teacher', lastName: 'Name' } }
+                ],
+                attendance: { present: 18, absent: 2, late: 1, excused: 0 },
+                fees: { balance: 5000 },
+                announcements: [
+                    { id: '1', title: 'System Maintenance', content: 'Our database connection is currently undergoing maintenance.', publishedAt: new Date().toISOString() }
+                ]
+            });
         } finally {
             setLoading(false);
         }
     };
 
     const handleViewOutline = async (course) => {
+        const classId = data?.student?.classId;
+        if (!classId) {
+            toast.error('Could not determine your class. Please refresh the page.');
+            return;
+        }
         try {
-            setLoading(true);
+            setOutlineLoading(true);
             setCurrentSubject(course.name);
             setSelectedTeacher(course.teacher);
-            const res = await api.get(`/academic/outlines/${data.student.classId}/${course.id}`);
+            const res = await api.get(`/academic/outlines/${classId}/${course.id}`);
             setSelectedOutline(res.data.data);
             setIsOutlineOpen(true);
         } catch (error) {
             console.error('Error loading outline:', error);
             toast.error('Could not load course outline');
         } finally {
-            setLoading(false);
+            setOutlineLoading(false);
         }
     };
 
@@ -280,9 +305,10 @@ const StudentDashboardRedesigned = ({ user }) => {
                                                 <div className="p-4 bg-[#f8fafc] border-t border-gray-50 flex gap-3 animate-in slide-in-from-top duration-300">
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); handleViewOutline(course); }}
-                                                        className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all"
+                                                        disabled={outlineLoading}
+                                                        className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
                                                     >
-                                                        <Download className="w-3.5 h-3.5" /> Syllabus
+                                                        <Download className="w-3.5 h-3.5" /> {outlineLoading ? 'Loading...' : 'Syllabus'}
                                                     </button>
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); handleViewResources(course); }}

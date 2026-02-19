@@ -577,146 +577,161 @@ app.listen(PORT, async () => {
     const slotCount = await prisma.timetableSlot.count();
     const assessmentCt = await prisma.assessment.count();
 
-    if (slotCount === 0 || assessmentCt === 0) {
-      logger.info('Auto-repair: checking for missing data...');
+    if (slotCount === 0) {
+      const result = await timetableService.generateTimetable();
+      logger.info(`Auto-repair: generated ${result.generated} timetable slots`);
+    }
 
-      if (slotCount === 0) {
-        const result = await timetableService.generateTimetable();
-        logger.info(`Auto-repair: generated ${result.generated} timetable slots`);
-      }
-
-      if (assessmentCt === 0) {
-        const currentTerm = await prisma.term.findFirst({
-          where: { academicYear: { isCurrent: true } },
-          orderBy: { startDate: 'desc' },
-        });
-
-        if (currentTerm) {
-          const subjects = await prisma.subject.findMany();
-          let created = 0;
-          for (const subj of subjects) {
-            await prisma.assessment.create({
-              data: {
-                name: 'Continuous Assessment 1',
-                type: 'CAT',
-                maxScore: 30,
-                weight: 0.3,
-                date: new Date(),
-                subjectId: subj.id,
-                termId: currentTerm.id,
-              },
-            });
-            created++;
-          }
-          logger.info(`Auto-repair: created ${created} default assessments`);
-        }
-      }
-
-      // Repair Course Outlines if any missing for assigned subjects
+    if (assessmentCt === 0) {
       const currentTerm = await prisma.term.findFirst({
         where: { academicYear: { isCurrent: true } },
         orderBy: { startDate: 'desc' },
       });
 
-      // Find all terms for current year
-      const terms = await prisma.term.findMany({
-        where: { academicYear: { isCurrent: true } },
-        orderBy: { termNumber: 'asc' }
-      });
-
-      if (terms.length > 0) {
-        const classes = await prisma.class.findMany({
-          include: {
-            classTeacher: { select: { id: true } },
-          }
-        });
+      if (currentTerm) {
         const subjects = await prisma.subject.findMany();
-        const anyStaff = await prisma.staff.findFirst();
+        let created = 0;
+        for (const subj of subjects) {
+          await prisma.assessment.create({
+            data: {
+              name: 'Continuous Assessment 1',
+              type: 'CAT',
+              maxScore: 30,
+              weight: 0.3,
+              date: new Date(),
+              subjectId: subj.id,
+              termId: currentTerm.id,
+            },
+          });
+          created++;
+        }
+        logger.info(`Auto-repair: created ${created} default assessments`);
+      }
+    }
 
-        let outlinesCreated = 0;
-        let resourcesCreated = 0;
+    // --- Always repair Course Outlines & Resources (independent of timetable/assessment) ---
+    const terms = await prisma.term.findMany({
+      where: { academicYear: { isCurrent: true } },
+      orderBy: { termNumber: 'asc' }
+    });
 
-        for (const term of terms) {
-          for (const cls of classes) {
-            for (const subj of subjects) {
-              // 1. Repair Outline
-              const existingOutline = await prisma.courseOutline.findUnique({
-                where: {
-                  classId_subjectId_termId: {
-                    classId: cls.id,
-                    subjectId: subj.id,
-                    termId: term.id
-                  }
-                }
-              });
+    if (terms.length > 0) {
+      const classes = await prisma.class.findMany({
+        include: { classTeacher: { select: { id: true } } }
+      });
+      const subjects = await prisma.subject.findMany();
+      const anyStaff = await prisma.staff.findFirst();
 
-              if (!existingOutline) {
-                const assignment = await prisma.teacherAssignment.findFirst({
-                  where: { classId: cls.id, subjectId: subj.id }
-                });
-                const teacherId = assignment?.staffId || cls.classTeacher?.id || anyStaff?.id;
+      // Subject-specific resource URLs
+      const subjectResourceMap = {
+        'Mathematics': { url: 'https://www.khanacademy.org/math', title: 'Khan Academy Mathematics', type: 'LINK' },
+        'English': { url: 'https://learnenglish.britishcouncil.org/', title: 'British Council English Learning', type: 'LINK' },
+        'Kiswahili': { url: 'https://www.bbc.com/swahili', title: 'BBC Kiswahili Resources', type: 'LINK' },
+        'Science and Technology': { url: 'https://www.khanacademy.org/science', title: 'Khan Academy Science', type: 'LINK' },
+        'Social Studies': { url: 'https://www.bbc.co.uk/cbbc/quizzes/social-studies', title: 'Social Studies Reference', type: 'LINK' },
+        'CRE': { url: 'https://www.bible.com/', title: 'Bible Study Resources', type: 'LINK' },
+        'Creative Arts': { url: 'https://www.tate.org.uk/learn', title: 'Tate Art Learning', type: 'LINK' },
+        'PHE': { url: 'https://www.pe4life.org/resources/', title: 'Physical Education Resources', type: 'LINK' },
+        'Agriculture': { url: 'https://www.fao.org/home/en/', title: 'FAO Agriculture Resources', type: 'LINK' },
+        'Home Science': { url: 'https://extension.umn.edu/family-and-consumer-science', title: 'Home Science Resources', type: 'LINK' },
+      };
 
-                if (teacherId) {
-                  await prisma.courseOutline.create({
-                    data: {
-                      classId: cls.id,
-                      subjectId: subj.id,
-                      termId: term.id,
-                      teacherId: teacherId,
-                      title: 'Term Outline',
-                      content: [
-                        { title: 'Introduction', description: `${subj.name} core goals and objectives.`, type: 'LESSON', date: 'Week 1' },
-                        { title: 'Core Modules', description: 'Exploring fundamental principles and practical applications.', type: 'LESSON', date: 'Weeks 2-5' },
-                        { title: 'Mid-term Assessment', description: 'Evaluating term progress and understanding.', type: 'CAT', date: 'Week 6' },
-                        { title: 'Advanced Topics', description: 'Building on foundations with specialized techniques.', type: 'LESSON', date: 'Weeks 7-9' },
-                        { title: 'Final Revision', description: 'Comprehensive review and exam preparation.', type: 'LESSON', date: 'Week 10' }
-                      ]
-                    }
-                  });
-                  outlinesCreated++;
-                }
-              }
+      let outlinesCreated = 0;
+      let resourcesCreated = 0;
 
-              // 2. Repair Resources
-              const existingResource = await prisma.courseResource.findFirst({
-                where: {
+      for (const term of terms) {
+        for (const cls of classes) {
+          for (const subj of subjects) {
+            const assignment = await prisma.teacherAssignment.findFirst({
+              where: { classId: cls.id, subjectId: subj.id }
+            });
+            const teacherId = assignment?.staffId || cls.classTeacher?.id || anyStaff?.id;
+
+            if (!teacherId) continue;
+
+            // 1. Repair Outline
+            const existingOutline = await prisma.courseOutline.findUnique({
+              where: { classId_subjectId_termId: { classId: cls.id, subjectId: subj.id, termId: term.id } }
+            });
+
+            if (!existingOutline) {
+              await prisma.courseOutline.create({
+                data: {
                   classId: cls.id,
                   subjectId: subj.id,
-                  termId: term.id
+                  termId: term.id,
+                  teacherId,
+                  title: `${subj.name} - Term ${term.termNumber} Outline`,
+                  content: [
+                    { title: 'Introduction', description: `${subj.name} core goals, objectives and overview of the term.`, type: 'LESSON', date: 'Week 1' },
+                    { title: 'Core Modules', description: 'Exploring fundamental principles and practical applications of key concepts.', type: 'LESSON', date: 'Weeks 2-5' },
+                    { title: 'Continuous Assessment (CAT)', description: 'Formal CAT evaluating term progress and understanding so far.', type: 'CAT', date: 'Week 6' },
+                    { title: 'Advanced Topics', description: 'Building on foundations with specialized techniques and applications.', type: 'LESSON', date: 'Weeks 7-9' },
+                    { title: 'Assignments', description: 'Individual and group assignment submissions.', type: 'ASSIGNMENT', date: 'Week 9' },
+                    { title: 'Final Revision & Exam Prep', description: 'Comprehensive review and preparation for end-of-term examinations.', type: 'LESSON', date: 'Week 10' }
+                  ]
                 }
               });
+              outlinesCreated++;
+            }
 
-              if (!existingResource) {
-                const assignment = await prisma.teacherAssignment.findFirst({
-                  where: { classId: cls.id, subjectId: subj.id }
-                });
-                const teacherId = assignment?.staffId || cls.classTeacher?.id || anyStaff?.id;
+            // 2. Repair Resources
+            const existingResource = await prisma.courseResource.findFirst({
+              where: { classId: cls.id, subjectId: subj.id, termId: term.id }
+            });
 
-                if (teacherId) {
-                  await prisma.courseResource.create({
-                    data: {
-                      classId: cls.id,
-                      subjectId: subj.id,
-                      termId: term.id,
-                      teacherId: teacherId,
-                      title: `${subj.name} Reference Materials`,
-                      type: 'PDF',
-                      url: 'https://example.com/sample-resource.pdf',
-                      size: '1.2 MB'
-                    }
-                  });
-                  resourcesCreated++;
+            if (!existingResource) {
+              // Find the base subject name (strip grade number suffix e.g. "Mathematics" from "Mathematics" or "MAT6")
+              const baseName = Object.keys(subjectResourceMap).find(k => subj.name.startsWith(k)) || null;
+              const resourceInfo = baseName ? subjectResourceMap[baseName] : {
+                url: 'https://www.open.edu/openlearn/',
+                title: `${subj.name} Study Materials`,
+                type: 'LINK'
+              };
+
+              await prisma.courseResource.create({
+                data: {
+                  classId: cls.id,
+                  subjectId: subj.id,
+                  termId: term.id,
+                  teacherId,
+                  title: resourceInfo.title,
+                  type: resourceInfo.type,
+                  url: resourceInfo.url,
+                  size: null
                 }
-              }
+              });
+              resourcesCreated++;
             }
           }
         }
-        if (outlinesCreated > 0) logger.info(`Auto-repair: created ${outlinesCreated} missing course outlines.`);
-        if (resourcesCreated > 0) logger.info(`Auto-repair: created ${resourcesCreated} missing course resources.`);
       }
 
-      logger.info('Auto-repair: complete');
+      // Fix any existing resources that still have the placeholder URL
+      const placeholderCount = await prisma.courseResource.count({
+        where: { url: 'https://example.com/sample-resource.pdf' }
+      });
+      if (placeholderCount > 0) {
+        for (const subj of subjects) {
+          const baseName = Object.keys(subjectResourceMap).find(k => subj.name.startsWith(k)) || null;
+          const resourceInfo = baseName ? subjectResourceMap[baseName] : {
+            url: 'https://www.open.edu/openlearn/',
+            title: `${subj.name} Study Materials`,
+            type: 'LINK'
+          };
+          await prisma.courseResource.updateMany({
+            where: { subjectId: subj.id, url: 'https://example.com/sample-resource.pdf' },
+            data: { url: resourceInfo.url, title: resourceInfo.title, type: resourceInfo.type, size: null }
+          });
+        }
+        logger.info(`Auto-repair: fixed ${placeholderCount} placeholder resource URLs.`);
+      }
+
+      if (outlinesCreated > 0) logger.info(`Auto-repair: created ${outlinesCreated} missing course outlines.`);
+      if (resourcesCreated > 0) logger.info(`Auto-repair: created ${resourcesCreated} missing course resources.`);
     }
+
+    logger.info('Auto-repair: complete');
   } catch (err) {
     logger.error({ message: 'Auto-repair failed (non-fatal)', error: err.message });
   }
