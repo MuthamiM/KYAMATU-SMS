@@ -86,10 +86,10 @@ export const register = async (data) => {
   return { user, ...tokens };
 };
 
-export const login = async (email, password) => {
+export const login = async (identifier, password) => {
   try {
-    const user = await prisma.user.findUnique({
-      where: { email },
+    let user = await prisma.user.findUnique({
+      where: { email: identifier },
       select: {
         id: true,
         email: true,
@@ -124,6 +124,52 @@ export const login = async (email, password) => {
       },
     });
 
+    // Fallback: If not found by email, try admission number
+    if (!user) {
+      const student = await prisma.student.findUnique({
+        where: { admissionNumber: identifier },
+        select: { userId: true }
+      });
+
+      if (student) {
+        user = await prisma.user.findUnique({
+          where: { id: student.userId },
+          select: {
+            id: true,
+            email: true,
+            phone: true,
+            password: true,
+            role: true,
+            isActive: true,
+            staff: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                employeeNumber: true,
+              }
+            },
+            student: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                admissionNumber: true,
+                classId: true,
+              }
+            },
+            guardian: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+              }
+            }
+          },
+        });
+      }
+    }
+
     if (!user) {
       throw new AuthenticationError('Invalid credentials');
     }
@@ -134,7 +180,15 @@ export const login = async (email, password) => {
 
     const isValidPassword = await bcrypt.compare(password, user.password);
 
-    if (!isValidPassword) {
+    // Fallback: If regular password fails and user is a student, check admission number (case-insensitive)
+    let isStudentAdmissionNumberMatch = false;
+    if (!isValidPassword && user.role === 'STUDENT' && user.student?.admissionNumber) {
+      if (password.toLowerCase() === user.student.admissionNumber.toLowerCase()) {
+        isStudentAdmissionNumberMatch = true;
+      }
+    }
+
+    if (!isValidPassword && !isStudentAdmissionNumberMatch) {
       throw new AuthenticationError('Invalid credentials');
     }
 

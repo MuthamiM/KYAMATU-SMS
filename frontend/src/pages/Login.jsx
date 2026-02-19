@@ -30,7 +30,7 @@ function Login() {
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: `url(${loginBg})` }}
     >
@@ -47,14 +47,14 @@ function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="label">Email Address</label>
+              <label className="label">Email or Admission Number</label>
               <input
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="input"
-                placeholder="Enter your email"
-                autoComplete="email"
+                placeholder="Enter email or admission number"
+                autoComplete="username"
               />
             </div>
 

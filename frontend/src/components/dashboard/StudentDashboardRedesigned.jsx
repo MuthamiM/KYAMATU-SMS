@@ -260,7 +260,7 @@ const StudentDashboardRedesigned = ({ user }) => {
                                     <button className="text-[11px] font-bold text-gray-900 border-b border-gray-900 pb-0.5 hover:text-[#99CBB9] hover:border-[#99CBB9] transition-all">show more</button>
                                     {post === 1 && (
                                         <div className="rounded-2xl overflow-hidden shadow-md mt-4">
-                                            <img src="https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=800" alt="Campus" className="w-full h-40 object-cover" />
+                                            <img src="https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=800" alt="Campus" className="w-full h-40 object-cover" onError={(e) => e.target.src = 'https://via.placeholder.com/800x400?text=Campus+Life'} />
                                         </div>
                                     )}
                                 </div>

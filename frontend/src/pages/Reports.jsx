@@ -35,6 +35,15 @@ function Reports() {
 
   const fetchStudents = async () => {
     try {
+      if (user?.role === 'STUDENT') {
+        const response = await api.get('/auth/profile');
+        const studentProfile = response.data.data.student;
+        if (studentProfile) {
+          setFoundStudent(studentProfile);
+          setSelectedStudent(studentProfile.id);
+        }
+        return;
+      }
       const response = await api.get('/students?limit=200');
       setStudents(response.data.data || []);
     } catch (error) {
@@ -956,8 +965,8 @@ function Reports() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${activeTab === tab.id
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
                 }`}
             >
               <tab.icon className="w-4 h-4" />
@@ -1131,49 +1140,51 @@ function Reports() {
       {activeTab === 'documents' && (
         <div className="space-y-6">
           {/* Student Search */}
-          <div className="card p-4">
-            <h3 className="font-medium text-gray-900 dark:text-white mb-4">Search Student by Admission Number</h3>
-            <div className="flex flex-wrap gap-4 items-end">
-              <div className="flex-1 min-w-64">
-                <label className="label">Admission Number</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={searchAdmNo}
-                    onChange={(e) => setSearchAdmNo(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && searchStudent()}
-                    placeholder="e.g., KPS/2026/0001"
-                    className="input flex-1"
-                  />
-                  <button
-                    onClick={searchStudent}
-                    disabled={searching}
-                    className="btn btn-primary flex items-center gap-2"
-                  >
-                    {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                    Search
-                  </button>
+          {user?.role !== 'STUDENT' && (
+            <div className="card p-4">
+              <h3 className="font-medium text-gray-900 dark:text-white mb-4">Search Student by Admission Number</h3>
+              <div className="flex flex-wrap gap-4 items-end">
+                <div className="flex-1 min-w-64">
+                  <label className="label">Admission Number</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={searchAdmNo}
+                      onChange={(e) => setSearchAdmNo(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && searchStudent()}
+                      placeholder="e.g., KPS/2026/0001"
+                      className="input flex-1"
+                    />
+                    <button
+                      onClick={searchStudent}
+                      disabled={searching}
+                      className="btn btn-primary flex items-center gap-2"
+                    >
+                      {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                      Search
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Found Student Info */}
-            {foundStudent && (
-              <div className="mt-4 p-4 bg-success-50 dark:bg-success-900/20 rounded-lg border border-success-200 dark:border-success-800">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-success-100 dark:bg-success-900/30 rounded-full flex items-center justify-center">
-                    <UserCheck className="w-6 h-6 text-success-600" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">{foundStudent.firstName} {foundStudent.lastName}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {foundStudent.admissionNumber} • {foundStudent.class?.name || 'No class'} • Admitted: {foundStudent.admissionDate ? new Date(foundStudent.admissionDate).toLocaleDateString('en-GB') : 'N/A'}
-                    </p>
+              {/* Found Student Info */}
+              {foundStudent && (
+                <div className="mt-4 p-4 bg-success-50 dark:bg-success-900/20 rounded-lg border border-success-200 dark:border-success-800">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-success-100 dark:bg-success-900/30 rounded-full flex items-center justify-center">
+                      <UserCheck className="w-6 h-6 text-success-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-white">{foundStudent.firstName} {foundStudent.lastName}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {foundStudent.admissionNumber} • {foundStudent.class?.name || 'No class'} • Admitted: {foundStudent.admissionDate ? new Date(foundStudent.admissionDate).toLocaleDateString('en-GB') : 'N/A'}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           {/* Document Types Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1326,7 +1337,7 @@ function Reports() {
             </div>
           </div>
 
-          {!selectedStudent && !foundStudent && (
+          {user?.role !== 'STUDENT' && !selectedStudent && !foundStudent && (
             <div className="card p-8 text-center">
               <Search className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mt-4">Search for a Student</h3>

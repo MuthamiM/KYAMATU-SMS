@@ -12,7 +12,7 @@ export const createAssessment = async (req, res, next) => {
 
 export const getAssessments = async (req, res, next) => {
   try {
-    const { assessments, meta } = await assessmentsService.getAssessments(req.query);
+    const { assessments, meta } = await assessmentsService.getAssessments(req.query, req.user);
     sendPaginated(res, assessments, meta);
   } catch (error) {
     next(error);
@@ -21,7 +21,7 @@ export const getAssessments = async (req, res, next) => {
 
 export const getAssessment = async (req, res, next) => {
   try {
-    const assessment = await assessmentsService.getAssessmentById(req.params.id);
+    const assessment = await assessmentsService.getAssessmentById(req.params.id, req.user);
     sendSuccess(res, assessment);
   } catch (error) {
     next(error);

@@ -191,7 +191,7 @@ function Layout() {
       </div>
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${user?.role === 'STUDENT' ? 'lg:ml-20' : sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${user?.role === 'STUDENT' ? 'lg:ml-20' : 'lg:ml-64'}`}>
         {/* Top Header */}
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between px-6 bg-white border-b border-gray-100">
           <div className="flex items-center flex-1 max-w-md bg-gray-50 rounded-lg px-4 py-2 border border-gray-100">

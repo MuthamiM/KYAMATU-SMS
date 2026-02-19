@@ -31,6 +31,13 @@ export const generateInvoice = async (req, res, next) => {
 
 export const getStudentInvoices = async (req, res, next) => {
   try {
+    // Privacy: If student, ensure they only access their own invoices
+    if (req.user.role === 'STUDENT') {
+      const student = await prisma.student.findUnique({ where: { userId: req.user.id } });
+      if (!student || student.id !== req.params.studentId) {
+        return res.status(403).json({ success: false, message: 'Unauthorized access to student data' });
+      }
+    }
     const { invoices, meta } = await feesService.getStudentInvoices(req.params.studentId, req.query);
     sendPaginated(res, invoices, meta);
   } catch (error) {
@@ -67,6 +74,13 @@ export const getPayments = async (req, res, next) => {
 
 export const getStudentBalance = async (req, res, next) => {
   try {
+    // Privacy: If student, ensure they only access their own balance
+    if (req.user.role === 'STUDENT') {
+      const student = await prisma.student.findUnique({ where: { userId: req.user.id } });
+      if (!student || student.id !== req.params.studentId) {
+        return res.status(403).json({ success: false, message: 'Unauthorized access to student data' });
+      }
+    }
     const balance = await feesService.getStudentFeeBalance(req.params.studentId);
     sendSuccess(res, balance);
   } catch (error) {
