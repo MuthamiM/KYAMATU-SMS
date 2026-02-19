@@ -569,8 +569,54 @@ app.use(errorHandler);
 
 const PORT = config.port;
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   logger.info({ message: `Server running on port ${PORT}`, env: config.env });
+
+  // Auto-repair: ensure timetable and assessments exist on startup
+  try {
+    const slotCount = await prisma.timetableSlot.count();
+    const assessmentCt = await prisma.assessment.count();
+
+    if (slotCount === 0 || assessmentCt === 0) {
+      logger.info('Auto-repair: checking for missing data...');
+
+      if (slotCount === 0) {
+        const result = await timetableService.generateTimetable();
+        logger.info(`Auto-repair: generated ${result.generated} timetable slots`);
+      }
+
+      if (assessmentCt === 0) {
+        const currentTerm = await prisma.term.findFirst({
+          where: { academicYear: { isCurrent: true } },
+          orderBy: { startDate: 'desc' },
+        });
+
+        if (currentTerm) {
+          const subjects = await prisma.subject.findMany();
+          let created = 0;
+          for (const subj of subjects) {
+            await prisma.assessment.create({
+              data: {
+                name: 'Continuous Assessment 1',
+                type: 'CAT',
+                maxScore: 30,
+                weight: 0.3,
+                date: new Date(),
+                subjectId: subj.id,
+                termId: currentTerm.id,
+              },
+            });
+            created++;
+          }
+          logger.info(`Auto-repair: created ${created} default assessments`);
+        }
+      }
+
+      logger.info('Auto-repair: complete');
+    }
+  } catch (err) {
+    logger.error({ message: 'Auto-repair failed (non-fatal)', error: err.message });
+  }
 });
 
 export default app;

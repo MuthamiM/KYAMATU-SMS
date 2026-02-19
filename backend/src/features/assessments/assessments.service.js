@@ -254,6 +254,100 @@ export const getStudentPerformanceSummary = async (studentId, termId) => {
   };
 };
 
+export const getStudentTermPerformance = async (studentId) => {
+  // Find the current academic year
+  const currentYear = await prisma.academicYear.findFirst({
+    where: { isCurrent: true },
+    include: {
+      terms: { orderBy: { termNumber: 'asc' } },
+    },
+  });
+
+  if (!currentYear) {
+    return { academicYear: null, terms: [] };
+  }
+
+  // Fetch all scores for this student in the current academic year's terms
+  const termIds = currentYear.terms.map(t => t.id);
+
+  const allScores = await prisma.assessmentScore.findMany({
+    where: {
+      studentId,
+      assessment: { termId: { in: termIds } },
+    },
+    include: {
+      assessment: {
+        include: { subject: true, term: true },
+      },
+    },
+  });
+
+  // Group scores by term, then by subject
+  const terms = currentYear.terms.map(term => {
+    const termScores = allScores.filter(s => s.assessment.termId === term.id);
+    const subjectMap = {};
+
+    for (const s of termScores) {
+      const subjectId = s.assessment.subjectId;
+      const subjectName = s.assessment.subject.name;
+
+      if (!subjectMap[subjectId]) {
+        subjectMap[subjectId] = {
+          subjectId,
+          subjectName,
+          assessments: [],
+          weightedSum: 0,
+          totalWeight: 0,
+        };
+      }
+
+      const percentage = (s.score / s.assessment.maxScore) * 100;
+      subjectMap[subjectId].assessments.push({
+        name: s.assessment.name,
+        type: s.assessment.type,
+        score: s.score,
+        maxScore: s.assessment.maxScore,
+        percentage: percentage.toFixed(2),
+        weight: s.assessment.weight,
+      });
+
+      subjectMap[subjectId].weightedSum += percentage * s.assessment.weight;
+      subjectMap[subjectId].totalWeight += s.assessment.weight;
+    }
+
+    const subjects = Object.values(subjectMap).map(sub => {
+      const average = sub.totalWeight > 0 ? sub.weightedSum / sub.totalWeight : 0;
+      const gradeInfo = calculateGrade(average);
+      return {
+        subjectId: sub.subjectId,
+        subjectName: sub.subjectName,
+        assessments: sub.assessments,
+        average: average.toFixed(2),
+        grade: gradeInfo.grade,
+        remark: gradeInfo.remark,
+      };
+    });
+
+    const termAverage = subjects.length > 0
+      ? subjects.reduce((sum, s) => sum + parseFloat(s.average), 0) / subjects.length
+      : 0;
+
+    return {
+      termId: term.id,
+      termName: term.name,
+      termNumber: term.termNumber,
+      subjects,
+      termAverage: termAverage.toFixed(2),
+      termGrade: calculateGrade(termAverage).grade,
+    };
+  });
+
+  return {
+    academicYear: currentYear.name,
+    terms,
+  };
+};
+
 export const createCompetency = async (data) => {
   const competency = await prisma.competency.create({
     data,

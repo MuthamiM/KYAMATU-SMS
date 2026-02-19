@@ -15,7 +15,9 @@ function Reports() {
   const [searching, setSearching] = useState(false);
   const [rankings, setRankings] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState(user?.role === 'STUDENT' ? 'documents' : 'rankings');
+  const [performanceData, setPerformanceData] = useState(null);
+  const [performanceLoading, setPerformanceLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState(user?.role === 'STUDENT' ? 'performance' : 'rankings');
 
   const isAdmin = ['SUPER_ADMIN', 'ADMIN', 'BURSAR'].includes(user?.role);
 
@@ -959,8 +961,13 @@ function Reports() {
         <nav className="flex gap-4">
           {[
             { id: 'rankings', label: 'Class Rankings', icon: TrendingUp, minRole: 'TEACHER' },
+            { id: 'performance', label: 'Performance', icon: TrendingUp, studentOnly: true },
             { id: 'documents', label: 'Student Documents', icon: FileText },
-          ].filter(tab => !tab.minRole || (user?.role && ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'BURSAR'].includes(user.role))).map((tab) => (
+          ].filter(tab => {
+            if (tab.studentOnly) return user?.role === 'STUDENT';
+            if (tab.minRole) return user?.role && ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'BURSAR'].includes(user.role);
+            return true;
+          }).map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
@@ -1135,6 +1142,18 @@ function Reports() {
             </div>
           )}
         </>
+      )}
+
+      {activeTab === 'performance' && (
+        <PerformanceTab
+          user={user}
+          foundStudent={foundStudent}
+          performanceData={performanceData}
+          setPerformanceData={setPerformanceData}
+          performanceLoading={performanceLoading}
+          setPerformanceLoading={setPerformanceLoading}
+          getGradeColor={getGradeColor}
+        />
       )}
 
       {activeTab === 'documents' && (
@@ -1346,6 +1365,127 @@ function Reports() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function PerformanceTab({ user, foundStudent, performanceData, setPerformanceData, performanceLoading, setPerformanceLoading, getGradeColor }) {
+  useEffect(() => {
+    if (user?.role === 'STUDENT' && foundStudent?.id && !performanceData) {
+      fetchPerformance(foundStudent.id);
+    }
+  }, [foundStudent?.id]);
+
+  const fetchPerformance = async (studentId) => {
+    setPerformanceLoading(true);
+    try {
+      const response = await api.get(`/assessments/student/${studentId}/term-performance`);
+      setPerformanceData(response.data.data);
+    } catch (error) {
+      toast.error('Failed to fetch performance data');
+    } finally {
+      setPerformanceLoading(false);
+    }
+  };
+
+  if (performanceLoading) {
+    return (
+      <div className="card p-12 text-center">
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary-500" />
+        <p className="mt-4 text-gray-500">Loading performance data...</p>
+      </div>
+    );
+  }
+
+  if (!performanceData || !performanceData.terms || performanceData.terms.length === 0) {
+    return (
+      <div className="card p-8 text-center">
+        <TrendingUp className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600" />
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mt-4">No Performance Data</h3>
+        <p className="text-gray-500 dark:text-gray-400 mt-2">Assessment scores will appear here once they are recorded.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Academic Year Header */}
+      <div className="card p-4 bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 border-primary-200 dark:border-primary-800">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center">
+            <Calendar className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="font-semibold text-primary-900 dark:text-primary-100">Academic Year: {performanceData.academicYear}</h2>
+            <p className="text-sm text-primary-700 dark:text-primary-300">Term-by-term performance breakdown</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Term Cards */}
+      {performanceData.terms.map((term) => (
+        <div key={term.termId} className="card overflow-hidden">
+          {/* Term Header */}
+          <div className="p-4 bg-gray-50 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <Award className="w-5 h-5 text-warning-500" />
+                {term.termName}
+              </h3>
+              {term.subjects.length > 0 && (
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-gray-500">Average: <strong className="text-gray-900 dark:text-white">{term.termAverage}%</strong></span>
+                  <span className={`px-3 py-1 rounded-full font-bold text-sm ${getGradeColor(term.termGrade)}`}>{term.termGrade}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {term.subjects.length === 0 ? (
+            <div className="p-6 text-center text-gray-400 dark:text-gray-500">
+              <p>No scores recorded for this term yet.</p>
+            </div>
+          ) : (
+            <div className="table-container">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Subject</th>
+                    <th>Assessments</th>
+                    <th>Average</th>
+                    <th>Grade</th>
+                    <th>Remark</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+                  {term.subjects.map((subject) => (
+                    <tr key={subject.subjectId} className="hover:bg-gray-50 dark:hover:bg-slate-800">
+                      <td className="font-medium text-gray-900 dark:text-white">{subject.subjectName}</td>
+                      <td>
+                        <div className="flex flex-wrap gap-2">
+                          {subject.assessments.map((a, i) => (
+                            <span key={i} className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded text-xs">
+                              <span className="text-gray-500 dark:text-gray-400">{a.name}:</span>
+                              <span className="font-semibold text-gray-900 dark:text-white">{a.percentage}%</span>
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="font-semibold text-gray-900 dark:text-white">{subject.average}%</td>
+                      <td>
+                        <span className={`px-3 py-1 rounded-full font-bold text-sm ${getGradeColor(subject.grade)}`}>
+                          {subject.grade}
+                        </span>
+                      </td>
+                      <td className="text-sm text-gray-600 dark:text-gray-400">{subject.remark}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

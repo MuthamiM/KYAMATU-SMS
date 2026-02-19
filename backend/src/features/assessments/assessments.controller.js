@@ -68,6 +68,17 @@ export const getStudentSummary = async (req, res, next) => {
   }
 };
 
+export const getStudentTermPerformance = async (req, res, next) => {
+  try {
+    const performance = await assessmentsService.getStudentTermPerformance(
+      req.params.studentId
+    );
+    sendSuccess(res, performance);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const createCompetency = async (req, res, next) => {
   try {
     const competency = await assessmentsService.createCompetency(req.body);

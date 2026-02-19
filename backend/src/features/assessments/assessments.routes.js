@@ -18,6 +18,7 @@ router.post('/scores', isTeacher, assessmentsController.enterScore);
 router.post('/scores/bulk', isTeacher, assessmentsController.enterBulkScores);
 router.get('/student/:studentId/scores', validateStudentId, validate, isStudent, restrictToOwnStudent, assessmentsController.getStudentScores);
 router.get('/student/:studentId/summary', validateStudentId, validate, isStudent, restrictToOwnStudent, assessmentsController.getStudentSummary);
+router.get('/student/:studentId/term-performance', validateStudentId, validate, isStudent, restrictToOwnStudent, assessmentsController.getStudentTermPerformance);
 
 router.post('/competencies', isAdmin, assessmentsController.createCompetency);
 router.get('/competencies', assessmentsController.getCompetencies);
