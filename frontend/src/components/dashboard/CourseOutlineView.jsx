@@ -12,7 +12,15 @@ const CourseOutlineView = ({ isOpen, onClose, outline, subjectName }) => {
                 <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-primary-600 text-white">
                     <div>
                         <h2 className="text-xl font-bold">{subjectName}</h2>
-                        <p className="text-sm opacity-80">Course Outline & Syllabus</p>
+                        <div className="flex items-center gap-2 text-sm opacity-80">
+                            <span>Course Outline & Syllabus</span>
+                            {outline?.teacher && (
+                                <>
+                                    <span className="w-1 h-1 bg-white/40 rounded-full"></span>
+                                    <span>Prepared by {outline.teacher.firstName} {outline.teacher.lastName}</span>
+                                </>
+                            )}
+                        </div>
                     </div>
                     <button
                         onClick={onClose}

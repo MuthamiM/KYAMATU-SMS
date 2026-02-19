@@ -243,7 +243,14 @@ const StudentDashboardRedesigned = ({ user }) => {
                                                 onClick={() => setExpandedCourse(isExpanded ? null : i)}
                                                 className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors cursor-pointer"
                                             >
-                                                <span className="text-xs font-bold text-gray-700 tracking-tight">{course.code} | {course.name}</span>
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-bold text-gray-700 tracking-tight">{course.code} | {course.name}</span>
+                                                    {course.teacher && (
+                                                        <span className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">
+                                                            Teacher: {course.teacher.firstName} {course.teacher.lastName}
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <ChevronRight className={`w-4 h-4 text-gray-300 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                                             </div>
                                             {isExpanded && (

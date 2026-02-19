@@ -40,8 +40,8 @@ function Timetable() {
     teacherId: ''
   });
 
-  const [viewMode, setViewMode] = useState(user.role === 'TEACHER' ? 'teacher' : 'class');
-  const [selectedTeacherId, setSelectedTeacherId] = useState(user.role === 'TEACHER' ? user.staff?.id : ''); // Default to self
+  const [viewMode, setViewMode] = useState(user?.role === 'TEACHER' ? 'teacher' : 'class');
+  const [selectedTeacherId, setSelectedTeacherId] = useState(user?.role === 'TEACHER' ? user.staff?.id : ''); // Default to self
 
   useEffect(() => {
     if (!user) return;
@@ -71,7 +71,7 @@ function Timetable() {
   };
 
   useEffect(() => {
-    if (user.role === 'STUDENT') return; // Student timetable already fetched
+    if (!user || user.role === 'STUDENT') return; // Student timetable already fetched or user not loaded
     // Clear data when switching views to prevent state leakage
     setTimetable([]);
     if (viewMode === 'class') {
@@ -337,7 +337,7 @@ function Timetable() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Timetable</h1>
           <p className="text-gray-500 dark:text-gray-400">
-            {user.role === 'STUDENT' ? 'My Class Schedule' : user.role === 'TEACHER' ? 'My Schedule' : 'Manage Class Schedules'}
+            {user?.role === 'STUDENT' ? 'My Class Schedule' : user?.role === 'TEACHER' ? 'My Schedule' : 'Manage Class Schedules'}
           </p>
         </div>
 

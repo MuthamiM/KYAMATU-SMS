@@ -25,7 +25,7 @@ import {
 
 const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/assessments', icon: ClipboardList, label: 'Assessments', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'STUDENT'] },
+  { path: '/assessments', icon: ClipboardList, label: 'Assessments', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER'] },
   { path: '/reports', icon: FileText, label: 'Reports', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'BURSAR', 'STUDENT'] },
   { path: '/timetable', icon: Calendar, label: 'Timetable', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'STUDENT'] },
   { path: '/students', icon: Users, label: 'Students', roles: ['SUPER_ADMIN', 'ADMIN'] },
@@ -203,7 +203,7 @@ function Layout() {
             <School className="w-5 h-5 text-gray-500 cursor-pointer hover:text-teal-600" />
             <NotificationDropdown />
             <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
-              <span className="text-sm font-medium text-gray-700 hidden sm:inline">{user?.staff?.firstName || user?.student?.firstName || user?.email.split('@')[0]}</span>
+              <span className="text-sm font-medium text-gray-700 hidden sm:inline">{user?.student?.firstName || user?.staff?.firstName || user?.name || user?.email.split('@')[0]}</span>
               <div onClick={handleLogout} className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-200">
                 <UserCog className="w-4 h-4 text-gray-600" />
               </div>
