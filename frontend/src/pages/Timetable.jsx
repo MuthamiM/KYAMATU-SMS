@@ -44,14 +44,32 @@ function Timetable() {
   const [selectedTeacherId, setSelectedTeacherId] = useState(user.role === 'TEACHER' ? user.staff?.id : ''); // Default to self
 
   useEffect(() => {
-    fetchClasses();
-    fetchTeachers();
-    if (user.role === 'TEACHER' && user.staff?.id) {
-      setSelectedTeacherId(user.staff.id); // Default to self
+    if (user.role === 'STUDENT') {
+      fetchStudentTimetable();
+    } else {
+      fetchClasses();
+      fetchTeachers();
+      if (user.role === 'TEACHER' && user.staff?.id) {
+        setSelectedTeacherId(user.staff.id);
+      }
     }
   }, []);
 
+  const fetchStudentTimetable = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/timetable/my-class');
+      setTimetable(res.data.data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to fetch your timetable');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
+    if (user.role === 'STUDENT') return; // Student timetable already fetched
     // Clear data when switching views to prevent state leakage
     setTimetable([]);
     if (viewMode === 'class') {
@@ -317,7 +335,7 @@ function Timetable() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Timetable</h1>
           <p className="text-gray-500 dark:text-gray-400">
-            {user.role === 'TEACHER' ? 'My Schedule' : 'Manage Class Schedules'}
+            {user.role === 'STUDENT' ? 'My Class Schedule' : user.role === 'TEACHER' ? 'My Schedule' : 'Manage Class Schedules'}
           </p>
         </div>
 

@@ -10,6 +10,7 @@ router.get('/master', isAuth, isTeacher, timetableController.getMasterTimetable)
 router.get('/teacher/:staffId', isAuth, isStaff, timetableController.getTeacherTimetable);
 router.get('/my', isAuth, isTeacher, timetableController.getMyTimetable);
 router.get('/next-lesson', isAuth, isTeacher, timetableController.getNextLesson);
+router.get('/my-class', isAuth, isStudent, timetableController.getMyClassTimetable);
 
 router.post('/generate', isAuth, isAdmin, timetableController.generate);
 router.post('/', isAuth, isAdmin, timetableController.upsertSlot); // Only Admin edits for now as per user req

@@ -1,5 +1,6 @@
 import * as timetableService from './timetable.service.js';
 import { sendSuccess } from '../../utils/response.js';
+import prisma from '../../config/database.js';
 
 export const getTimetable = async (req, res, next) => {
   try {
@@ -37,7 +38,15 @@ export const getMyTimetable = async (req, res, next) => {
 
 export const getMyClassTimetable = async (req, res, next) => {
   try {
-    const student = req.user.student;
+    const studentId = req.user.student?.id;
+    if (!studentId) {
+      throw new Error('Student profile not found');
+    }
+    // req.user.student only has { id }, need to fetch classId
+    const student = await prisma.student.findUnique({
+      where: { id: studentId },
+      select: { classId: true },
+    });
     if (!student || !student.classId) {
       throw new Error('Student class not found');
     }
