@@ -1,15 +1,53 @@
-import { X, CheckCircle, Clock, BookOpen, AlertCircle, FileText } from 'lucide-react';
+import { X, CheckCircle, Clock, BookOpen, AlertCircle, FileText, Printer } from 'lucide-react';
 
 const CourseOutlineView = ({ isOpen, onClose, outline, subjectName }) => {
     if (!isOpen) return null;
 
     const content = outline?.content || [];
 
+    const handlePrint = () => {
+        const win = window.open('', '_blank');
+        win.document.write(`
+            <html>
+                <head>
+                    <title>${subjectName} - Course Syllabus</title>
+                    <style>
+                        body { font-family: 'Inter', sans-serif; padding: 40px; color: #1a1a1a; }
+                        h1 { color: #2563eb; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; }
+                        .prepared-by { color: #6b7280; font-size: 0.875rem; margin-bottom: 30px; }
+                        .module { margin-bottom: 25px; page-break-inside: avoid; }
+                        .module-type { font-weight: 700; color: #2563eb; font-size: 0.75rem; text-transform: uppercase; }
+                        .module-title { font-size: 1.25rem; font-weight: 700; margin: 5px 0; }
+                        .module-desc { color: #4b5563; font-size: 0.9375rem; line-height: 1.5; }
+                        .module-date { color: #9ca3af; font-size: 0.8125rem; font-weight: 500; }
+                        @media print { body { padding: 0; } }
+                    </style>
+                </head>
+                <body>
+                    <h1>${subjectName}</h1>
+                    <div class="prepared-by">
+                        Course Outline & Syllabus
+                        ${outline?.teacher ? ` | Prepared by ${outline.teacher.firstName} ${outline.teacher.lastName}` : ''}
+                    </div>
+                    ${content.map(m => `
+                        <div class="module">
+                            <div class="module-type">${m.type} • ${m.date}</div>
+                            <div class="module-title">${m.title}</div>
+                            <div class="module-desc">${m.description}</div>
+                        </div>
+                    `).join('')}
+                    <script>window.onload = function() { window.print(); }</script>
+                </body>
+            </html>
+        `);
+        win.document.close();
+    };
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
             <div className="w-full max-w-lg h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-500">
                 {/* Header */}
-                <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-primary-600 text-white">
+                <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-teal-600 text-white">
                     <div>
                         <h2 className="text-xl font-bold">{subjectName}</h2>
                         <div className="flex items-center gap-2 text-sm opacity-80">
@@ -22,12 +60,21 @@ const CourseOutlineView = ({ isOpen, onClose, outline, subjectName }) => {
                             )}
                         </div>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-white/10 rounded-xl transition-all"
-                    >
-                        <X className="w-6 h-6" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handlePrint}
+                            className="p-2 hover:bg-white/10 rounded-xl transition-all"
+                            title="Print Syllabus"
+                        >
+                            <Printer className="w-5 h-5" />
+                        </button>
+                        <button
+                            onClick={onClose}
+                            className="p-2 hover:bg-white/10 rounded-xl transition-all"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Content */}
