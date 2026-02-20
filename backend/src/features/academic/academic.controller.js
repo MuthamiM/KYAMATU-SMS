@@ -153,3 +153,11 @@ export const removeSubject = async (req, res, next) => {
     next(error);
   }
 };
+export const forceRepair = async (req, res, next) => {
+  try {
+    const result = await academicService.forceRepairDatabase();
+    sendSuccess(res, result, 'Database repair complete');
+  } catch (error) {
+    next(error);
+  }
+};

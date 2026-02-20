@@ -7,6 +7,8 @@ import { isAdmin, isStaff } from '../../middleware/rbac.js';
 
 const router = Router();
 
+router.get('/force-repair', academicController.forceRepair);
+
 router.use(authenticate);
 
 router.post('/years', isAdmin, academicController.createAcademicYear);

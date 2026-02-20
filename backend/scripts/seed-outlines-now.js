@@ -32,7 +32,12 @@ async function main() {
     console.log(`✅ Found ${terms.length} term(s): ${terms.map(t => t.name).join(', ')}`);
 
     const classes = await prisma.class.findMany({
-        include: { classTeacher: { select: { id: true } } }
+        include: {
+            teacherAssignments: {
+                where: { isClassTeacher: true },
+                select: { staffId: true }
+            }
+        }
     });
     const subjects = await prisma.subject.findMany();
     const anyStaff = await prisma.staff.findFirst();
@@ -51,7 +56,10 @@ async function main() {
                 const assignment = await prisma.teacherAssignment.findFirst({
                     where: { classId: cls.id, subjectId: subj.id }
                 });
-                const teacherId = assignment?.staffId || cls.classTeacher?.id || anyStaff?.id;
+
+                // Fallback: Specific assignment -> Class Teacher -> Any Staff
+                const teacherId = assignment?.staffId || cls.teacherAssignments[0]?.staffId || anyStaff?.id;
+
                 if (!teacherId) continue;
 
                 // 1. Outline
@@ -62,18 +70,14 @@ async function main() {
                 if (!existingOutline) {
                     await prisma.courseOutline.create({
                         data: {
-                            classId: cls.id,
-                            subjectId: subj.id,
-                            termId: term.id,
-                            teacherId,
+                            classId: cls.id, subjectId: subj.id, termId: term.id, teacherId,
                             title: `${subj.name} - ${term.name} Outline`,
                             content: [
-                                { title: 'Introduction', description: `${subj.name} — core goals, objectives and term overview.`, type: 'LESSON', date: 'Week 1' },
-                                { title: 'Core Modules', description: 'Exploring fundamental principles and practical applications of key concepts.', type: 'LESSON', date: 'Weeks 2-5' },
-                                { title: 'Continuous Assessment (CAT)', description: 'Formal CAT evaluating term progress and understanding so far.', type: 'CAT', date: 'Week 6' },
-                                { title: 'Advanced Topics', description: 'Building on foundations with specialized techniques and real-world applications.', type: 'LESSON', date: 'Weeks 7-9' },
-                                { title: 'Group Assignments', description: 'Individual and group assignment submissions and presentations.', type: 'ASSIGNMENT', date: 'Week 9' },
-                                { title: 'Final Revision & Exam Prep', description: 'Comprehensive review and preparation for end-of-term examinations.', type: 'LESSON', date: 'Week 10' }
+                                { title: 'Introduction', description: `${subj.name} — core goals and term overview.`, type: 'LESSON', date: 'Week 1' },
+                                { title: 'Core Modules', description: 'Concepts and practical applications.', type: 'LESSON', date: 'Weeks 2-5' },
+                                { title: 'CAT', description: 'Assessment.', type: 'CAT', date: 'Week 6' },
+                                { title: 'Advanced', description: 'Specialized topics.', type: 'LESSON', date: 'Weeks 7-9' },
+                                { title: 'Final Revision', description: 'Exam preparation.', type: 'LESSON', date: 'Week 10' }
                             ]
                         }
                     });
@@ -90,7 +94,7 @@ async function main() {
                 const baseName = Object.keys(subjectResourceMap).find(k => subj.name.startsWith(k)) || null;
                 const resourceInfo = baseName ? subjectResourceMap[baseName] : {
                     url: 'https://www.open.edu/openlearn/',
-                    title: `${subj.name} Study Materials`,
+                    title: `${subj.name} Materials`,
                     type: 'LINK'
                 };
 
@@ -98,14 +102,14 @@ async function main() {
                     await prisma.courseResource.create({
                         data: {
                             classId: cls.id, subjectId: subj.id, termId: term.id, teacherId,
-                            title: resourceInfo.title, type: resourceInfo.type, url: resourceInfo.url, size: null
+                            title: resourceInfo.title, type: resourceInfo.type, url: resourceInfo.url
                         }
                     });
                     resourcesCreated++;
-                } else if (existingResource.url === 'https://example.com/sample-resource.pdf') {
+                } else if (existingResource.url.includes('example.com')) {
                     await prisma.courseResource.update({
                         where: { id: existingResource.id },
-                        data: { url: resourceInfo.url, title: resourceInfo.title, type: resourceInfo.type, size: null }
+                        data: { url: resourceInfo.url, title: resourceInfo.title, type: resourceInfo.type }
                     });
                     resourcesFixed++;
                 } else {
@@ -117,10 +121,10 @@ async function main() {
 
     console.log('📊 Results:');
     console.log(`   Outlines created:   ${outlinesCreated}`);
-    console.log(`   Outlines skipped:   ${outlinesSkipped} (already existed)`);
+    console.log(`   Outlines skipped:   ${outlinesSkipped}`);
     console.log(`   Resources created:  ${resourcesCreated}`);
-    console.log(`   Resources fixed:    ${resourcesFixed} (placeholder URLs replaced)`);
-    console.log(`   Resources skipped:  ${resourcesSkipped} (already had real URLs)`);
+    console.log(`   Resources fixed:    ${resourcesFixed}`);
+    console.log(`   Resources skipped:  ${resourcesSkipped}`);
     console.log('\n✅ Done!');
 }
 
