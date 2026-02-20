@@ -617,7 +617,12 @@ app.listen(PORT, async () => {
 
     if (terms.length > 0) {
       const classes = await prisma.class.findMany({
-        include: { classTeacher: { select: { id: true } } }
+        include: {
+          teacherAssignments: {
+            where: { isClassTeacher: true },
+            select: { staffId: true }
+          }
+        }
       });
       const subjects = await prisma.subject.findMany();
       const anyStaff = await prisma.staff.findFirst();
@@ -645,7 +650,7 @@ app.listen(PORT, async () => {
             const assignment = await prisma.teacherAssignment.findFirst({
               where: { classId: cls.id, subjectId: subj.id }
             });
-            const teacherId = assignment?.staffId || cls.classTeacher?.id || anyStaff?.id;
+            const teacherId = assignment?.staffId || cls.teacherAssignments[0]?.staffId || anyStaff?.id;
 
             if (!teacherId) continue;
 
