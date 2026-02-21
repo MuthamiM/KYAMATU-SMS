@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as feesController from './fees.controller.js';
 import { authenticate } from '../../middleware/auth.js';
-import { isAdmin, isBursar, isStaff } from '../../middleware/rbac.js';
+import { isAdmin, isBursar, isStaff, requireRole } from '../../middleware/rbac.js';
 
 const router = Router();
 
@@ -13,8 +13,11 @@ router.get('/structures', isBursar, feesController.getFeeStructures);
 router.post('/invoices', isBursar, feesController.generateInvoice);
 router.get('/invoices/export', isBursar, feesController.exportInvoices);
 router.get('/invoices/:id', isBursar, feesController.getInvoice);
-router.get('/student/:studentId/invoices', isBursar, feesController.getStudentInvoices);
-router.get('/student/:studentId/balance', isBursar, feesController.getStudentBalance);
+
+// Student invoice/balance: accessible by bursar, admin, teacher, AND the student themselves
+const canViewStudentFees = requireRole('SUPER_ADMIN', 'ADMIN', 'BURSAR', 'TEACHER', 'STUDENT');
+router.get('/student/:studentId/invoices', canViewStudentFees, feesController.getStudentInvoices);
+router.get('/student/:studentId/balance', canViewStudentFees, feesController.getStudentBalance);
 
 router.post('/payments', isBursar, feesController.recordPayment);
 router.get('/payments', isBursar, feesController.getPayments);

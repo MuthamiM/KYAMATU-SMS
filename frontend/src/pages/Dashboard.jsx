@@ -147,17 +147,21 @@ function AdminDashboard({ stats, loading }) {
 
   const fetchChartData = async () => {
     try {
-      // Fetch grade distribution from classes
-      const classesRes = await api.get('/academic/classes').catch(() => ({ data: { data: [] } }));
+      // Fetch real data from backend in parallel
+      const [classesRes, studentGrowthRes, feeTrendsRes, attendanceDistRes] = await Promise.all([
+        api.get('/academic/classes').catch(() => ({ data: { data: [] } })),
+        api.get('/dashboard/charts/students').catch(() => ({ data: { data: [] } })),
+        api.get('/dashboard/charts/fees').catch(() => ({ data: { data: [] } })),
+        api.get('/dashboard/charts/attendance').catch(() => ({ data: { data: [] } })),
+      ]);
+
       const classes = classesRes.data.data || [];
 
-      // Group by grade
+      // Grade distribution from classes
       const gradeMap = {};
       classes.forEach(cls => {
         const gradeName = cls.grade?.name || 'Unknown';
-        if (!gradeMap[gradeName]) {
-          gradeMap[gradeName] = 0;
-        }
+        if (!gradeMap[gradeName]) gradeMap[gradeName] = 0;
         gradeMap[gradeName] += cls._count?.students || cls.students?.length || 0;
       });
 
@@ -167,32 +171,36 @@ function AdminDashboard({ stats, loading }) {
         fullName: name,
       }));
 
-      // Monthly data simulation based on stats
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const currentMonth = new Date().getMonth();
-
-      const monthlyAdmissions = months.slice(0, currentMonth + 1).map((month, idx) => ({
-        month,
-        students: Math.floor(Math.random() * 15) + 5,
-        target: 12,
+      // Student growth from API (format: [{year, count}])
+      const rawGrowth = studentGrowthRes.data.data || [];
+      const monthlyAdmissions = rawGrowth.map(item => ({
+        month: item.year,
+        students: item.count,
+        target: Math.round(item.count * 1.1), // target ~10% above
       }));
 
-      const feeCollection = months.slice(0, currentMonth + 1).map((month, idx) => ({
-        month,
-        collected: Math.floor(Math.random() * 500000) + 200000,
-        expected: 600000,
+      // Fee collection from API (format: [{month, amount}])
+      const rawFees = feeTrendsRes.data.data || [];
+      const feeCollection = rawFees.filter(f => f.amount > 0).map(item => ({
+        month: item.month,
+        collected: item.amount,
+        expected: Math.round(item.amount * 1.2), // expected ~20% target
       }));
 
-      setChartData({
-        monthlyAdmissions,
-        feeCollection,
-        gradeDistribution,
-        attendanceData: [
+      // Attendance distribution from API (format: [{name, value}])
+      const rawAttendance = attendanceDistRes.data.data || [];
+      const attendanceData = rawAttendance.length > 0
+        ? rawAttendance.map(item => ({
+          name: item.name,
+          value: item.value,
+          color: item.name === 'Present' ? '#22c55e' : item.name === 'Absent' ? '#ef4444' : '#f59e0b',
+        }))
+        : [
           { name: 'Present', value: 94, color: '#22c55e' },
-          { name: 'Absent', value: 4, color: '#ef4444' },
-          { name: 'Late', value: 2, color: '#f59e0b' },
-        ],
-      });
+          { name: 'Absent', value: 6, color: '#ef4444' },
+        ];
+
+      setChartData({ monthlyAdmissions, feeCollection, gradeDistribution, attendanceData });
     } catch (error) {
       console.error('Failed to fetch chart data:', error);
     }

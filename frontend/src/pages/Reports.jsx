@@ -3,6 +3,8 @@ import api from '../services/api';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../stores/authStore';
 import { FileText, Download, Award, TrendingUp, CheckCircle, Receipt, ClipboardList, UserCheck, Calendar, Shield, Search, GraduationCap, Loader2 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 function Reports() {
   const { user } = useAuthStore();
@@ -260,6 +262,133 @@ function Reports() {
     }
   };
 
+  // PDF Download: generates a professional PDF report card
+  const downloadReportCardPDF = async (studentId, specificTermId = null) => {
+    try {
+      let termId = specificTermId;
+      if (!termId) {
+        const termsRes = await api.get('/academic/terms');
+        termId = termsRes.data.data[0]?.id;
+      }
+      if (!termId) { toast.error('No active term found'); return; }
+
+      toast.loading('Generating PDF...');
+      const response = await api.post('/reports/generate', { studentId, termId });
+      const report = response.data.data;
+      toast.dismiss();
+
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+
+      // School Header
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('KYAMATU PRIMARY SCHOOL', pageWidth / 2, 20, { align: 'center' });
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text('P.O. Box 123, Machakos | Tel: +254 700 000 000 | Email: info@kyamatu.ac.ke', pageWidth / 2, 27, { align: 'center' });
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('STUDENT REPORT CARD', pageWidth / 2, 35, { align: 'center' });
+
+      // Horizontal line
+      doc.setLineWidth(0.5);
+      doc.line(14, 38, pageWidth - 14, 38);
+
+      // Student Info
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Student Name:', 14, 46);
+      doc.setFont('helvetica', 'normal');
+      doc.text(report.student.name, 50, 46);
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('Adm. No:', 120, 46);
+      doc.setFont('helvetica', 'normal');
+      doc.text(report.student.admissionNumber, 145, 46);
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('Class:', 14, 53);
+      doc.setFont('helvetica', 'normal');
+      doc.text(report.student.class, 50, 53);
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('Term / Year:', 120, 53);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${report.term.name} - ${report.term.academicYear}`, 145, 53);
+
+      // Subjects Table
+      const tableBody = report.subjects.map(s => [
+        s.subjectName,
+        s.assessments.map(a => `${a.name}: ${parseFloat(a.percentage).toFixed(1)}%`).join('\n'),
+        `${s.average}%`,
+        s.grade,
+        s.remark,
+      ]);
+
+      doc.autoTable({
+        startY: 60,
+        head: [['Subject', 'Assessments', 'Average', 'Grade', 'Remark']],
+        body: tableBody,
+        theme: 'grid',
+        styles: { fontSize: 9, cellPadding: 3 },
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 35 },
+          1: { cellWidth: 55, fontSize: 8 },
+          2: { cellWidth: 22, halign: 'center', fontStyle: 'bold' },
+          3: { cellWidth: 18, halign: 'center', fontStyle: 'bold' },
+          4: { cellWidth: 40 },
+        },
+        alternateRowStyles: { fillColor: [248, 249, 250] },
+      });
+
+      // Summary Section
+      const summaryY = doc.lastAutoTable.finalY + 10;
+      doc.setFillColor(248, 249, 250);
+      doc.roundedRect(14, summaryY, pageWidth - 28, 22, 3, 3, 'F');
+
+      const cols = [
+        { label: 'Total Score', value: String(report.summary.totalScore) },
+        { label: 'Average', value: `${report.summary.averageScore}%` },
+        { label: 'Overall Grade', value: report.summary.overallGrade },
+        { label: 'Rank', value: `${report.summary.rank || '-'} / ${report.summary.outOf}` },
+      ];
+
+      const colWidth = (pageWidth - 28) / 4;
+      cols.forEach((col, i) => {
+        const x = 14 + colWidth * i + colWidth / 2;
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100);
+        doc.text(col.label, x, summaryY + 8, { align: 'center' });
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0);
+        doc.text(col.value, x, summaryY + 17, { align: 'center' });
+      });
+
+      // Signature Section
+      const sigY = summaryY + 40;
+      doc.setLineWidth(0.3);
+      doc.line(14, sigY, 80, sigY);
+      doc.line(120, sigY, pageWidth - 14, sigY);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text("Class Teacher's Signature", 47, sigY + 6, { align: 'center' });
+      doc.text("Principal's Signature & Stamp", (120 + pageWidth - 14) / 2, sigY + 6, { align: 'center' });
+
+      // Save
+      const filename = `ReportCard_${report.student.name.replace(/\s+/g, '_')}_${report.term.name.replace(/\s+/g, '_')}.pdf`;
+      doc.save(filename);
+      toast.success('Report card PDF downloaded!');
+    } catch (error) {
+      toast.dismiss();
+      console.error(error);
+      toast.error('Failed to generate PDF');
+    }
+  };
+
   // Generate Clearance Form
   const generateClearanceForm = async (studentId) => {
     try {
@@ -485,7 +614,9 @@ function Reports() {
       printWindow.document.close();
       toast.success('Fee statement generated');
     } catch (error) {
-      toast.error('Failed to generate fee statement');
+      console.error('Fee statement error:', error);
+      const msg = error.response?.status === 403 ? 'Access denied — please contact admin' : (error.response?.data?.message || 'Failed to generate fee statement');
+      toast.error(msg);
     }
   };
 
@@ -1446,64 +1577,67 @@ function PerformanceTab({ user, foundStudent, performanceData, setPerformanceDat
                   <span className="text-sm text-gray-500">Average: <strong className="text-gray-900 dark:text-white">{term.termAverage}%</strong></span>
                   <span className={`px-3 py-1 rounded-full font-bold text-sm ${getGradeColor(term.termGrade)}`}>{term.termGrade}</span>
                   <button
-                    onClick={() => handleGenerateReport(foundStudent?.id || selectedStudent, term.termId)}
+                    onClick={() => downloadReportCardPDF(foundStudent?.id || selectedStudent, term.termId)}
                     className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors text-primary-600 flex items-center gap-2 text-xs font-semibold"
-                    title="Download Report Card"
+                    title="Download Report Card as PDF"
                   >
                     <Download className="w-4 h-4" />
-                    Download
+                    Download PDF
                   </button>
                 </div>
               )}
             </div>
           </div>
 
-          {term.subjects.length === 0 ? (
-            <div className="p-6 text-center text-gray-400 dark:text-gray-500">
-              <p>No scores recorded for this term yet.</p>
-            </div>
-          ) : (
-            <div className="table-container">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Subject</th>
-                    <th>Assessments</th>
-                    <th>Average</th>
-                    <th>Grade</th>
-                    <th>Remark</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
-                  {term.subjects.map((subject) => (
-                    <tr key={subject.subjectId} className="hover:bg-gray-50 dark:hover:bg-slate-800">
-                      <td className="font-medium text-gray-900 dark:text-white">{subject.subjectName}</td>
-                      <td>
-                        <div className="flex flex-col gap-1 py-1">
-                          {subject.assessments.map((a, i) => (
-                            <div key={i} className="text-xs flex items-center gap-2">
-                              <span className="text-gray-500 dark:text-gray-400 min-w-[120px]">{a.name}:</span>
-                              <span className="font-bold text-gray-900 dark:text-white">{parseFloat(a.percentage).toFixed(2)}%</span>
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="font-semibold text-gray-900 dark:text-white">{subject.average}%</td>
-                      <td>
-                        <span className={`px-3 py-1 rounded-full font-bold text-sm ${getGradeColor(subject.grade)}`}>
-                          {subject.grade}
-                        </span>
-                      </td>
-                      <td className="text-sm text-gray-600 dark:text-gray-400">{subject.remark}</td>
+          {
+            term.subjects.length === 0 ? (
+              <div className="p-6 text-center text-gray-400 dark:text-gray-500">
+                <p>No scores recorded for this term yet.</p>
+              </div>
+            ) : (
+              <div className="table-container">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Subject</th>
+                      <th>Assessments</th>
+                      <th>Average</th>
+                      <th>Grade</th>
+                      <th>Remark</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+                    {term.subjects.map((subject) => (
+                      <tr key={subject.subjectId} className="hover:bg-gray-50 dark:hover:bg-slate-800">
+                        <td className="font-medium text-gray-900 dark:text-white">{subject.subjectName}</td>
+                        <td>
+                          <div className="flex flex-col gap-1 py-1">
+                            {subject.assessments.map((a, i) => (
+                              <div key={i} className="text-xs flex items-center gap-2">
+                                <span className="text-gray-500 dark:text-gray-400 min-w-[120px]">{a.name}:</span>
+                                <span className="font-bold text-gray-900 dark:text-white">{parseFloat(a.percentage).toFixed(2)}%</span>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="font-semibold text-gray-900 dark:text-white">{subject.average}%</td>
+                        <td>
+                          <span className={`px-3 py-1 rounded-full font-bold text-sm ${getGradeColor(subject.grade)}`}>
+                            {subject.grade}
+                          </span>
+                        </td>
+                        <td className="text-sm text-gray-600 dark:text-gray-400">{subject.remark}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          }
         </div>
-      ))}
-    </div>
+      ))
+      }
+    </div >
   );
 }
 
