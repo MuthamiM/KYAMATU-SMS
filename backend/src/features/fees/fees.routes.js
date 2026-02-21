@@ -5,7 +5,12 @@ import { isAdmin, isBursar, isStaff, requireRole } from '../../middleware/rbac.j
 
 const router = Router();
 
+// Public M-Pesa Callback (Safaricom hits this, no auth)
+router.post('/mpesa/callback', feesController.mpesaCallback);
+
 router.use(authenticate);
+
+router.post('/mpesa/stkpush', requireRole('SUPER_ADMIN', 'ADMIN', 'BURSAR', 'TEACHER', 'STUDENT'), feesController.initiateSTKPush);
 
 router.post('/structures', isAdmin, feesController.createFeeStructure);
 router.get('/structures', isBursar, feesController.getFeeStructures);

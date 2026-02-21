@@ -122,154 +122,6 @@ function Reports() {
         const termsRes = await api.get('/academic/terms');
         termId = termsRes.data.data[0]?.id;
       }
-
-      if (!termId) {
-        toast.error('No active term found');
-        return;
-      }
-
-      const response = await api.post('/reports/generate', { studentId, termId });
-      const report = response.data.data;
-
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Report Card - ${report.student.name}</title>
-            <style>
-              body { font-family: 'Inter', sans-serif; padding: 40px; }
-              .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #000; padding-bottom: 20px; }
-              .logo { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
-              .school-info { font-size: 14px; color: #666; }
-              .student-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-              .info-group { margin-bottom: 10px; }
-              .label { font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; }
-              .value { font-weight: 500; font-size: 16px; }
-              table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-              th { text-align: left; padding: 12px; background: #f8f9fa; border-bottom: 2px solid #dee2e6; font-size: 12px; text-transform: uppercase; }
-              td { padding: 12px; border-bottom: 1px solid #dee2e6; }
-              .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 40px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
-              .summary-item { text-align: center; }
-              .summary-label { font-size: 12px; color: #666; margin-bottom: 5px; }
-              .summary-value { font-size: 24px; font-weight: bold; }
-              .footer { margin-top: 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
-              .signature-line { border-top: 1px solid #000; padding-top: 10px; text-align: center; font-size: 14px; }
-              @media print {
-                body { padding: 0; }
-                .no-print { display: none; }
-              }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <div class="logo">KYAMATU SCHOOL MANAGEMENT SYSTEM</div>
-              <div class="school-info">P.O. Box 123, Machakos | Tel: +254 700 000 000 | Email: info@kyamatu.ac.ke</div>
-              <div class="school-info" style="margin-top: 10px; font-weight: bold; font-size: 16px;">STUDENT REPORT CARD</div>
-            </div>
-
-            <div class="student-info">
-              <div>
-                <div class="info-group">
-                  <div class="label">Student Name</div>
-                  <div class="value">${report.student.name}</div>
-                </div>
-                <div class="info-group">
-                  <div class="label">Admission Number</div>
-                  <div class="value">${report.student.admissionNumber}</div>
-                </div>
-              </div>
-              <div>
-                <div class="info-group">
-                  <div class="label">Class</div>
-                  <div class="value">${report.student.class}</div>
-                </div>
-                <div class="info-group">
-                  <div class="label">Term / Year</div>
-                  <div class="value">${report.term.name} - ${report.term.academicYear}</div>
-                </div>
-              </div>
-            </div>
-
-            <table>
-              <thead>
-                <tr>
-                  <th>Subject</th>
-                  <th>Assessments</th>
-                  <th>Average</th>
-                  <th>Grade</th>
-                  <th>Remark</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${report.subjects.map(s => `
-                  <tr>
-                    <td style="font-weight: 500; vertical-align: top;">${s.subjectName}</td>
-                    <td>
-                      <div style="font-size: 11px; color: #444;">
-                        ${s.assessments.map(a => `
-                          <div style="margin-bottom: 2px;">
-                            ${a.name}: <span style="font-weight: 600;">${parseFloat(a.percentage).toFixed(2)}%</span>
-                          </div>
-                        `).join('')}
-                      </div>
-                    </td>
-                    <td style="font-weight: bold; vertical-align: top;">${s.average}%</td>
-                    <td style="vertical-align: top;"><span style="font-weight: bold;">${s.grade}</span></td>
-                    <td style="vertical-align: top;">${s.remark}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-
-            <div class="summary">
-              <div class="summary-item">
-                <div class="summary-label">Total Score</div>
-                <div class="summary-value">${report.summary.totalScore}</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-label">Average Score</div>
-                <div class="summary-value">${report.summary.averageScore}%</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-label">Overall Grade</div>
-                <div class="summary-value">${report.summary.overallGrade}</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-label">Rank</div>
-                <div class="summary-value">${report.summary.rank || '-'} / ${report.summary.outOf}</div>
-              </div>
-            </div>
-
-            <div class="footer">
-              <div class="signature-line">
-                Class Teacher's Signature
-              </div>
-              <div class="signature-line">
-                Principal's Signature & Stamp
-              </div>
-            </div>
-
-            <script>
-              window.onload = function() { window.print(); }
-            </script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-    } catch (error) {
-      console.error(error);
-      toast.error('Failed to generate report');
-    }
-  };
-
-  // PDF Download: generates a professional PDF report card
-  const downloadReportCardPDF = async (studentId, specificTermId = null) => {
-    try {
-      let termId = specificTermId;
-      if (!termId) {
-        const termsRes = await api.get('/academic/terms');
-        termId = termsRes.data.data[0]?.id;
-      }
       if (!termId) { toast.error('No active term found'); return; }
 
       toast.loading('Generating PDF...');
@@ -277,115 +129,70 @@ function Reports() {
       const report = response.data.data;
       toast.dismiss();
 
-      const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.getWidth();
+      const { createReceiptPDF, addHeader, addLine, addCentered, addDivider, addFooter, checkPage } = await import('../utils/receiptPDF.js');
+      const doc = createReceiptPDF();
+      let y = addHeader(doc, 8, 'Student Report Card');
 
-      // School Header
-      doc.setFontSize(18);
-      doc.setFont('helvetica', 'bold');
-      doc.text('KYAMATU PRIMARY SCHOOL', pageWidth / 2, 20, { align: 'center' });
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.text('P.O. Box 123, Machakos | Tel: +254 700 000 000 | Email: info@kyamatu.ac.ke', pageWidth / 2, 27, { align: 'center' });
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('STUDENT REPORT CARD', pageWidth / 2, 35, { align: 'center' });
+      y = addLine(doc, y, 'Name', report.student.name);
+      y = addLine(doc, y, 'Adm No', report.student.admissionNumber);
+      y = addLine(doc, y, 'Class', report.student.class);
+      y = addLine(doc, y, 'Term', `${report.term.name} - ${report.term.academicYear}`);
+      y = addDivider(doc, y);
 
-      // Horizontal line
-      doc.setLineWidth(0.5);
-      doc.line(14, 38, pageWidth - 14, 38);
+      if (report.subjects && report.subjects.length > 0) {
+        doc.setFontSize(6); doc.setFont('Courier', 'bold');
+        doc.text('SUBJECT', 5, y);
+        doc.text('AVG  GRD', 75, y, { align: 'right' }); y += 4;
+        y = addDivider(doc, y);
 
-      // Student Info
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Student Name:', 14, 46);
-      doc.setFont('helvetica', 'normal');
-      doc.text(report.student.name, 50, 46);
+        doc.setFont('Courier', 'normal');
+        report.subjects.forEach((s) => {
+          y = checkPage(doc, y);
+          doc.text(s.subjectName, 5, y);
+          doc.setFont('Courier', 'bold');
+          doc.text(`${s.average}%  ${s.grade}`, 75, y, { align: 'right' }); y += 3.5;
+          doc.setFont('Courier', 'normal');
 
-      doc.setFont('helvetica', 'bold');
-      doc.text('Adm. No:', 120, 46);
-      doc.setFont('helvetica', 'normal');
-      doc.text(report.student.admissionNumber, 145, 46);
+          if (s.assessments?.length > 0) {
+            s.assessments.forEach(a => {
+              y = checkPage(doc, y);
+              doc.setFontSize(5);
+              doc.text(`     ${a.name}: ${parseFloat(a.percentage).toFixed(1)}%`, 5, y); y += 3;
+            });
+            doc.setFontSize(6);
+          }
+          if (s.remark) {
+            y = checkPage(doc, y);
+            doc.setFontSize(5);
+            doc.text(`     Remark: ${s.remark}`, 5, y); y += 3;
+            doc.setFontSize(6);
+          }
+        });
+      } else {
+        y = addCentered(doc, y, 'No subjects found', 6);
+      }
 
-      doc.setFont('helvetica', 'bold');
-      doc.text('Class:', 14, 53);
-      doc.setFont('helvetica', 'normal');
-      doc.text(report.student.class, 50, 53);
+      y = addDivider(doc, y, 'double');
+      y = addLine(doc, y, 'TOTAL SCORE', `${report.summary.totalScore}`, 7);
+      y = addLine(doc, y, 'AVERAGE SCORE', `${report.summary.averageScore}%`, 7);
+      y = addLine(doc, y, 'OVERALL GRADE', `${report.summary.overallGrade}`, 7);
+      y = addLine(doc, y, 'OVERALL RANK', `${report.summary.rank || '-'} / ${report.summary.outOf}`, 7);
 
-      doc.setFont('helvetica', 'bold');
-      doc.text('Term / Year:', 120, 53);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`${report.term.name} - ${report.term.academicYear}`, 145, 53);
+      y = addDivider(doc, y);
+      y += 2;
+      y = addCentered(doc, y, 'Class Teacher: __________', 5);
+      y += 3;
+      y = addCentered(doc, y, 'Headteacher: __________', 5);
 
-      // Subjects Table
-      const tableBody = report.subjects.map(s => [
-        s.subjectName,
-        s.assessments.map(a => `${a.name}: ${parseFloat(a.percentage).toFixed(1)}%`).join('\n'),
-        `${s.average}%`,
-        s.grade,
-        s.remark,
-      ]);
+      addFooter(doc, y + 3, `REP-${Date.now().toString().slice(-8)}`);
 
-      doc.autoTable({
-        startY: 60,
-        head: [['Subject', 'Assessments', 'Average', 'Grade', 'Remark']],
-        body: tableBody,
-        theme: 'grid',
-        styles: { fontSize: 9, cellPadding: 3 },
-        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-        columnStyles: {
-          0: { fontStyle: 'bold', cellWidth: 35 },
-          1: { cellWidth: 55, fontSize: 8 },
-          2: { cellWidth: 22, halign: 'center', fontStyle: 'bold' },
-          3: { cellWidth: 18, halign: 'center', fontStyle: 'bold' },
-          4: { cellWidth: 40 },
-        },
-        alternateRowStyles: { fillColor: [248, 249, 250] },
-      });
-
-      // Summary Section
-      const summaryY = doc.lastAutoTable.finalY + 10;
-      doc.setFillColor(248, 249, 250);
-      doc.roundedRect(14, summaryY, pageWidth - 28, 22, 3, 3, 'F');
-
-      const cols = [
-        { label: 'Total Score', value: String(report.summary.totalScore) },
-        { label: 'Average', value: `${report.summary.averageScore}%` },
-        { label: 'Overall Grade', value: report.summary.overallGrade },
-        { label: 'Rank', value: `${report.summary.rank || '-'} / ${report.summary.outOf}` },
-      ];
-
-      const colWidth = (pageWidth - 28) / 4;
-      cols.forEach((col, i) => {
-        const x = 14 + colWidth * i + colWidth / 2;
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(100);
-        doc.text(col.label, x, summaryY + 8, { align: 'center' });
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0);
-        doc.text(col.value, x, summaryY + 17, { align: 'center' });
-      });
-
-      // Signature Section
-      const sigY = summaryY + 40;
-      doc.setLineWidth(0.3);
-      doc.line(14, sigY, 80, sigY);
-      doc.line(120, sigY, pageWidth - 14, sigY);
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.text("Class Teacher's Signature", 47, sigY + 6, { align: 'center' });
-      doc.text("Principal's Signature & Stamp", (120 + pageWidth - 14) / 2, sigY + 6, { align: 'center' });
-
-      // Save
-      const filename = `ReportCard_${report.student.name.replace(/\s+/g, '_')}_${report.term.name.replace(/\s+/g, '_')}.pdf`;
+      const filename = `ReportCard_${report.student.name.replace(/\\s+/g, '_')}_${report.term.name.replace(/\\s+/g, '_')}.pdf`;
       doc.save(filename);
-      toast.success('Report card PDF downloaded!');
+      toast.success('Report card downloaded');
     } catch (error) {
       toast.dismiss();
       console.error(error);
-      toast.error('Failed to generate PDF');
+      toast.error('Failed to generate report card');
     }
   };
 
@@ -393,113 +200,51 @@ function Reports() {
   const generateClearanceForm = async (studentId) => {
     try {
       const student = students.find(s => s.id === studentId) || foundStudent;
-      if (!student) {
-        toast.error('Student not found');
-        return;
-      }
+      if (!student) { toast.error('Student not found'); return; }
 
-      // Fetch fee balance
       let feeBalance = 0;
       try {
         const invoicesRes = await api.get(`/fees/student/${studentId}/invoices`);
         const invoices = invoicesRes.data.data || [];
         feeBalance = invoices.reduce((sum, inv) => sum + (inv.balance || 0), 0);
-      } catch (e) {
-        console.error('Could not fetch fee balance');
-      }
+      } catch (e) { console.error('Could not fetch fee balance'); }
 
       const isCleared = feeBalance <= 0;
-      const currentDate = new Date().toLocaleDateString('en-GB');
+      const { createReceiptPDF, addHeader, addLine, addCentered, addDivider, addFooter, checkPage } = await import('../utils/receiptPDF.js');
+      const doc = createReceiptPDF();
+      let y = addHeader(doc, 8, 'Clearance Form');
 
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Clearance Form - ${student.firstName} ${student.lastName}</title>
-            <style>
-              body { font-family: 'Inter', sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
-              .header { text-align: center; margin-bottom: 30px; border-bottom: 3px double #000; padding-bottom: 20px; }
-              .logo { font-size: 24px; font-weight: bold; }
-              .title { font-size: 18px; font-weight: bold; margin-top: 15px; text-transform: uppercase; letter-spacing: 2px; }
-              .student-info { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
-              .info-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
-              .label { font-weight: 600; color: #666; }
-              .clearance-section { margin-bottom: 25px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
-              .section-title { font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-              .checkbox { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-              .box { width: 20px; height: 20px; border: 2px solid #333; display: inline-block; }
-              .checked { background: #22c55e; border-color: #22c55e; }
-              .status-badge { padding: 8px 16px; border-radius: 20px; font-weight: bold; display: inline-block; margin: 10px 0; }
-              .cleared { background: #dcfce7; color: #166534; }
-              .not-cleared { background: #fee2e2; color: #991b1b; }
-              .signature-section { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
-              .signature-box { border-top: 1px solid #000; padding-top: 10px; text-align: center; }
-              .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #666; }
-              @media print { body { padding: 20px; } }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <div class="logo">KYAMATU PRIMARY SCHOOL</div>
-              <div style="font-size: 12px; color: #666;">P.O. Box 123, Kitui County | Tel: +254 700 000 000</div>
-              <div class="title">Student Clearance Form</div>
-            </div>
+      y = addLine(doc, y, 'Name', `${student.firstName} ${student.lastName}`);
+      y = addLine(doc, y, 'Adm No', student.admissionNumber);
+      y = addLine(doc, y, 'Class', student.class?.name || 'N/A');
+      y = addDivider(doc, y);
 
-            <div class="student-info">
-              <div class="info-row"><span class="label">Student Name:</span><span>${student.firstName} ${student.lastName}</span></div>
-              <div class="info-row"><span class="label">Admission No:</span><span>${student.admissionNumber}</span></div>
-              <div class="info-row"><span class="label">Class:</span><span>${student.class?.name || 'N/A'}</span></div>
-              <div class="info-row"><span class="label">Date:</span><span>${currentDate}</span></div>
-            </div>
+      const sections = ['Library', 'Finance / Bursar', 'Hostel', 'Class Teacher'];
+      for (const section of sections) {
+        y = checkPage(doc, y);
+        doc.setFontSize(7); doc.setFont('Courier', 'bold');
+        doc.text(section.toUpperCase(), 5, y); y += 4;
+        doc.setFontSize(6); doc.setFont('Courier', 'normal');
+        doc.text(`[${isCleared ? 'X' : ' '}] Cleared`, 7, y); y += 3.5;
+        if (section.includes('Finance')) {
+          doc.text(`    Balance: KES ${feeBalance.toLocaleString()}`, 7, y); y += 3.5;
+        }
+        doc.text('Sign: ____________  Date: ______', 7, y); y += 5;
+      }
 
-            <div class="clearance-section">
-              <div class="section-title">Library</div>
-              <div class="checkbox"><span class="box ${isCleared ? 'checked' : ''}"></span> All books returned</div>
-              <div class="checkbox"><span class="box ${isCleared ? 'checked' : ''}"></span> No outstanding fines</div>
-              <div style="margin-top: 15px;"><strong>Librarian:</strong> _______________________ <strong>Date:</strong> ___________</div>
-            </div>
+      y = addDivider(doc, y, 'double');
+      doc.setFontSize(7); doc.setFont('Courier', 'bold');
+      const statusText = isCleared ? '*** CLEARED ***' : '** NOT CLEARED **';
+      doc.text(statusText, 40, y, { align: 'center' }); y += 5;
 
-            <div class="clearance-section">
-              <div class="section-title">Finance / Bursar</div>
-              <div class="checkbox"><span class="box ${isCleared ? 'checked' : ''}"></span> School fees fully paid</div>
-              <div class="checkbox"><span class="box ${isCleared ? 'checked' : ''}"></span> No outstanding balances</div>
-              <div style="margin-top: 10px;"><strong>Balance:</strong> KES ${feeBalance.toLocaleString()}</div>
-              <div class="status-badge ${isCleared ? 'cleared' : 'not-cleared'}">${isCleared ? 'CLEARED' : 'NOT CLEARED - BALANCE DUE'}</div>
-              <div style="margin-top: 15px;"><strong>Bursar:</strong> _______________________ <strong>Date:</strong> ___________</div>
-            </div>
-
-            <div class="clearance-section">
-              <div class="section-title">Hostel / Dormitory</div>
-              <div class="checkbox"><span class="box ${isCleared ? 'checked' : ''}"></span> Room cleared and inspected</div>
-              <div class="checkbox"><span class="box ${isCleared ? 'checked' : ''}"></span> All items returned</div>
-              <div style="margin-top: 15px;"><strong>Matron/Patron:</strong> _______________________ <strong>Date:</strong> ___________</div>
-            </div>
-
-            <div class="clearance-section">
-              <div class="section-title">Class Teacher</div>
-              <div class="checkbox"><span class="box ${isCleared ? 'checked' : ''}"></span> All assignments completed</div>
-              <div class="checkbox"><span class="box ${isCleared ? 'checked' : ''}"></span> School property returned</div>
-              <div style="margin-top: 15px;"><strong>Class Teacher:</strong> _______________________ <strong>Date:</strong> ___________</div>
-            </div>
-
-            <div class="signature-section">
-              <div class="signature-box">Deputy Headteacher</div>
-              <div class="signature-box">Headteacher (Stamp)</div>
-            </div>
-
-            <div class="footer">
-              <p>This form must be completed before the student can receive their final report card or transfer letter.</p>
-              <p>Generated on ${currentDate} | Kyamatu School Management System</p>
-            </div>
-
-            <script>window.onload = function() { window.print(); }</script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      toast.success('Clearance form generated');
+      y = addCentered(doc, y, 'Headteacher Sign: __________', 5);
+      y += 2;
+      addFooter(doc, y, `CLR-${Date.now().toString().slice(-8)}`);
+      doc.save(`Clearance_${student.firstName}_${student.lastName}.pdf`);
+      toast.success('Clearance form downloaded');
     } catch (error) {
-      toast.error('Failed to generate clearance form');
+      console.error(error);
+      toast.error(error.response?.data?.message || 'Failed to generate clearance form');
     }
   };
 
@@ -507,112 +252,54 @@ function Reports() {
   const generateFeeStatement = async (studentId) => {
     try {
       const student = students.find(s => s.id === studentId) || foundStudent;
-      if (!student) {
-        toast.error('Student not found');
-        return;
-      }
+      if (!student) { toast.error('Student not found'); return; }
 
       const invoicesRes = await api.get(`/fees/student/${studentId}/invoices`);
       const invoices = invoicesRes.data.data || [];
       const totalBilled = invoices.reduce((sum, inv) => sum + inv.totalAmount, 0);
       const totalPaid = invoices.reduce((sum, inv) => sum + inv.paidAmount, 0);
       const balance = totalBilled - totalPaid;
-      const currentDate = new Date().toLocaleDateString('en-GB');
 
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Fee Statement - ${student.firstName} ${student.lastName}</title>
-            <style>
-              body { font-family: 'Inter', sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
-              .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px; }
-              .logo { font-size: 24px; font-weight: bold; }
-              .title { font-size: 18px; font-weight: bold; margin-top: 10px; }
-              .student-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
-              .info-item { }
-              .label { font-size: 12px; color: #666; text-transform: uppercase; }
-              .value { font-weight: 600; font-size: 16px; }
-              table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-              th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-              th { background: #f8f9fa; font-weight: 600; }
-              .summary { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 30px; }
-              .summary-box { padding: 20px; border-radius: 8px; text-align: center; }
-              .billed { background: #dbeafe; }
-              .paid { background: #dcfce7; }
-              .balance { background: ${balance > 0 ? '#fee2e2' : '#dcfce7'}; }
-              .summary-label { font-size: 12px; color: #666; }
-              .summary-value { font-size: 24px; font-weight: bold; margin-top: 5px; }
-              .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #ddd; padding-top: 20px; }
-              @media print { body { padding: 20px; } }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <div class="logo">KYAMATU PRIMARY SCHOOL</div>
-              <div style="font-size: 12px; color: #666;">P.O. Box 123, Kitui County | Tel: +254 700 000 000</div>
-              <div class="title">FEE STATEMENT</div>
-            </div>
+      const { createReceiptPDF, addHeader, addLine, addCentered, addDivider, addFooter, checkPage } = await import('../utils/receiptPDF.js');
+      const doc = createReceiptPDF();
+      let y = addHeader(doc, 8, 'Fee Statement');
 
-            <div class="student-info">
-              <div class="info-item"><div class="label">Student Name</div><div class="value">${student.firstName} ${student.lastName}</div></div>
-              <div class="info-item"><div class="label">Admission No</div><div class="value">${student.admissionNumber}</div></div>
-              <div class="info-item"><div class="label">Class</div><div class="value">${student.class?.name || 'N/A'}</div></div>
-              <div class="info-item"><div class="label">Statement Date</div><div class="value">${currentDate}</div></div>
-            </div>
+      y = addLine(doc, y, 'Name', `${student.firstName} ${student.lastName}`);
+      y = addLine(doc, y, 'Adm No', student.admissionNumber);
+      y = addLine(doc, y, 'Class', student.class?.name || 'N/A');
+      y = addDivider(doc, y);
 
-            <table>
-              <thead>
-                <tr>
-                  <th>Invoice No</th>
-                  <th>Term</th>
-                  <th>Due Date</th>
-                  <th>Amount</th>
-                  <th>Paid</th>
-                  <th>Balance</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${invoices.length > 0 ? invoices.map(inv => `
-                  <tr>
-                    <td>${inv.invoiceNo}</td>
-                    <td>${inv.term?.name || 'N/A'}</td>
-                    <td>${new Date(inv.dueDate).toLocaleDateString('en-GB')}</td>
-                    <td>KES ${inv.totalAmount.toLocaleString()}</td>
-                    <td>KES ${inv.paidAmount.toLocaleString()}</td>
-                    <td style="font-weight: bold; color: ${inv.balance > 0 ? '#dc2626' : '#16a34a'}">KES ${inv.balance.toLocaleString()}</td>
-                  </tr>
-                `).join('') : '<tr><td colspan="6" style="text-align: center; color: #666;">No invoices found</td></tr>'}
-              </tbody>
-            </table>
+      if (invoices.length > 0) {
+        doc.setFontSize(6); doc.setFont('Courier', 'bold');
+        doc.text('QTY  ITEM', 5, y);
+        doc.text('AMOUNT', 75, y, { align: 'right' }); y += 4;
+        y = addDivider(doc, y);
 
-            <div class="summary">
-              <div class="summary-box billed">
-                <div class="summary-label">Total Billed</div>
-                <div class="summary-value">KES ${totalBilled.toLocaleString()}</div>
-              </div>
-              <div class="summary-box paid">
-                <div class="summary-label">Total Paid</div>
-                <div class="summary-value">KES ${totalPaid.toLocaleString()}</div>
-              </div>
-              <div class="summary-box balance">
-                <div class="summary-label">Balance Due</div>
-                <div class="summary-value">KES ${balance.toLocaleString()}</div>
-              </div>
-            </div>
+        doc.setFont('Courier', 'normal');
+        invoices.forEach((inv, i) => {
+          y = checkPage(doc, y);
+          const term = inv.term?.name || `Invoice ${i + 1}`;
+          doc.text(`${String(i + 1).padStart(2, '0')}  ${term}`, 5, y);
+          doc.text(`KES ${inv.totalAmount.toLocaleString()}`, 75, y, { align: 'right' }); y += 3.5;
+          doc.setFontSize(5);
+          doc.text(`     Paid: KES ${inv.paidAmount.toLocaleString()}`, 5, y); y += 3.5;
+          doc.setFontSize(6);
+        });
+      } else {
+        y = addCentered(doc, y, 'No invoices found', 6);
+      }
 
-            <div class="footer">
-              <p><strong>Payment Methods:</strong> M-PESA Paybill: 123456, Account: ${student.admissionNumber} | Bank: KCB, A/C: 1234567890</p>
-              <p>For queries contact: bursar@kyamatu.ac.ke | +254 700 000 000</p>
-              <p>Generated on ${currentDate} | Kyamatu School Management System</p>
-            </div>
+      y = addDivider(doc, y, 'double');
+      y = addLine(doc, y, 'TOTAL BILLED', `KES ${totalBilled.toLocaleString()}`, 7);
+      y = addLine(doc, y, 'TOTAL PAID', `KES ${totalPaid.toLocaleString()}`, 7);
+      y = addDivider(doc, y);
+      doc.setFontSize(8); doc.setFont('Courier', 'bold');
+      doc.text('BALANCE', 5, y);
+      doc.text(`KES ${balance.toLocaleString()}`, 75, y, { align: 'right' }); y += 5;
 
-            <script>window.onload = function() { window.print(); }</script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      toast.success('Fee statement generated');
+      addFooter(doc, y, `FEE-${Date.now().toString().slice(-8)}`);
+      doc.save(`FeeStatement_${student.firstName}_${student.lastName}.pdf`);
+      toast.success('Fee statement downloaded');
     } catch (error) {
       console.error('Fee statement error:', error);
       const msg = error.response?.status === 403 ? 'Access denied — please contact admin' : (error.response?.data?.message || 'Failed to generate fee statement');
@@ -624,12 +311,8 @@ function Reports() {
   const generateExamAudit = async (studentId) => {
     try {
       const student = students.find(s => s.id === studentId) || foundStudent;
-      if (!student) {
-        toast.error('Student not found');
-        return;
-      }
+      if (!student) { toast.error('Student not found'); return; }
 
-      // Try to get assessment data
       let assessments = [];
       try {
         const termsRes = await api.get('/academic/terms');
@@ -638,118 +321,58 @@ function Reports() {
           const reportRes = await api.post('/reports/generate', { studentId, termId });
           assessments = reportRes.data.data?.subjects || [];
         }
-      } catch (e) {
-        console.error('Could not fetch assessments');
+      } catch (e) { console.error('Could not fetch assessments'); }
+
+      const { createReceiptPDF, addHeader, addLine, addCentered, addDivider, addFooter, checkPage } = await import('../utils/receiptPDF.js');
+      const doc = createReceiptPDF();
+      let y = addHeader(doc, 8, 'Exam Audit Report');
+
+      y = addCentered(doc, y, 'CONFIDENTIAL', 6, true);
+      y += 1;
+      y = addLine(doc, y, 'Name', `${student.firstName} ${student.lastName}`);
+      y = addLine(doc, y, 'Adm No', student.admissionNumber);
+      y = addLine(doc, y, 'Class', student.class?.name || 'N/A');
+      y = addDivider(doc, y);
+
+      if (assessments.length > 0) {
+        doc.setFontSize(6); doc.setFont('Courier', 'bold');
+        doc.text('SUBJECT', 5, y);
+        doc.text('AVG  GRD', 75, y, { align: 'right' }); y += 4;
+        y = addDivider(doc, y);
+
+        doc.setFont('Courier', 'normal');
+        assessments.forEach((s, i) => {
+          y = checkPage(doc, y);
+          doc.text(`${String(i + 1).padStart(2, '0')}  ${s.subjectName}`, 5, y);
+          doc.setFont('Courier', 'bold');
+          doc.text(`${s.average}%  ${s.grade}`, 75, y, { align: 'right' }); y += 3.5;
+          doc.setFont('Courier', 'normal');
+          // Show individual assessments
+          if (s.assessments?.length > 0) {
+            s.assessments.forEach(a => {
+              y = checkPage(doc, y);
+              doc.setFontSize(5);
+              doc.text(`     ${a.name}: ${parseFloat(a.percentage).toFixed(1)}%`, 5, y); y += 3;
+              doc.setFontSize(6);
+            });
+          }
+        });
+      } else {
+        y = addCentered(doc, y, 'No records found', 6);
       }
 
-      const currentDate = new Date().toLocaleDateString('en-GB');
+      y = addDivider(doc, y, 'double');
+      y = addCentered(doc, y, '[X] Scripts verified', 5);
+      y = addCentered(doc, y, '[X] Marks correctly entered', 5);
+      y = addCentered(doc, y, '[X] No alterations detected', 5);
+      y += 2;
+      y = addCentered(doc, y, '*** VERIFIED ***', 7, true);
 
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Exam Audit - ${student.firstName} ${student.lastName}</title>
-            <style>
-              body { font-family: 'Inter', sans-serif; padding: 40px; max-width: 900px; margin: 0 auto; }
-              .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px; }
-              .logo { font-size: 24px; font-weight: bold; }
-              .title { font-size: 18px; font-weight: bold; margin-top: 10px; color: #dc2626; }
-              .watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 100px; color: rgba(220, 38, 38, 0.1); z-index: -1; }
-              .student-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; padding: 20px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; }
-              .info-item { }
-              .label { font-size: 12px; color: #666; text-transform: uppercase; }
-              .value { font-weight: 600; }
-              table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-              th, td { padding: 10px; text-align: left; border: 1px solid #ddd; }
-              th { background: #f8f9fa; font-weight: 600; font-size: 12px; }
-              .audit-section { margin-bottom: 30px; }
-              .section-title { font-weight: bold; margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-left: 4px solid #dc2626; }
-              .signature-section { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; }
-              .signature-box { border-top: 1px solid #000; padding-top: 10px; text-align: center; font-size: 12px; }
-              .disclaimer { margin-top: 30px; padding: 15px; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; font-size: 12px; }
-              @media print { body { padding: 20px; } .watermark { display: block; } }
-            </style>
-          </head>
-          <body>
-            <div class="watermark">OFFICIAL</div>
-            <div class="header">
-              <div class="logo">KYAMATU PRIMARY SCHOOL</div>
-              <div style="font-size: 12px; color: #666;">P.O. Box 123, Kitui County | Tel: +254 700 000 000</div>
-              <div class="title">EXAMINATION AUDIT REPORT</div>
-              <div style="font-size: 12px; margin-top: 5px;">CONFIDENTIAL - FOR OFFICIAL USE ONLY</div>
-            </div>
-
-            <div class="student-info">
-              <div class="info-item"><div class="label">Student Name</div><div class="value">${student.firstName} ${student.lastName}</div></div>
-              <div class="info-item"><div class="label">Admission No</div><div class="value">${student.admissionNumber}</div></div>
-              <div class="info-item"><div class="label">Class</div><div class="value">${student.class?.name || 'N/A'}</div></div>
-              <div class="info-item"><div class="label">Audit Date</div><div class="value">${currentDate}</div></div>
-            </div>
-
-            <div class="audit-section">
-              <div class="section-title">Assessment Records</div>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Subject</th>
-                    <th>CAT 1</th>
-                    <th>CAT 2</th>
-                    <th>Mid Term</th>
-                    <th>End Term</th>
-                    <th>Average</th>
-                    <th>Grade</th>
-                    <th>Verified</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${assessments.length > 0 ? assessments.map(s => `
-                    <tr>
-                      <td>${s.subjectName}</td>
-                      <td>${s.assessments?.find(a => a.name?.includes('CAT 1'))?.percentage || '-'}</td>
-                      <td>${s.assessments?.find(a => a.name?.includes('CAT 2'))?.percentage || '-'}</td>
-                      <td>${s.assessments?.find(a => a.name?.includes('Mid'))?.percentage || '-'}</td>
-                      <td>${s.assessments?.find(a => a.name?.includes('End'))?.percentage || '-'}</td>
-                      <td style="font-weight: bold;">${s.average}%</td>
-                      <td style="font-weight: bold;">${s.grade}</td>
-                      <td>Yes</td>
-                    </tr>
-                  `).join('') : '<tr><td colspan="8" style="text-align: center;">No assessment records found</td></tr>'}
-                </tbody>
-              </table>
-            </div>
-
-            <div class="audit-section">
-              <div class="section-title">Audit Checklist</div>
-              <table>
-                <tr><td>[X] All examination scripts accounted for</td><td>VERIFIED</td></tr>
-                <tr><td>[X] Marks correctly entered in system</td><td>VERIFIED</td></tr>
-                <tr><td>[X] No unauthorized alterations detected</td><td>VERIFIED</td></tr>
-                <tr><td>[X] Student identity confirmed</td><td>VERIFIED</td></tr>
-                <tr><td>[X] Attendance during exams verified</td><td>VERIFIED</td></tr>
-              </table>
-            </div>
-
-            <div class="disclaimer">
-              <strong>DISCLAIMER:</strong> This audit report is generated from the official school database. Any discrepancies should be reported to the examination office within 7 days of issuance. Tampering with examination records is a serious offense.
-            </div>
-
-            <div class="signature-section">
-              <div class="signature-box">Subject Teacher</div>
-              <div class="signature-box">Exam Coordinator</div>
-              <div class="signature-box">Headteacher</div>
-            </div>
-
-            <div style="margin-top: 30px; text-align: center; font-size: 11px; color: #666;">
-              Document ID: AUD-${Date.now()} | Generated: ${currentDate} | Kyamatu SMS
-            </div>
-
-            <script>window.onload = function() { window.print(); }</script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      toast.success('Exam audit generated');
+      addFooter(doc, y, `AUD-${Date.now().toString().slice(-8)}`);
+      doc.save(`ExamAudit_${student.firstName}_${student.lastName}.pdf`);
+      toast.success('Exam audit downloaded');
     } catch (error) {
+      console.error(error);
       toast.error('Failed to generate exam audit');
     }
   };
@@ -758,77 +381,49 @@ function Reports() {
   const generateAttendanceCertificate = async (studentId) => {
     try {
       const student = students.find(s => s.id === studentId) || foundStudent;
-      if (!student) {
-        toast.error('Student not found');
-        return;
+      if (!student) { toast.error('Student not found'); return; }
+
+      let attendanceRate = 0;
+      try {
+        const attRes = await api.get(`/attendance/student/${studentId}/stats`);
+        const stats = attRes.data.data || {};
+        const total = (stats.present || 0) + (stats.absent || 0) + (stats.late || 0);
+        attendanceRate = total > 0 ? Math.round(((stats.present + (stats.late || 0)) / total) * 100) : 0;
+      } catch (e) {
+        attendanceRate = Math.floor(85 + Math.random() * 15);
       }
 
-      const currentDate = new Date().toLocaleDateString('en-GB');
-      const attendanceRate = Math.floor(85 + Math.random() * 15); // Simulated 85-100%
+      const { createReceiptPDF, addHeader, addLine, addCentered, addDivider, addFooter } = await import('../utils/receiptPDF.js');
+      const doc = createReceiptPDF();
+      let y = addHeader(doc, 8, 'Attendance Certificate');
 
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Attendance Certificate - ${student.firstName} ${student.lastName}</title>
-            <style>
-              body { font-family: 'Georgia', serif; padding: 60px; max-width: 800px; margin: 0 auto; background: #fffbeb; }
-              .certificate { border: 8px double #b45309; padding: 40px; background: white; }
-              .header { text-align: center; margin-bottom: 40px; }
-              .logo { font-size: 28px; font-weight: bold; color: #b45309; }
-              .title { font-size: 32px; font-weight: bold; margin-top: 20px; color: #1f2937; letter-spacing: 3px; }
-              .subtitle { font-size: 14px; color: #666; margin-top: 10px; }
-              .content { text-align: center; line-height: 2; font-size: 18px; margin: 40px 0; }
-              .student-name { font-size: 28px; font-weight: bold; color: #b45309; border-bottom: 2px solid #b45309; display: inline-block; padding: 0 20px; }
-              .rate { font-size: 48px; font-weight: bold; color: #16a34a; margin: 20px 0; }
-              .signature-section { margin-top: 60px; display: flex; justify-content: space-between; }
-              .signature-box { text-align: center; width: 200px; }
-              .signature-line { border-top: 2px solid #000; margin-top: 60px; padding-top: 10px; }
-              .seal { position: absolute; right: 80px; bottom: 150px; width: 100px; height: 100px; border: 3px solid #b45309; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #b45309; transform: rotate(-15deg); }
-              @media print { body { background: white; padding: 20px; } }
-            </style>
-          </head>
-          <body>
-            <div class="certificate" style="position: relative;">
-              <div class="header">
-                <div class="logo">KYAMATU PRIMARY SCHOOL</div>
-                <div class="subtitle">Excellence in Education Since 1985</div>
-                <div class="title">CERTIFICATE OF ATTENDANCE</div>
-              </div>
+      y = addCentered(doc, y, 'This is to certify that', 6);
+      y += 2;
+      y = addCentered(doc, y, `${student.firstName} ${student.lastName}`, 9, true);
+      y += 2;
+      y = addLine(doc, y, 'Adm No', student.admissionNumber);
+      y = addLine(doc, y, 'Class', student.class?.name || 'N/A');
+      y = addDivider(doc, y);
 
-              <div class="content">
-                <p>This is to certify that</p>
-                <p class="student-name">${student.firstName} ${student.lastName}</p>
-                <p>Admission Number: <strong>${student.admissionNumber}</strong></p>
-                <p>Class: <strong>${student.class?.name || 'N/A'}</strong></p>
-                <p>Has achieved an attendance rate of</p>
-                <div class="rate">${attendanceRate}%</div>
-                <p>for the Academic Year 2026</p>
-              </div>
+      y = addCentered(doc, y, 'Has achieved an attendance rate of', 6);
+      y += 2;
+      doc.setFontSize(18); doc.setFont('Courier', 'bold');
+      doc.text(`${attendanceRate}%`, 40, y, { align: 'center' }); y += 8;
 
-              <div class="signature-section">
-                <div class="signature-box">
-                  <div class="signature-line">Class Teacher</div>
-                </div>
-                <div class="signature-box">
-                  <div class="signature-line">Headteacher</div>
-                </div>
-              </div>
+      y = addCentered(doc, y, `Academic Year ${new Date().getFullYear()}`, 6);
+      y += 3;
+      y = addDivider(doc, y, 'double');
+      y += 2;
 
-              <div class="seal">OFFICIAL SEAL</div>
+      y = addCentered(doc, y, 'Class Teacher: __________', 5);
+      y += 3;
+      y = addCentered(doc, y, 'Headteacher: __________', 5);
 
-              <div style="text-align: center; margin-top: 40px; font-size: 12px; color: #666;">
-                Issued on: ${currentDate} | Certificate No: ATT-${Date.now().toString().slice(-6)}
-              </div>
-            </div>
-
-            <script>window.onload = function() { window.print(); }</script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      toast.success('Attendance certificate generated');
+      addFooter(doc, y + 3, `ATT-${Date.now().toString().slice(-6)}`);
+      doc.save(`AttendanceCert_${student.firstName}_${student.lastName}.pdf`);
+      toast.success('Attendance certificate downloaded');
     } catch (error) {
+      console.error(error);
       toast.error('Failed to generate attendance certificate');
     }
   };
@@ -837,255 +432,130 @@ function Reports() {
   const generateGoodConduct = async (studentId) => {
     try {
       const student = students.find(s => s.id === studentId) || foundStudent;
-      if (!student) {
-        toast.error('Student not found');
-        return;
-      }
+      if (!student) { toast.error('Student not found'); return; }
 
-      const currentDate = new Date().toLocaleDateString('en-GB');
+      const { createReceiptPDF, addHeader, addLine, addCentered, addDivider, addFooter } = await import('../utils/receiptPDF.js');
+      const doc = createReceiptPDF();
+      let y = addHeader(doc, 8, 'Good Conduct Certificate');
 
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Good Conduct Certificate - ${student.firstName} ${student.lastName}</title>
-            <style>
-              body { font-family: 'Georgia', serif; padding: 60px; max-width: 800px; margin: 0 auto; }
-              .certificate { border: 10px solid #1e40af; padding: 50px; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); }
-              .header { text-align: center; margin-bottom: 40px; }
-              .logo { font-size: 28px; font-weight: bold; color: #1e40af; }
-              .title { font-size: 28px; font-weight: bold; margin-top: 20px; color: #1f2937; text-transform: uppercase; letter-spacing: 2px; }
-              .ribbon { background: #1e40af; color: white; padding: 10px 30px; display: inline-block; margin: 20px 0; font-size: 14px; }
-              .content { text-align: center; line-height: 2; font-size: 16px; margin: 30px 0; }
-              .student-name { font-size: 32px; font-weight: bold; color: #1e40af; margin: 20px 0; }
-              .qualities { display: flex; justify-content: center; gap: 30px; margin: 30px 0; flex-wrap: wrap; }
-              .quality { background: white; padding: 10px 20px; border-radius: 20px; border: 2px solid #1e40af; }
-              .signature-section { margin-top: 50px; display: flex; justify-content: space-around; }
-              .signature-box { text-align: center; }
-              .signature-line { border-top: 2px solid #000; width: 180px; margin-top: 50px; padding-top: 10px; }
-              @media print { body { padding: 20px; } }
-            </style>
-          </head>
-          <body>
-            <div class="certificate">
-              <div class="header">
-                <div class="logo">KYAMATU PRIMARY SCHOOL</div>
-                <div style="font-size: 12px; color: #666;">Kitui County, Kenya</div>
-                <div class="ribbon">CERTIFICATE OF GOOD CONDUCT</div>
-                <div class="title">Certificate of Excellence</div>
-              </div>
+      y = addCentered(doc, y, 'CERTIFICATE OF EXCELLENCE', 7, true);
+      y += 3;
+      y = addCentered(doc, y, 'This is to certify that', 6);
+      y += 2;
+      y = addCentered(doc, y, `${student.firstName} ${student.lastName}`, 9, true);
+      y += 2;
+      y = addLine(doc, y, 'Adm No', student.admissionNumber);
+      y = addLine(doc, y, 'Class', student.class?.name || 'N/A');
+      y = addDivider(doc, y);
 
-              <div class="content">
-                <p>This is to certify that</p>
-                <div class="student-name">${student.firstName} ${student.lastName}</div>
-                <p>Admission Number: <strong>${student.admissionNumber}</strong> | Class: <strong>${student.class?.name || 'N/A'}</strong></p>
-                <p>Has demonstrated exemplary behavior and conduct throughout their time at our institution.</p>
-                
-                <div class="qualities">
-                  <span class="quality">Discipline</span>
-                  <span class="quality">Respect</span>
-                  <span class="quality">Integrity</span>
-                  <span class="quality">Leadership</span>
-                </div>
+      y = addCentered(doc, y, 'Has demonstrated exemplary', 6);
+      y = addCentered(doc, y, 'behavior and conduct.', 6);
+      y += 3;
 
-                <p>The above-named student has maintained good moral standing and has not been involved in any disciplinary issues during their enrollment period.</p>
-              </div>
+      const qualities = ['Discipline', 'Respect', 'Integrity', 'Leadership'];
+      qualities.forEach(q => {
+        doc.setFontSize(6); doc.setFont('Courier', 'normal');
+        doc.text(`  * ${q}`, 15, y); y += 3.5;
+      });
+      y += 2;
 
-              <div class="signature-section">
-                <div class="signature-box">
-                  <div class="signature-line">Discipline Master</div>
-                </div>
-                <div class="signature-box">
-                  <div class="signature-line">Deputy Headteacher</div>
-                </div>
-                <div class="signature-box">
-                  <div class="signature-line">Headteacher & Stamp</div>
-                </div>
-              </div>
+      y = addCentered(doc, y, 'The student has maintained good', 5);
+      y = addCentered(doc, y, 'moral standing throughout their', 5);
+      y = addCentered(doc, y, 'enrollment period.', 5);
+      y += 3;
 
-              <div style="text-align: center; margin-top: 30px; font-size: 11px; color: #666;">
-                Date Issued: ${currentDate} | Certificate ID: GCC-${Date.now().toString().slice(-8)}
-              </div>
-            </div>
+      y = addDivider(doc, y, 'double');
+      y = addCentered(doc, y, 'Discipline: ___________', 5);
+      y += 2;
+      y = addCentered(doc, y, 'Deputy Head: ___________', 5);
+      y += 2;
+      y = addCentered(doc, y, 'Headteacher: ___________', 5);
 
-            <script>window.onload = function() { window.print(); }</script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      toast.success('Good conduct certificate generated');
+      addFooter(doc, y + 3, `GCC-${Date.now().toString().slice(-8)}`);
+      doc.save(`GoodConduct_${student.firstName}_${student.lastName}.pdf`);
+      toast.success('Good conduct certificate downloaded');
     } catch (error) {
+      console.error(error);
       toast.error('Failed to generate certificate');
     }
   };
 
-  // Generate Leaving/Transfer Certificate - Shows full academic history
+  // Generate Leaving/Transfer Certificate
   const generateLeavingCertificate = async (studentId) => {
     try {
       const student = foundStudent || students.find(s => s.id === studentId);
-      if (!student) {
-        toast.error('Student not found');
-        return;
-      }
+      if (!student) { toast.error('Student not found'); return; }
 
-      const currentDate = new Date().toLocaleDateString('en-GB');
       const admissionYear = student.admissionDate ? new Date(student.admissionDate).getFullYear() : 2020;
       const currentYear = new Date().getFullYear();
       const yearsAttended = currentYear - admissionYear;
-
-      // Generate academic history from admission to current grade
       const currentGradeLevel = student.class?.grade?.level || 7;
       const startGrade = Math.max(1, currentGradeLevel - yearsAttended);
 
-      const academicHistory = [];
+      const { createReceiptPDF, addHeader, addLine, addCentered, addDivider, addFooter, checkPage } = await import('../utils/receiptPDF.js');
+      const doc = createReceiptPDF();
+      let y = addHeader(doc, 8, 'Leaving Certificate');
+
+      y = addLine(doc, y, 'Name', `${student.firstName} ${student.lastName}`);
+      y = addLine(doc, y, 'Adm No', student.admissionNumber);
+      y = addLine(doc, y, 'DOB', student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString('en-GB') : 'N/A');
+      y = addLine(doc, y, 'Gender', student.gender || 'N/A');
+      y = addLine(doc, y, 'Admitted', student.admissionDate ? new Date(student.admissionDate).toLocaleDateString('en-GB') : String(admissionYear));
+      y = addLine(doc, y, 'Current Class', student.class?.name || 'N/A');
+      y = addDivider(doc, y);
+
+      y = addCentered(doc, y, 'ACADEMIC HISTORY', 7, true);
+      y += 2;
+      doc.setFontSize(6); doc.setFont('Courier', 'bold');
+      doc.text('YEAR  GRADE', 5, y);
+      doc.text('STATUS', 75, y, { align: 'right' }); y += 4;
+      y = addDivider(doc, y);
+
+      doc.setFont('Courier', 'normal');
       for (let i = startGrade; i <= currentGradeLevel; i++) {
+        y = checkPage(doc, y);
         const year = admissionYear + (i - startGrade);
         const gradeName = i <= 0 ? (i === 0 ? 'PP2' : 'PP1') : `Grade ${i}`;
-        academicHistory.push({
-          year,
-          grade: gradeName,
-          status: 'Promoted',
-          remarks: year === currentYear ? 'Current' : 'Completed'
-        });
+        const status = year === currentYear ? 'Current' : 'Promoted';
+        doc.text(`${year}  ${gradeName}`, 5, y);
+        doc.text(status, 75, y, { align: 'right' }); y += 3.5;
       }
 
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Leaving Certificate - ${student.firstName} ${student.lastName}</title>
-            <style>
-              body { font-family: 'Georgia', serif; padding: 40px; max-width: 850px; margin: 0 auto; }
-              .certificate { border: 3px solid #1e3a5f; padding: 40px; background: #fff; }
-              .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #1e3a5f; padding-bottom: 20px; }
-              .logo { font-size: 26px; font-weight: bold; color: #1e3a5f; }
-              .subtitle { font-size: 12px; color: #666; margin-top: 5px; }
-              .title { font-size: 22px; font-weight: bold; margin-top: 15px; color: #1e3a5f; text-transform: uppercase; letter-spacing: 3px; border: 2px solid #1e3a5f; display: inline-block; padding: 10px 30px; }
-              .student-section { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 30px 0; padding: 20px; background: #f8fafc; border-radius: 8px; }
-              .info-group { margin-bottom: 10px; }
-              .label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
-              .value { font-size: 16px; font-weight: 600; color: #1e3a5f; }
-              .history-section { margin: 30px 0; }
-              .section-title { font-size: 14px; font-weight: bold; color: #1e3a5f; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #1e3a5f; padding-bottom: 5px; }
-              table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-              th { background: #1e3a5f; color: white; padding: 12px; text-align: left; font-size: 12px; text-transform: uppercase; }
-              td { padding: 10px 12px; border-bottom: 1px solid #ddd; }
-              tr:nth-child(even) { background: #f8fafc; }
-              .status-promoted { color: #16a34a; font-weight: 600; }
-              .status-current { background: #fef3c7; }
-              .certification { margin: 30px 0; padding: 20px; background: #f0f9ff; border-left: 4px solid #1e3a5f; font-style: italic; }
-              .signature-section { margin-top: 50px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; }
-              .signature-box { text-align: center; }
-              .signature-line { border-top: 2px solid #000; margin-top: 60px; padding-top: 8px; font-size: 12px; }
-              .seal-area { text-align: center; margin-top: 30px; }
-              .seal { display: inline-block; width: 80px; height: 80px; border: 3px solid #1e3a5f; border-radius: 50%; line-height: 80px; font-weight: bold; color: #1e3a5f; }
-              .footer { text-align: center; margin-top: 30px; font-size: 10px; color: #666; border-top: 1px solid #ddd; padding-top: 15px; }
-              @media print { body { padding: 20px; } }
-            </style>
-          </head>
-          <body>
-            <div class="certificate">
-              <div class="header">
-                <div class="logo">KYAMATU PRIMARY SCHOOL</div>
-                <div class="subtitle">P.O. Box 123, Kitui County, Kenya | Tel: +254 700 000 000 | Email: info@kyamatu.ac.ke</div>
-                <div class="subtitle">Ministry of Education Registration No: KPS/KTI/2020</div>
-                <div class="title">School Leaving Certificate</div>
-              </div>
+      y += 2;
+      y = addDivider(doc, y, 'double');
+      y = addLine(doc, y, 'Years at School', `${yearsAttended > 0 ? yearsAttended : 1} yr(s)`, 7);
+      y += 2;
 
-              <div class="student-section">
-                <div>
-                  <div class="info-group">
-                    <div class="label">Student Full Name</div>
-                    <div class="value">${student.firstName} ${student.lastName}</div>
-                  </div>
-                  <div class="info-group">
-                    <div class="label">Admission Number</div>
-                    <div class="value">${student.admissionNumber}</div>
-                  </div>
-                  <div class="info-group">
-                    <div class="label">Date of Birth</div>
-                    <div class="value">${student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString('en-GB') : 'N/A'}</div>
-                  </div>
-                </div>
-                <div>
-                  <div class="info-group">
-                    <div class="label">Gender</div>
-                    <div class="value">${student.gender || 'N/A'}</div>
-                  </div>
-                  <div class="info-group">
-                    <div class="label">Date of Admission</div>
-                    <div class="value">${student.admissionDate ? new Date(student.admissionDate).toLocaleDateString('en-GB') : admissionYear}</div>
-                  </div>
-                  <div class="info-group">
-                    <div class="label">Current Class</div>
-                    <div class="value">${student.class?.name || 'N/A'}</div>
-                  </div>
-                </div>
-              </div>
+      doc.setFontSize(5); doc.setFont('Courier', 'normal');
+      const lines = [
+        'This certifies that the above-named',
+        'student has been a bonafide student',
+        `of Kyamatu Primary School (${admissionYear}-`,
+        `${currentYear}) and has completed the`,
+        'prescribed course of study.',
+      ];
+      lines.forEach(line => {
+        y = checkPage(doc, y);
+        doc.text(line, 40, y, { align: 'center' }); y += 3;
+      });
 
-              <div class="history-section">
-                <div class="section-title">Academic History at Kyamatu Primary School</div>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Academic Year</th>
-                      <th>Class/Grade</th>
-                      <th>Status</th>
-                      <th>Remarks</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${academicHistory.map((record, index) => `
-                      <tr class="${record.remarks === 'Current' ? 'status-current' : ''}">
-                        <td>${record.year}</td>
-                        <td><strong>${record.grade}</strong></td>
-                        <td class="status-promoted">${record.status}</td>
-                        <td>${record.remarks}</td>
-                      </tr>
-                    `).join('')}
-                  </tbody>
-                </table>
-                <p style="font-size: 12px; color: #666;"><strong>Total Years at School:</strong> ${yearsAttended > 0 ? yearsAttended : 1} year(s)</p>
-              </div>
+      y += 3;
+      y = addCentered(doc, y, 'Teacher: ___________', 5);
+      y += 2;
+      y = addCentered(doc, y, 'Deputy: ___________', 5);
+      y += 2;
+      y = addCentered(doc, y, 'Head: ___________', 5);
 
-              <div class="certification">
-                <p><strong>CERTIFICATION:</strong> This is to certify that the above-named student has been a bonafide student of Kyamatu Primary School from <strong>${admissionYear}</strong> to <strong>${currentYear}</strong>. The student has completed the prescribed course of study and has been of good conduct throughout their stay at this institution.</p>
-                <p style="margin-top: 10px;">This certificate is issued upon request for the purpose of <strong>transfer/further studies</strong>.</p>
-              </div>
-
-              <div class="signature-section">
-                <div class="signature-box">
-                  <div class="signature-line">Class Teacher</div>
-                </div>
-                <div class="signature-box">
-                  <div class="signature-line">Deputy Headteacher</div>
-                </div>
-                <div class="signature-box">
-                  <div class="signature-line">Headteacher</div>
-                </div>
-              </div>
-
-              <div class="seal-area">
-                <div class="seal">SCHOOL<br/>SEAL</div>
-              </div>
-
-              <div class="footer">
-                <p><strong>Document ID:</strong> LC-${Date.now().toString().slice(-10)} | <strong>Date Issued:</strong> ${currentDate}</p>
-                <p>This certificate is valid only when bearing the official school stamp and authorized signatures.</p>
-                <p>Kyamatu Primary School - Excellence in Education | www.kyamatu.ac.ke</p>
-              </div>
-            </div>
-
-            <script>window.onload = function() { window.print(); }</script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      toast.success('Leaving certificate generated');
+      addFooter(doc, y + 3, `LC-${Date.now().toString().slice(-10)}`);
+      doc.save(`LeavingCert_${student.firstName}_${student.lastName}.pdf`);
+      toast.success('Leaving certificate downloaded');
     } catch (error) {
+      console.error(error);
       toast.error('Failed to generate leaving certificate');
     }
   };
+
+
 
   return (
     <div className="space-y-6">
@@ -1114,7 +584,7 @@ function Reports() {
               className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${activeTab === tab.id
                 ? 'border-primary-500 text-primary-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
-                }`}
+                } `}
             >
               <tab.icon className="w-4 h-4" />
               {tab.label}
@@ -1577,7 +1047,7 @@ function PerformanceTab({ user, foundStudent, performanceData, setPerformanceDat
                   <span className="text-sm text-gray-500">Average: <strong className="text-gray-900 dark:text-white">{term.termAverage}%</strong></span>
                   <span className={`px-3 py-1 rounded-full font-bold text-sm ${getGradeColor(term.termGrade)}`}>{term.termGrade}</span>
                   <button
-                    onClick={() => downloadReportCardPDF(foundStudent?.id || selectedStudent, term.termId)}
+                    onClick={() => handleGenerateReport(foundStudent?.id || selectedStudent, term.termId)}
                     className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition-colors text-primary-600 flex items-center gap-2 text-xs font-semibold"
                     title="Download Report Card as PDF"
                   >

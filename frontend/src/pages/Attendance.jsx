@@ -7,7 +7,34 @@ import { format } from 'date-fns';
 import { useAuthStore } from '../stores/authStore';
 
 // Simple QR code token display component (shows a large styled code)
-function QRTokenDisplay({ token, className: cls, expiresAt }) {
+function QRTokenDisplay({ token, className: cls, expiresAt, onRefreshRequired }) {
+  const [scannedCount, setScannedCount] = useState(0);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const checkSession = async () => {
+      try {
+        const res = await api.get(`/attendance/qr/session/${token}`);
+        if (res.data.success && res.data.data) {
+          const newCount = res.data.data.totalScanned;
+          setScannedCount(prev => {
+            if (newCount > prev) {
+              if (onRefreshRequired) onRefreshRequired();
+            }
+            return newCount;
+          });
+        }
+      } catch (err) {
+        // Ignore errors, could be expired
+      }
+    };
+
+    checkSession();
+    const interval = setInterval(checkSession, 5000);
+    return () => clearInterval(interval);
+  }, [token, onRefreshRequired]);
+
   const copyToken = () => {
     navigator.clipboard.writeText(token);
     toast.success('Code copied to clipboard!');
@@ -21,19 +48,33 @@ function QRTokenDisplay({ token, className: cls, expiresAt }) {
         <QrCode className="w-6 h-6" />
         <span className="font-semibold text-lg">QR Attendance Code</span>
       </div>
-      <div className="bg-white p-6 rounded-xl shadow-inner border border-blue-100">
-        <p className="text-4xl font-mono font-bold tracking-[0.3em] text-gray-900 select-all">{token}</p>
+
+      <div className="flex flex-wrap gap-6 items-center w-full justify-center">
+        <div className="bg-white p-6 rounded-xl shadow-inner border border-blue-100 flex-1 max-w-[300px] text-center">
+          <p className="text-4xl font-mono font-bold tracking-[0.3em] text-gray-900 select-all">{token}</p>
+        </div>
+
+        <div className="flex flex-col items-center justify-center p-6 bg-white/60 border border-blue-200 rounded-xl min-w-[120px]">
+          <span className="text-4xl font-bold text-blue-700">{scannedCount}</span>
+          <span className="text-sm font-semibold text-blue-600 uppercase mt-1">Scanned</span>
+        </div>
       </div>
-      <p className="text-sm text-gray-600">Class: <span className="font-semibold">{cls}</span></p>
-      <p className="text-sm text-gray-500">
-        Expires in <span className="font-semibold text-orange-600">{timeLeft} minutes</span>
-      </p>
-      <div className="flex gap-2">
+
+      <div className="flex flex-col items-center gap-1 mt-2">
+        <p className="text-sm text-gray-600">Class: <span className="font-semibold">{cls}</span></p>
+        <p className="text-sm text-gray-500">
+          Expires in <span className="font-semibold text-orange-600">{timeLeft} minutes</span>
+        </p>
+      </div>
+
+      <div className="flex gap-2 mt-2">
         <button onClick={copyToken} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm">
           <Copy className="w-4 h-4" /> Copy Code
         </button>
       </div>
-      <p className="text-xs text-gray-400 text-center max-w-xs">Share this code with students. They enter it on their Attendance page to mark themselves present.</p>
+      <p className="text-xs text-gray-400 text-center max-w-xs mt-2">
+        Share this code with students. They enter it on their Attendance page to mark themselves present.
+      </p>
     </div>
   );
 }
@@ -292,6 +333,7 @@ function Attendance() {
           token={qrToken.token}
           className={qrToken.className}
           expiresAt={qrToken.expiresAt}
+          onRefreshRequired={fetchAttendance}
         />
       )}
 
