@@ -45,12 +45,23 @@ export const initiateSTKPush = async (phoneNumber, amount, accountReference, tra
     const passkey = process.env.MPESA_PASSKEY;
     const callbackUrl = process.env.MPESA_CALLBACK_URL;
 
-    // Safaricom expects the phone number in the format 2547XXXXXXXX
+    // Safaricom expects the phone number in the format 2547XXXXXXXX or 2541XXXXXXXX
     let formattedPhone = phoneNumber.replace(/[^0-9]/g, '');
+
+    // Normalize to 254...
     if (formattedPhone.startsWith('0')) {
         formattedPhone = `254${formattedPhone.substring(1)}`;
-    } else if (formattedPhone.startsWith('+')) {
-        formattedPhone = formattedPhone.substring(1);
+    } else if (formattedPhone.startsWith('7') || formattedPhone.startsWith('1')) {
+        formattedPhone = `254${formattedPhone}`;
+    } else if (formattedPhone.startsWith('254')) {
+        // Already 254 format
+    } else {
+        throw new Error('Invalid phone number format. Must start with 07, 01, +254, or 254.');
+    }
+
+    // Must be exactly 12 digits (e.g., 254712345678)
+    if (formattedPhone.length !== 12) {
+        throw new Error('Invalid phone number length. Please ensure you entered a standard 10-digit Kenyan mobile number.');
     }
 
     const timestamp = format(new Date(), 'yyyyMMddHHmmss');

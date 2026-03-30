@@ -279,6 +279,14 @@ function Assessments() {
                         >
                           View
                         </button>
+                        {['SUPER_ADMIN', 'ADMIN'].includes(user?.role) && (assessment._count?.scores || 0) > 0 && (
+                          <button
+                            onClick={() => openScoresModal(assessment, 'edit')}
+                            className="text-amber-600 hover:underline text-sm font-medium"
+                          >
+                            Edit Marks
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -408,10 +416,15 @@ function Assessments() {
           <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full p-6 animate-scale-in max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h2 className="text-xl font-bold">{modalMode === 'enter' ? 'Enter Scores' : 'View Scores'}</h2>
+                <h2 className="text-xl font-bold">
+                  {modalMode === 'enter' ? 'Enter Scores' : modalMode === 'edit' ? 'Edit Marks' : 'View Scores'}
+                </h2>
                 <p className="text-gray-500">
                   {selectedAssessment.name} - {selectedAssessment.subject?.name} (Max: {selectedAssessment.maxScore})
                 </p>
+                {modalMode === 'edit' && (
+                  <p className="text-amber-600 text-xs font-medium mt-1">⚠️ Changes will overwrite existing marks</p>
+                )}
               </div>
               <button onClick={() => setShowScoresModal(false)} className="btn btn-secondary">
                 Close
@@ -454,10 +467,10 @@ function Assessments() {
                                 {student.firstName} {student.lastName}
                               </td>
                               <td className="w-32">
-                                {modalMode === 'enter' ? (
+                                {(modalMode === 'enter' || modalMode === 'edit') ? (
                                   <input
                                     type="number"
-                                    className="input py-1"
+                                    className={`input py-1 ${modalMode === 'edit' ? 'border-amber-300 focus:border-amber-500' : ''}`}
                                     min="0"
                                     max={selectedAssessment.maxScore}
                                     value={currentScore}
@@ -477,10 +490,10 @@ function Assessments() {
                               </td>
                               <td className="text-sm text-gray-500">{percentage}%</td>
                               <td>
-                                {modalMode === 'enter' ? (
+                                {(modalMode === 'enter' || modalMode === 'edit') ? (
                                   <input
                                     type="text"
-                                    className="input py-1"
+                                    className={`input py-1 ${modalMode === 'edit' ? 'border-amber-300 focus:border-amber-500' : ''}`}
                                     placeholder="Optional comment"
                                     value={scoresData[student.id]?.comment || ''}
                                     onChange={(e) => setScoresData(prev => ({
@@ -500,7 +513,7 @@ function Assessments() {
                   </table>
                 </div>
 
-                {modalMode === 'enter' && (
+                {(modalMode === 'enter' || modalMode === 'edit') && (
                   <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
                     <button
                       type="button"
@@ -509,8 +522,8 @@ function Assessments() {
                     >
                       Cancel
                     </button>
-                    <button type="submit" className="btn btn-primary">
-                      Save Scores
+                    <button type="submit" className={modalMode === 'edit' ? 'btn bg-amber-600 hover:bg-amber-700 text-white' : 'btn btn-primary'}>
+                      {modalMode === 'edit' ? 'Update Marks' : 'Save Scores'}
                     </button>
                   </div>
                 )}

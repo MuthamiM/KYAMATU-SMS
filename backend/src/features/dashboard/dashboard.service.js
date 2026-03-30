@@ -173,7 +173,6 @@ export const getStudentDashboardData = async (userId) => {
             }
           },
           teacherAssignments: {
-            where: { isClassTeacher: true },
             include: {
               staff: {
                 select: { firstName: true, lastName: true }
@@ -192,102 +191,91 @@ export const getStudentDashboardData = async (userId) => {
     orderBy: { startDate: 'desc' }
   });
 
-  // Calculate current Day of Week (0-6, where 0 is Sunday, but our timetable might use 1-7 or 0-6)
-  // Let's assume dayOfWeek Int where 1=Monday, ..., 7=Sunday
   const today = new Date();
   const dayOfWeek = today.getDay() === 0 ? 7 : today.getDay();
+  const classSubjects = student.class?.classSubjects || [];
+  const subjectIds = classSubjects.map(cs => cs.subjectId);
 
-  // 1. Timetable Slots (Brief - Today only, sorted by time)
-  const timetable = await prisma.timetableSlot.findMany({
-    where: {
-      classId: student.classId,
-      dayOfWeek: dayOfWeek
-    },
-    include: {
-      subject: true,
-      teacher: {
-        select: { firstName: true, lastName: true }
-      }
-    },
-    orderBy: { startTime: 'asc' },
-    take: 6 // Brief view
+  // Run all independent queries in parallel instead of sequentially
+  const [timetable, scores, invoice, attendance, announcements, outlines] = await Promise.all([
+    // 1. Today's timetable
+    prisma.timetableSlot.findMany({
+      where: { classId: student.classId, dayOfWeek },
+      include: {
+        subject: true,
+        teacher: { select: { firstName: true, lastName: true } }
+      },
+      orderBy: { startTime: 'asc' },
+      take: 6
+    }),
+
+    // 2. Exam scores
+    prisma.assessmentScore.findMany({
+      where: { studentId: student.id },
+      include: {
+        assessment: { include: { subject: true } }
+      },
+      orderBy: { assessment: { date: 'desc' } }
+    }),
+
+    // 3. Fee invoice
+    prisma.studentInvoice.findFirst({
+      where: { studentId: student.id, termId: term?.id },
+      orderBy: { createdAt: 'desc' }
+    }),
+
+    // 4. Attendance summary
+    prisma.attendance.groupBy({
+      by: ['status'],
+      where: { studentId: student.id, termId: term?.id },
+      _count: true
+    }),
+
+    // 5. Announcements
+    prisma.announcement.findMany({
+      where: {
+        isPublished: true,
+        OR: [
+          { targetRoles: { has: 'STUDENT' } },
+          { targetRoles: { isEmpty: true } }
+        ]
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 3
+    }),
+
+    // 6. All outlines for this class in one batch query (instead of N individual queries)
+    term ? prisma.courseOutline.findMany({
+      where: {
+        classId: student.classId,
+        termId: term.id,
+        subjectId: { in: subjectIds }
+      },
+      select: { id: true, subjectId: true }
+    }) : Promise.resolve([])
+  ]);
+
+  // Build lookup maps from the batch results (in-memory, instant)
+  const outlineMap = {};
+  outlines.forEach(o => { outlineMap[o.subjectId] = o.id; });
+
+  // Teacher assignments are already loaded with the class (from the initial student query)
+  const assignmentMap = {};
+  (student.class?.teacherAssignments || []).forEach(ta => {
+    if (ta.subjectId) assignmentMap[ta.subjectId] = ta.staff;
   });
 
-  // 2. Exam Scores (Audit)
-  const scores = await prisma.assessmentScore.findMany({
-    where: { studentId: student.id },
-    include: {
-      assessment: {
-        include: { subject: true }
-      }
-    },
-    orderBy: { assessment: { date: 'desc' } }
-  });
-
-  // 3. Fee Info
-  const invoice = await prisma.studentInvoice.findFirst({
-    where: { studentId: student.id, termId: term?.id },
-    orderBy: { createdAt: 'desc' }
-  });
-
-  // 4. Attendance Summary (This term)
-  const attendance = await prisma.attendance.groupBy({
-    by: ['status'],
-    where: { studentId: student.id, termId: term?.id },
-    _count: true
-  });
-
-  // 5. Latest Announcements
-  const announcements = await prisma.announcement.findMany({
-    where: {
-      isPublished: true,
-      OR: [
-        { targetRoles: { has: 'STUDENT' } },
-        { targetRoles: { isEmpty: true } }
-      ]
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 3
-  });
-
-  // 6. Courses with Outlines
-  const subjectsWithOutlines = await Promise.all(
-    (student.class?.classSubjects || []).map(async (cs) => {
-      const [outline, assignment] = await Promise.all([
-        prisma.courseOutline.findUnique({
-          where: {
-            classId_subjectId_termId: {
-              classId: student.classId,
-              subjectId: cs.subjectId,
-              termId: term?.id
-            }
-          }
-        }),
-        prisma.teacherAssignment.findFirst({
-          where: {
-            classId: student.classId,
-            subjectId: cs.subjectId
-          },
-          include: {
-            staff: {
-              select: { firstName: true, lastName: true }
-            }
-          }
-        })
-      ]);
-
-      return {
-        ...cs.subject,
-        hasOutline: !!outline,
-        outlineId: outline?.id,
-        teacher: assignment?.staff || null
-      };
-    })
-  );
+  // Map courses without any additional DB queries
+  const subjectsWithOutlines = classSubjects.map(cs => ({
+    ...cs.subject,
+    hasOutline: !!outlineMap[cs.subjectId],
+    outlineId: outlineMap[cs.subjectId] || null,
+    teacher: assignmentMap[cs.subjectId] || null
+  }));
 
   return {
     student,
-    classTeacher: student.class?.teacherAssignments?.[0]?.staff || null,
+    classTeacher: student.class?.teacherAssignments?.find(ta => ta.isClassTeacher)?.staff || null,
     timetable,
     scores: scores.map(s => ({
       id: s.id,

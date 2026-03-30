@@ -89,7 +89,6 @@ const StudentDashboardRedesigned = ({ user }) => {
             setData(res.data.data);
         } catch (error) {
             console.error('Error fetching student dashboard:', error);
-            toast.error('Using offline preview (Database unreachable)');
 
             // Mock data fallback for preview
             setData({
@@ -166,17 +165,17 @@ const StudentDashboardRedesigned = ({ user }) => {
 
     const handleDayNav = async (direction) => {
         const newOffset = dayOffset + direction;
-        setDayOffset(newOffset);
         setExpandedLesson(null);
-        // Fetch full week timetable once if navigating away from today
+        // Fetch full week timetable BEFORE updating offset so data is ready for render
         if (newOffset !== 0 && !weekTimetable && student?.classId) {
             try {
-                const res = await api.get(`/academic/timetable/${student.classId}`);
+                const res = await api.get('/timetable/my-class');
                 setWeekTimetable(res.data.data || []);
             } catch (e) {
                 console.error('Could not fetch week timetable');
             }
         }
+        setDayOffset(newOffset);
     };
 
     // Attendance Rate Calculation

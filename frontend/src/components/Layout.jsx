@@ -34,7 +34,7 @@ const navItems = [
   { path: '/classes', icon: BookOpen, label: 'Classes', roles: ['SUPER_ADMIN', 'ADMIN'] },
   { path: '/attendance', icon: CalendarCheck, label: 'Attendance', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER'] },
   { path: '/fees', icon: Wallet, label: 'Fees', roles: ['SUPER_ADMIN', 'ADMIN', 'BURSAR'] },
-  { path: '/announcements', icon: Bell, label: 'Announcements', roles: ['SUPER_ADMIN', 'ADMIN'] },
+  { path: '/announcements', icon: Bell, label: 'Announcements', roles: ['SUPER_ADMIN', 'ADMIN', 'PARENT', 'TEACHER'] },
   { path: '/settings', icon: Settings, label: 'Settings', roles: ['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'BURSAR'] },
 ];
 
@@ -150,13 +150,27 @@ function Layout() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-900 flex">
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar - Slim and Teal for Students */}
       <div
         className={`fixed inset-y-0 left-0 z-50 transition-all duration-300 transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           } ${user?.role === 'STUDENT' ? 'w-20 bg-[#99CBB9]' : 'w-64 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800'} flex flex-col items-center py-6`}
       >
-        <div className="mb-10">
+        <div className="mb-10 w-full flex justify-center relative">
           <GraduationCap className={`w-8 h-8 ${user?.role === 'STUDENT' ? 'text-white' : 'text-primary-600'}`} />
+          <button
+            className="absolute right-2 top-0 lg:hidden text-gray-400 hover:text-white"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <X className={`w-5 h-5 ${user?.role === 'STUDENT' ? 'text-white/80' : 'text-gray-500'}`} />
+          </button>
         </div>
 
         <nav className="flex-1 w-full space-y-4 px-2">
@@ -169,34 +183,46 @@ function Layout() {
                 to={item.path}
                 title={item.label}
                 className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all ${active
-                  ? (user?.role === 'STUDENT' ? 'bg-white/20 text-white' : 'bg-primary-50 text-primary-600')
-                  : (user?.role === 'STUDENT' ? 'text-white/70 hover:bg-white/10 hover:text-white' : 'text-gray-500 hover:bg-gray-50')
+                  ? (user?.role === 'STUDENT' ? 'bg-white/30 text-white shadow-sm' : 'bg-primary-50 text-primary-600')
+                  : (user?.role === 'STUDENT' ? 'text-white hover:bg-white/15 hover:text-white' : 'text-gray-500 hover:bg-gray-50')
                   }`}
               >
                 <Icon className="w-6 h-6" />
-                {user?.role !== 'STUDENT' && <span className="text-xs mt-1">{item.label}</span>}
+                <span className={`text-[10px] mt-1 font-medium ${user?.role === 'STUDENT' ? '' : ''}`}>{item.label}</span>
               </Link>
             );
           })}
         </nav>
 
-        <div className="mt-auto">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className={`p-2 rounded-lg ${user?.role === 'STUDENT' ? 'text-white/70 hover:bg-white/10' : 'text-gray-400'}`}
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-        </div>
+        {user?.role !== 'STUDENT' && (
+          <div className="mt-auto">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 rounded-lg text-gray-400"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${user?.role === 'STUDENT' ? 'lg:ml-20' : 'lg:ml-64'}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 w-full ${user?.role === 'STUDENT' ? 'lg:ml-20 ml-0' : 'lg:ml-64 ml-0'}`}>
         {/* Top Header */}
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between px-6 bg-white border-b border-gray-100">
-          <div className="flex items-center flex-1 max-w-md bg-gray-50 rounded-lg px-4 py-2 border border-gray-100">
-            <Search className="w-4 h-4 text-gray-400 mr-2" />
-            <input type="text" placeholder="Search..." className="bg-transparent border-none outline-none text-sm w-full" />
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between px-4 lg:px-6 bg-white border-b border-gray-100">
+          <div className="flex items-center gap-2 flex-1">
+            {/* Mobile Menu Toggle */}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="lg:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-lg mr-2"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center flex-1 max-w-md bg-gray-50 rounded-lg px-4 py-2 border border-gray-100 hidden sm:flex">
+              <Search className="w-4 h-4 text-gray-400 mr-2" />
+              <input type="text" placeholder="Search..." className="bg-transparent border-none outline-none text-sm w-full" />
+            </div>
           </div>
 
           <div className="flex items-center gap-6">
