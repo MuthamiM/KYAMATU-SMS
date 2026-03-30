@@ -218,10 +218,10 @@ export const getStudentDashboardData = async (userId) => {
       orderBy: { assessment: { date: 'desc' } }
     }),
 
-    // 3. Fee invoice
-    prisma.studentInvoice.findFirst({
-      where: { studentId: student.id, termId: term?.id },
-      orderBy: { createdAt: 'desc' }
+    // 3. Overall Fee Totals
+    prisma.studentInvoice.aggregate({
+      where: { studentId: student.id },
+      _sum: { totalAmount: true, paidAmount: true, balance: true }
     }),
 
     // 4. Attendance summary
@@ -286,9 +286,9 @@ export const getStudentDashboardData = async (userId) => {
       date: s.assessment.date
     })),
     fees: {
-      total: invoice?.totalAmount || 0,
-      paid: invoice?.paidAmount || 0,
-      balance: invoice?.balance || 0
+      total: invoice?._sum?.totalAmount || 0,
+      paid: invoice?._sum?.paidAmount || 0,
+      balance: invoice?._sum?.balance || 0
     },
     attendance: attendance.reduce((acc, curr) => {
       acc[curr.status.toLowerCase()] = curr._count;
