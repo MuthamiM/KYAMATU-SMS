@@ -8,6 +8,8 @@ function Fees() {
   const [terms, setTerms] = useState([]);
   const [summary, setSummary] = useState(null);
   const [payments, setPayments] = useState([]);
+  const [defaulters, setDefaulters] = useState([]);
+  const [activeTab, setActiveTab] = useState('payments');
   const [loading, setLoading] = useState(true);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -37,16 +39,19 @@ function Fees() {
 
   const fetchData = async () => {
     try {
-      const [summaryRes, paymentsRes] = await Promise.all([
+      const [summaryRes, paymentsRes, defaultersRes] = await Promise.all([
         api.get('/fees/summary'),
         api.get('/fees/payments?limit=10'),
+        api.get('/fees/defaulters')
       ]);
       setSummary(summaryRes?.data?.data || null);
       setPayments(paymentsRes?.data?.data || []);
+      setDefaulters(defaultersRes?.data?.data || []);
     } catch (error) {
       toast.error('Failed to fetch fee data');
       setSummary(null);
       setPayments([]);
+      setDefaulters([]);
     } finally {
       setLoading(false);
     }
@@ -248,51 +253,125 @@ function Fees() {
       )}
 
       <div className="card">
-        <div className="p-4 border-b border-gray-200">
-          <h2 className="font-semibold text-gray-900">Recent Payments</h2>
+        <div className="p-4 border-b border-gray-200 flex gap-4">
+          <button
+            onClick={() => setActiveTab('payments')}
+            className={`font-semibold pb-2 border-b-2 transition-colors ${
+              activeTab === 'payments' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Recent Payments
+          </button>
+          <button
+            onClick={() => setActiveTab('balances')}
+            className={`font-semibold pb-2 border-b-2 transition-colors ${
+              activeTab === 'balances' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Student Balances
+          </button>
         </div>
         <div className="table-container">
           <table className="table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Student</th>
-                <th>Invoice</th>
-                <th>Method</th>
-                <th>Amount</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {loading ? (
-                <tr>
-                  <td colSpan="6" className="text-center py-8">Loading...</td>
-                </tr>
-              ) : payments.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="text-center py-8 text-gray-500">
-                    No payments found
-                  </td>
-                </tr>
-              ) : (
-                payments.map((payment) => (
-                  <tr key={payment.id} className="hover:bg-gray-50">
-                    <td>{new Date(payment.paidAt).toLocaleDateString()}</td>
-                    <td className="font-medium">
-                      {payment.student?.firstName} {payment.student?.lastName}
-                    </td>
-                    <td className="font-mono text-sm">{payment.invoice?.invoiceNo}</td>
-                    <td>
-                      <span className="badge badge-primary">{payment.method}</span>
-                    </td>
-                    <td className="font-semibold">{formatCurrency(payment.amount)}</td>
-                    <td>
-                      <span className="badge badge-success">{payment.status}</span>
-                    </td>
+            {activeTab === 'payments' ? (
+              <>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Student</th>
+                    <th>Invoice</th>
+                    <th>Method</th>
+                    <th>Amount</th>
+                    <th>Status</th>
                   </tr>
-                ))
-              )}
-            </tbody>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {loading ? (
+                    <tr>
+                      <td colSpan="6" className="text-center py-8">Loading...</td>
+                    </tr>
+                  ) : payments.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="text-center py-8 text-gray-500">
+                        No payments found
+                      </td>
+                    </tr>
+                  ) : (
+                    payments.map((payment) => (
+                      <tr key={payment.id} className="hover:bg-gray-50">
+                        <td>{new Date(payment.paidAt).toLocaleDateString()}</td>
+                        <td className="font-medium">
+                          {payment.student?.firstName} {payment.student?.lastName}
+                        </td>
+                        <td className="font-mono text-sm">{payment.invoice?.invoiceNo}</td>
+                        <td>
+                          <span className="badge badge-primary">{payment.method}</span>
+                        </td>
+                        <td className="font-semibold">{formatCurrency(payment.amount)}</td>
+                        <td>
+                          <span className="badge badge-success">{payment.status}</span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </>
+            ) : (
+              <>
+                <thead>
+                  <tr>
+                    <th>Student Name</th>
+                    <th>Adm No.</th>
+                    <th>Invoices</th>
+                    <th>Total Balance</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {loading ? (
+                    <tr>
+                      <td colSpan="5" className="text-center py-8">Loading...</td>
+                    </tr>
+                  ) : defaulters.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="text-center py-8 text-gray-500">
+                        No outstanding balances found
+                      </td>
+                    </tr>
+                  ) : (
+                    defaulters.map((d, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50">
+                        <td className="font-medium">
+                          {d.student?.firstName} {d.student?.lastName}
+                        </td>
+                        <td className="font-mono text-sm">{d.student?.admissionNumber}</td>
+                        <td className="text-sm text-gray-500">
+                          {d.invoices.map(inv => (
+                            <div key={inv.invoiceNo}>{inv.term}: {formatCurrency(inv.balance)}</div>
+                          ))}
+                        </td>
+                        <td className="font-semibold text-danger-600">
+                          {formatCurrency(d.totalBalance)}
+                        </td>
+                        <td>
+                          <button
+                            onClick={() => {
+                              setSelectedStudent(d.student?.id);
+                              setPaymentForm({ ...paymentForm, studentId: d.student?.id });
+                              fetchStudentInvoices(d.student?.id);
+                              setShowPaymentModal(true);
+                            }}
+                            className="text-primary-600 hover:underline text-sm font-medium"
+                          >
+                            Add Payment
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </>
+            )}
           </table>
         </div>
       </div>

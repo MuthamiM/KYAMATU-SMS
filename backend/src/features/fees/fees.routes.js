@@ -27,6 +27,7 @@ router.get('/student/:studentId/balance', canViewStudentFees, feesController.get
 router.post('/payments', isBursar, feesController.recordPayment);
 router.get('/payments', isBursar, feesController.getPayments);
 
+router.get('/defaulters', isBursar, feesController.getDefaulters);
 router.get('/summary', isBursar, feesController.getFinancialSummary);
 
 export default router;

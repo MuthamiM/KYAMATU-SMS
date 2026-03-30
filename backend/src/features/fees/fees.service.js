@@ -330,3 +330,33 @@ export const exportInvoicesCSV = async (termId) => {
   
   return csvContent;
 };
+
+export const getDefaulters = async () => {
+  const invoices = await prisma.studentInvoice.findMany({
+    where: { balance: { gt: 0 } },
+    include: {
+      student: { select: { id: true, firstName: true, lastName: true, admissionNumber: true } },
+      term: { select: { name: true } }
+    },
+    orderBy: { balance: 'desc' },
+  });
+
+  const studentMap = {};
+  invoices.forEach(inv => {
+    if (!studentMap[inv.studentId]) {
+      studentMap[inv.studentId] = {
+        student: inv.student,
+        totalBalance: 0,
+        invoices: []
+      };
+    }
+    studentMap[inv.studentId].totalBalance += inv.balance;
+    studentMap[inv.studentId].invoices.push({
+      invoiceNo: inv.invoiceNo,
+      balance: inv.balance,
+      term: inv.term.name
+    });
+  });
+
+  return Object.values(studentMap).sort((a, b) => b.totalBalance - a.totalBalance);
+};

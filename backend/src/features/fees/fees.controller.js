@@ -162,3 +162,12 @@ export const mpesaCallback = async (req, res, next) => {
     res.status(200).json({ success: false, message: 'Error processing callback, but acknowledged' });
   }
 };
+
+export const getDefaulters = async (req, res, next) => {
+  try {
+    const defaulters = await feesService.getDefaulters();
+    sendSuccess(res, defaulters);
+  } catch (error) {
+    next(error);
+  }
+};
