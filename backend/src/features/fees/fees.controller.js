@@ -119,6 +119,7 @@ export const initiateSTKPush = async (req, res, next) => {
     }
 
     let accountReference = 'GenericPayment';
+    let studentId = null;
 
     if (invoiceId === 'mock-inv-123' || invoiceId === 'fallback-inv-123') {
       accountReference = 'TEST-INVOICE';
@@ -128,8 +129,22 @@ export const initiateSTKPush = async (req, res, next) => {
         return res.status(404).json({ success: false, message: 'Invoice not found' });
       }
       accountReference = invoice.invoiceNo;
+      studentId = invoice.studentId;
     }
     const response = await mpesaService.initiateSTKPush(phoneNumber, amount, accountReference);
+
+    if (studentId && response.CheckoutRequestID) {
+      await prisma.payment.create({
+        data: {
+          amount: parseFloat(amount),
+          method: 'MPESA',
+          status: 'PENDING',
+          transactionRef: response.CheckoutRequestID,
+          studentId: studentId,
+          invoiceId: invoiceId
+        }
+      });
+    }
 
     sendSuccess(res, response, 'STK Push initiated successfully');
   } catch (error) {
@@ -143,16 +158,56 @@ export const mpesaCallback = async (req, res, next) => {
     const result = mpesaService.parseCallback(req.body);
 
     if (result.success) {
-      // Find the pending transaction or use the receipt to locate the right invoice
-      // In a real production system, you'd map the checkoutRequestID to the invoiceId first
-      // Because we missed storing CheckoutRequestID, we will just log it here for now
-      // Let's assume the user is tracking their invoiceId locally.
       console.log(`Payment of ${result.amount} received from ${result.phoneNumber}. Receipt: ${result.mpesaReceiptNumber}`);
 
-      // We would ideally look up the invoice using an intermediary table, but for now we just log it as a successful web callback.
-      // If we provided the exact invoiceId in the initial request, we would update it here.
+      const pendingPayment = await prisma.payment.findUnique({
+        where: { transactionRef: result.checkoutRequestID }
+      });
+
+      if (pendingPayment && pendingPayment.status === 'PENDING') {
+        const invoice = await prisma.studentInvoice.findUnique({
+          where: { id: pendingPayment.invoiceId }
+        });
+
+        if (invoice) {
+          // Update payment
+          await prisma.payment.update({
+            where: { id: pendingPayment.id },
+            data: {
+              status: 'COMPLETED',
+              mpesaReceiptNo: result.mpesaReceiptNumber,
+              paidAt: new Date(),
+              amount: parseFloat(result.amount) // Use actual amount paid
+            }
+          });
+
+          // Update invoice balance
+          const newPaidAmount = invoice.paidAmount + parseFloat(result.amount);
+          const newBalance = invoice.totalAmount - newPaidAmount;
+          await prisma.studentInvoice.update({
+            where: { id: invoice.id },
+            data: {
+              paidAmount: newPaidAmount,
+              balance: Math.max(0, newBalance)
+            }
+          });
+          console.log(`Successfully updated invoice ${invoice.invoiceNo} balance.`);
+        }
+      }
     } else {
       console.warn(`STK Push Failed or Cancelled: ${result.resultDesc}`);
+      // Find and mark as failed if exists
+      if (result.checkoutRequestID) {
+        const pendingPayment = await prisma.payment.findUnique({
+          where: { transactionRef: result.checkoutRequestID }
+        });
+        if (pendingPayment && pendingPayment.status === 'PENDING') {
+          await prisma.payment.update({
+            where: { id: pendingPayment.id },
+            data: { status: 'FAILED' }
+          });
+        }
+      }
     }
 
     // Always respond with 200 OK so Safaricom doesn't retry
