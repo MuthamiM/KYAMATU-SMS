@@ -12,7 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Ensure upload directory exists (Multer silently fails if it doesn't)
-const uploadDir = path.join(__dirname, '../../../../public/uploads/resources');
+const uploadDir = path.join(__dirname, '../../../public/uploads/resources');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
