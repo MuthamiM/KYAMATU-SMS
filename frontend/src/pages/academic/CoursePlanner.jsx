@@ -20,7 +20,24 @@ const CoursePlanner = () => {
     const fetchMyClasses = async () => {
         try {
             const res = await api.get('/staff/my-classes');
-            setClasses(res.data.data);
+            // Transform assignments into unique classes with their subjects
+            const assignments = res.data.data || [];
+            const classMap = {};
+            assignments.forEach(a => {
+                const cls = a.class;
+                if (!cls) return;
+                if (!classMap[cls.id]) {
+                    classMap[cls.id] = { ...cls, classSubjects: [] };
+                }
+                if (a.subject) {
+                    // Avoid duplicate subjects
+                    const exists = classMap[cls.id].classSubjects.find(cs => cs.subject.id === a.subject.id);
+                    if (!exists) {
+                        classMap[cls.id].classSubjects.push({ subject: a.subject });
+                    }
+                }
+            });
+            setClasses(Object.values(classMap));
         } catch (error) {
             toast.error('Failed to load classes');
         }
@@ -117,7 +134,7 @@ const CoursePlanner = () => {
                         >
                             <option value="">Choose a class...</option>
                             {classes.map(c => (
-                                <option key={c.id} value={c.id}>{c.grade.name} {c.stream.name}</option>
+                                <option key={c.id} value={c.id}>{c.grade?.name} {c.stream?.name}</option>
                             ))}
                         </select>
                     </div>

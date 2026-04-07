@@ -598,7 +598,17 @@ function TeacherDashboard({ user }) {
           api.get('/staff/my-classes').catch(() => ({ data: { data: [] } }))
         ]);
         setNextLesson(lessonRes.data.data);
-        setMyClasses(classesRes.data.data);
+
+        // Deduplicate: /staff/my-classes returns assignments, so group by class
+        const assignments = classesRes.data.data || [];
+        const classMap = {};
+        assignments.forEach(a => {
+          const cls = a.class;
+          if (cls && !classMap[cls.id]) {
+            classMap[cls.id] = cls;
+          }
+        });
+        setMyClasses(Object.values(classMap));
       } catch (e) { console.error(e); } finally { setLoading(false); }
     };
     fetchData();
@@ -607,8 +617,8 @@ function TeacherDashboard({ user }) {
   const quickStats = [
     {
       label: 'Next Lesson',
-      value: nextLesson ? `${nextLesson.subject.name}` : 'No lessons',
-      subtitle: nextLesson ? `${nextLesson.class.grade.name} ${nextLesson.class.stream.name} @ ${nextLesson.startTime}` : 'Relax!',
+      value: nextLesson ? `${nextLesson.subject?.name || 'Lesson'}` : 'No lessons',
+      subtitle: nextLesson ? `${nextLesson.class?.grade?.name || ''} ${nextLesson.class?.stream?.name || ''} @ ${nextLesson.startTime}` : 'Relax!',
       icon: Clock,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100',
@@ -630,7 +640,7 @@ function TeacherDashboard({ user }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">Quick Actions</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {[
               { icon: Calendar, label: 'Take Attendance', color: 'bg-blue-500', path: '/attendance' },
               { icon: BookOpen, label: 'Course Planner', color: 'bg-indigo-500', path: '/course-planner' },
@@ -660,8 +670,8 @@ function TeacherDashboard({ user }) {
               myClasses.length === 0 ? <div className="p-4 text-center text-gray-500">No classes assigned.</div> :
                 myClasses.map((cls, index) => (
                   <div
-                    key={index}
-                    onClick={() => navigate('/classes')} // Or specific class view
+                    key={cls.id || index}
+                    onClick={() => navigate('/classes')}
                     className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
@@ -669,13 +679,11 @@ function TeacherDashboard({ user }) {
                         <BookOpen className="w-5 h-5 text-blue-600" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{cls.grade.name} {cls.stream.name}</p>
-                        {/* Assuming backend returns subject or we fetch it? getMyClasses in controller returns classes. */}
-                        {/* We might need to adjust getMyClasses to include subject info if derived from assignments */}
+                        <p className="font-medium text-gray-900">{cls.grade?.name} {cls.stream?.name}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-gray-900">{cls._count?.students || 0}</p>
+                      <p className="font-bold text-gray-900">{cls.students?.length || cls._count?.students || 0}</p>
                       <p className="text-xs text-gray-500">students</p>
                     </div>
                   </div>
