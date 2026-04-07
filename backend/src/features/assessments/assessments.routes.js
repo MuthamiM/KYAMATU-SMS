@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as assessmentsController from './assessments.controller.js';
 import { authenticate } from '../../middleware/auth.js';
-import { isAdmin, isTeacher, isStaff, isStudent } from '../../middleware/rbac.js';
+import { isAdmin, isTeacher, isStaff, isStudent, requireRole } from '../../middleware/rbac.js';
 import { restrictToOwnStudent } from '../../middleware/accessControl.js';
 import { validateId, validateStudentId } from '../../middleware/commonValidators.js';
 import { validate } from '../../middleware/validate.js';
@@ -16,9 +16,11 @@ router.get('/:id', validateId(), validate, assessmentsController.getAssessment);
 
 router.post('/scores', isTeacher, assessmentsController.enterScore);
 router.post('/scores/bulk', isTeacher, assessmentsController.enterBulkScores);
-router.get('/student/:studentId/scores', validateStudentId, validate, isStudent, restrictToOwnStudent, assessmentsController.getStudentScores);
-router.get('/student/:studentId/summary', validateStudentId, validate, isStudent, restrictToOwnStudent, assessmentsController.getStudentSummary);
-router.get('/student/:studentId/term-performance', validateStudentId, validate, isStudent, restrictToOwnStudent, assessmentsController.getStudentTermPerformance);
+const canViewStudentAcademics = requireRole('SUPER_ADMIN', 'ADMIN', 'TEACHER', 'STUDENT');
+
+router.get('/student/:studentId/scores', validateStudentId, validate, canViewStudentAcademics, restrictToOwnStudent, assessmentsController.getStudentScores);
+router.get('/student/:studentId/summary', validateStudentId, validate, canViewStudentAcademics, restrictToOwnStudent, assessmentsController.getStudentSummary);
+router.get('/student/:studentId/term-performance', validateStudentId, validate, canViewStudentAcademics, restrictToOwnStudent, assessmentsController.getStudentTermPerformance);
 
 router.post('/competencies', isAdmin, assessmentsController.createCompetency);
 router.get('/competencies', assessmentsController.getCompetencies);
