@@ -48,7 +48,8 @@ async function main() {
   await prisma.staff.deleteMany();
   await prisma.user.deleteMany();
 
-  const hashedPassword = await bcrypt.hash('Admin@123', 12);
+  const adminHashedPassword = await bcrypt.hash('Admin@123', 12); // ADMIN & SUPER_ADMIN only
+  const defaultHashedPassword = await bcrypt.hash('admin', 12); // Teachers, Bursars, Students
 
   // 1. Create Academic Year 2026
   console.log('Creating academic year...');
@@ -156,7 +157,7 @@ async function main() {
 
   // Headmaster (SUPER_ADMIN)
   const headmasterUser = await prisma.user.create({
-    data: { email: 'headmaster@kyamatu.ac.ke', password: hashedPassword, role: 'SUPER_ADMIN', phone: '+254700000001' },
+    data: { email: 'headmaster@kyamatu.ac.ke', password: adminHashedPassword, role: 'SUPER_ADMIN', phone: '+254700000001' },
   });
   await prisma.staff.create({
     data: {
@@ -172,7 +173,7 @@ async function main() {
 
   // Deputy Headmaster (ADMIN)
   const deputyUser = await prisma.user.create({
-    data: { email: 'deputy@kyamatu.ac.ke', password: hashedPassword, role: 'ADMIN', phone: '+254700000002' },
+    data: { email: 'deputy@kyamatu.ac.ke', password: adminHashedPassword, role: 'ADMIN', phone: '+254700000002' },
   });
   await prisma.staff.create({
     data: {
@@ -188,12 +189,12 @@ async function main() {
 
   // System Admin (for testing)
   await prisma.user.create({
-    data: { email: 'admin@kyamatu.ac.ke', password: hashedPassword, role: 'SUPER_ADMIN', phone: '+254700000000' },
+    data: { email: 'admin@kyamatu.ac.ke', password: adminHashedPassword, role: 'SUPER_ADMIN', phone: '+254700000000' },
   });
 
   // Bursar
   const bursarUser = await prisma.user.create({
-    data: { email: 'bursar@kyamatu.ac.ke', password: hashedPassword, role: 'BURSAR', phone: '+254700000003' },
+    data: { email: 'bursar@kyamatu.ac.ke', password: defaultHashedPassword, role: 'BURSAR', phone: '+254700000003' },
   });
   await prisma.staff.create({
     data: {
@@ -224,7 +225,7 @@ async function main() {
 
   for (const t of teacherData) {
     const teacherUser = await prisma.user.create({
-      data: { email: t.email, password: hashedPassword, role: 'TEACHER', phone: `+2547${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}` },
+      data: { email: t.email, password: defaultHashedPassword, role: 'TEACHER', phone: `+2547${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}` },
     });
     await prisma.staff.create({
       data: {
@@ -312,7 +313,7 @@ async function main() {
       const studentUser = await prisma.user.create({
         data: {
           email: `student${studentCounter}@kyamatu.ac.ke`,
-          password: hashedPassword,
+          password: defaultHashedPassword,
           role: 'STUDENT',
         }
       });
@@ -554,9 +555,10 @@ async function main() {
   console.log(`   - Staff: ${staffCount}`);
   console.log('-------------------------------------------');
   console.log('\nLogin credentials:');
-  console.log('   Admin: admin@kyamatu.ac.ke / Admin@123');
-  console.log('   Bursar: bursar@kyamatu.ac.ke / Admin@123');
-  console.log('   Teacher: teacher@kyamatu.ac.ke / Admin@123');
+  console.log('   Admin:   admin@kyamatu.ac.ke / Admin@123');
+  console.log('   Bursar:  bursar@kyamatu.ac.ke / admin');
+  console.log('   Teacher: jmusa@kyamatu.ac.ke / admin');
+  console.log('   Student: student1@kyamatu.ac.ke / admin');
 }
 
 main()

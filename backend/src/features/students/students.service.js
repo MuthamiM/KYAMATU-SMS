@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import prisma from '../../config/database.js';
 import { NotFoundError, ConflictError } from '../../utils/errors.js';
 import { generateAdmissionNumber, paginationMeta } from '../../utils/helpers.js';
@@ -15,9 +16,9 @@ export const createStudent = async (data) => {
 
   const { email, password, phone, ...studentData } = data;
 
-  // New credential logic: firstInitial + lastName + @kyamatu.ac.ke
   const studentEmail = email || `${studentData.firstName[0]}${studentData.lastName}`.toLowerCase().replace(/\s+/g, '') + '@kyamatu.ac.ke';
-  const studentPassword = password || admissionNumber; // Use Admission Number as default password
+  const rawPassword = password || 'admin'; // Default password for students is "admin"
+  const hashedPassword = await bcrypt.hash(rawPassword, 12);
 
   const student = await prisma.student.create({
     data: {
@@ -27,7 +28,7 @@ export const createStudent = async (data) => {
       user: {
         create: {
           email: studentEmail,
-          password: studentPassword, // This will be hashed by the User model middleware or service
+          password: hashedPassword,
           phone,
           role: 'STUDENT',
         },

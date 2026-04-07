@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import prisma from '../../config/database.js';
 import { NotFoundError, ConflictError } from '../../utils/errors.js';
 import { generateEmployeeNumber, paginationMeta } from '../../utils/helpers.js';
@@ -6,6 +7,10 @@ export const createStaff = async (data) => {
   const employeeNumber = data.employeeNumber || generateEmployeeNumber();
   
   const { email, phone, password, role, isActive, ...staffData } = data;
+
+  // Default password: 'admin' for teachers/bursars, hash before storing
+  const rawPassword = password || 'admin';
+  const hashedPassword = await bcrypt.hash(rawPassword, 12);
   
   const staff = await prisma.staff.create({
     data: {
@@ -14,10 +19,10 @@ export const createStaff = async (data) => {
       user: {
         create: {
           email,
-          password,
+          password: hashedPassword,
           phone,
           role: role || 'TEACHER',
-          isActive: isActive !== undefined ? isActive : true, // Handle inactive users
+          isActive: isActive !== undefined ? isActive : true,
         },
       },
     },
