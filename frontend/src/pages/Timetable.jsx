@@ -48,12 +48,11 @@ function Timetable() {
 
     if (user.role === 'STUDENT') {
       fetchStudentTimetable();
-    } else {
+    } else if (['ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
       fetchClasses();
       fetchTeachers();
-      if (user.role === 'TEACHER' && user.staff?.id) {
-        setSelectedTeacherId(user.staff.id);
-      }
+    } else if (user.role === 'TEACHER' && user.staff?.id) {
+      setSelectedTeacherId(user.staff.id);
     }
   }, [user]);
 
@@ -342,7 +341,7 @@ function Timetable() {
         </div>
 
         <div className="flex flex-wrap gap-2 w-full xl:w-auto items-center">
-          {['ADMIN', 'SUPER_ADMIN', 'TEACHER'].includes(user.role) && (
+          {['ADMIN', 'SUPER_ADMIN'].includes(user.role) && (
             <button
               onClick={handleDownloadMaster}
               className="btn btn-secondary flex items-center gap-2"
@@ -362,7 +361,7 @@ function Timetable() {
             </button>
           )}
 
-          {['ADMIN', 'SUPER_ADMIN', 'TEACHER'].includes(user.role) && (
+          {['ADMIN', 'SUPER_ADMIN'].includes(user.role) && (
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <div className="flex bg-gray-100 dark:bg-slate-800 rounded-lg p-1">
                 <button

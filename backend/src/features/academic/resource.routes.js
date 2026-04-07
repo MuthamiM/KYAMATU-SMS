@@ -50,4 +50,7 @@ router.get('/:classId/:subjectId', isAuth, resourceController.getResources);
 // Note: We use upload.single('file') to accept the multipart file
 router.post('/', isAuth, isTeacher, upload.single('file'), resourceController.createResource);
 
+// Delete resource (Teachers/Admins)
+router.delete('/:id', isAuth, isTeacher, resourceController.deleteResource);
+
 export default router;

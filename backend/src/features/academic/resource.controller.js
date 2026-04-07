@@ -46,3 +46,13 @@ export const createResource = async (req, res, next) => {
         next(error);
     }
 };
+
+export const deleteResource = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        await resourceService.deleteResource(id, req.user);
+        sendSuccess(res, null, 'Resource deleted successfully');
+    } catch (error) {
+        next(error);
+    }
+};

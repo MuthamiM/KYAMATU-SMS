@@ -66,10 +66,14 @@ const CourseResourcesView = ({ isOpen, onClose, subjectName, teacher, classId, s
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {resources.map((res) => (
+                            {resources.map((res) => {
+                                const downloadUrl = res.url?.startsWith('/public') 
+                                    ? `https://kyamatu-sms-backend.onrender.com${res.url}` 
+                                    : res.url;
+                                return (
                                 <div
                                     key={res.id}
-                                    onClick={() => res.url && window.open(res.url, '_blank')}
+                                    onClick={() => downloadUrl && window.open(downloadUrl, '_blank')}
                                     className="group p-4 bg-gray-50 dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 hover:border-teal-300 dark:hover:border-teal-500 transition-all hover:shadow-md cursor-pointer"
                                 >
                                     <div className="flex items-center justify-between">
@@ -98,7 +102,8 @@ const CourseResourcesView = ({ isOpen, onClose, subjectName, teacher, classId, s
                                         </button>
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
 
                             {resources.length === 0 && (
                                 <div className="py-12 text-center text-gray-500">
