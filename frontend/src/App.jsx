@@ -20,6 +20,7 @@ import Timetable from './pages/Timetable';
 import SystemStatus from './pages/SystemStatus';
 import Profile from './pages/Profile';
 import CoursePlanner from './pages/academic/CoursePlanner';
+import CourseResourcesManager from './pages/academic/CourseResourcesManager';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, user } = useAuthStore();
@@ -143,6 +144,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'TEACHER']}>
               <CoursePlanner />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="course-resources"
+          element={
+            <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'TEACHER']}>
+              <CourseResourcesManager />
             </ProtectedRoute>
           }
         />

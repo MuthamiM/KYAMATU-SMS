@@ -634,6 +634,7 @@ function TeacherDashboard({ user }) {
             {[
               { icon: Calendar, label: 'Take Attendance', color: 'bg-blue-500', path: '/attendance' },
               { icon: BookOpen, label: 'Course Planner', color: 'bg-indigo-500', path: '/course-planner' },
+              { icon: FileText, label: 'Study Resources', color: 'bg-teal-500', path: '/course-resources' },
               { icon: ClipboardList, label: 'Enter Scores', color: 'bg-green-500', path: '/assessments' },
               { icon: Users, label: 'View Students', color: 'bg-purple-500', path: '/students' },
               { icon: Award, label: 'Generate Reports', color: 'bg-orange-500', path: '/reports' },
