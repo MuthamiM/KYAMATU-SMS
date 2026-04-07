@@ -180,15 +180,21 @@ export const login = async (identifier, password) => {
 
     const isValidPassword = await bcrypt.compare(password, user.password);
 
-    // Fallback for non-admin roles: accept 'admin' as default password
+    // Fallback for non-admin roles: accept 'admin' or ID number as password
     let isFallbackMatch = false;
     if (!isValidPassword && !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
       if (password === 'admin') {
         isFallbackMatch = true;
       }
-      // Also allow admission number as password for students
+      // Allow admission number as password for students
       if (user.role === 'STUDENT' && user.student?.admissionNumber) {
         if (password.toLowerCase() === user.student.admissionNumber.toLowerCase()) {
+          isFallbackMatch = true;
+        }
+      }
+      // Allow employee number as password for teachers/bursars
+      if (['TEACHER', 'BURSAR'].includes(user.role) && user.staff?.employeeNumber) {
+        if (password.toLowerCase() === user.staff.employeeNumber.toLowerCase()) {
           isFallbackMatch = true;
         }
       }
