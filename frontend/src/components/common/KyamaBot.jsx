@@ -8,7 +8,7 @@ const KyamaBot = () => {
     const [isMinimized, setIsMinimized] = useState(false);
     const [message, setMessage] = useState('');
     const [chatHistory, setChatHistory] = useState([
-        { role: 'bot', content: "Hello! I'm KyamaBot, your school assistant. How can I help you today? I can help you plan your tasks or set reminders." }
+        { role: 'bot', content: "Hello! I'm KyamaAI, your school assistant. How can I help you today? I can help you plan your tasks or set reminders." }
     ]);
     const [isLoading, setIsLoading] = useState(false);
     const [isLoadingInitial, setIsLoadingInitial] = useState(false);
@@ -114,7 +114,7 @@ const KyamaBot = () => {
                         <Sparkles className="w-4 h-4" />
                     </div>
                     <div>
-                        <h3 className="font-bold text-sm tracking-wide">KyamaBot</h3>
+                        <h3 className="font-bold text-sm tracking-wide">KyamaAI</h3>
                         <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest flex items-center gap-1">
                             <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-ping"></span>
                             Online
