@@ -1,10 +1,11 @@
 import axios from 'axios';
 import * as reminderService from '../reminders/reminder.service.js';
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 export const processChatMessage = async (userId, studentId, message) => {
+  const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+  
   if (!OPENROUTER_API_KEY) {
     return handleMockResponse(studentId, message);
   }
