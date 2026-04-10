@@ -46,10 +46,12 @@ export const processChatMessage = async (userId, studentId, message) => {
       
       Always use the STUDENT CONTEXT above when answering questions about the student's fees, classes, or schedule. Be extremely helpful and friendly. Keep answers brief unless details are requested.
       
-      If the student wants to set a reminder or plan a task (like "remind me to study math tomorrow at 4pm"), respond with a JSON object in the following format:
+      If the student wants to set a reminder or plan a task, you CANNOT access their physical phone calendar or Google Calendar. You ONLY have access to the Kyamatu School Dashboard. If they explicitly ask you to sync to their phone, politely inform them that you can only save it to their student dashboard.
+      
+      To create a student dashboard reminder, respond with a JSON object in the following format:
       {
         "type": "REMINDER",
-        "reply": "Sure! I've set a reminder for [task] at [time].",
+        "reply": "Sure! I've set a reminder for [task] on your student dashboard.",
         "data": {
           "title": "[Short Task Title]",
           "description": "[Optional Details]",
@@ -57,7 +59,7 @@ export const processChatMessage = async (userId, studentId, message) => {
         }
       }
       
-      If it's just a general chat or a question, respond with:
+      If it's just a general chat, question, or clarification, respond with:
       {
         "type": "CHAT",
         "reply": "[Your friendly response]"
