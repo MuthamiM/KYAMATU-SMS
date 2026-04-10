@@ -299,6 +299,8 @@ const StudentDashboardRedesigned = ({ user }) => {
         } finally {
             setIsProcessingPayment(false);
         }
+    };
+
     const handleConnect = async (service) => {
         try {
             const res = await api.get(`/integrations/${service}/auth`);

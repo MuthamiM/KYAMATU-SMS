@@ -32,7 +32,16 @@ export const processChatMessage = async (userId, studentId, message) => {
       data: { studentId, role: 'user', content: message }
     });
 
-    // 2. Fetch history Context
+    // 2. FETCH STATUS OF INTEGRATIONS (Awareness)
+    const studentIntegrations = await prisma.student.findUnique({
+      where: { id: studentId },
+      select: { googleRefreshToken: true, microsoftRefreshToken: true }
+    });
+
+    const isGoogleLinked = !!studentIntegrations?.googleRefreshToken;
+    const isMicrosoftLinked = !!studentIntegrations?.microsoftRefreshToken;
+
+    // 3. Fetch history Context
     const history = await getChatHistory(studentId);
 
     const systemPrompt = `
@@ -43,10 +52,16 @@ export const processChatMessage = async (userId, studentId, message) => {
       - Name: ${dashboardData.student.firstName}
       - Fee Balance: KES ${feeBalance}
       - Today's Classes: ${classesToday}
+      - SYNC STATUS: Google Calendar: ${isGoogleLinked ? 'CONNECTED' : 'NOT LINKED'}, Microsoft To-Do: ${isMicrosoftLinked ? 'CONNECTED' : 'NOT LINKED'}
       
       Always use the STUDENT CONTEXT above when answering questions about the student's fees, classes, or schedule. Be extremely helpful and friendly. Keep answers brief unless details are requested.
       
-      If the student wants to set a reminder or plan a task, you CANNOT access their physical phone calendar or Google Calendar. You ONLY have access to the Kyamatu School Dashboard. If they explicitly ask you to sync to their phone, politely inform them that you can only save it to their student dashboard.
+      SYNC INSTRUCTIONS:
+      1. If the student asks to sync to their phone or an external calendar:
+         - If BOTH are NOT LINKED: Inform them they must first click the "Link" button in the "Services & Sync" card on their dashboard.
+         - If at least one is LINKED: Proceed with creating the reminder; it will sync automatically.
+      2. NEVER claim you can directly access their physical phone hardware. You only sync via the cloud services if they are LINKED.
+      3. If they ask to sync but are NOT LINKED, do NOT set the REMINDER type yet; just use CHAT to explain the Link step.
       
       To create a student dashboard reminder, respond with a JSON object in the following format:
       {
@@ -111,15 +126,21 @@ export const processChatMessage = async (userId, studentId, message) => {
 
       return result.reply;
     } catch (parseError) {
-      console.error('Failed to parse AI response as JSON:', aiResponseText);
+      console.error('Failed to parse AI response as JSON:', aiResponseText, parseError.message);
       await prisma.aiChatMessage.create({
         data: { studentId, role: 'bot', content: aiResponseText }
       });
       return aiResponseText; // Return raw text if JSON parsing fails
     }
   } catch (error) {
-    console.error('AI Service Error:', error.message);
-    return "I'm sorry, I'm having trouble thinking right now. Could you try again later?";
+    console.error('AI Service Error stack:', error.stack || error);
+    console.error('AI Service Error message:', error.message);
+    
+    // Check for specific error types to provide better feedback
+    if (error.response?.status === 429) return "I'm a bit overwhelmed with requests right now. Could you wait a moment and try again?";
+    if (error.response?.status === 401) return "I'm having trouble accessing my AI intelligence right now. Please check my API configuration.";
+    
+    return "I'm sorry, I'm having trouble processing that request right now. It might be a bit too complex or something went wrong on my end. Could you try a simpler question?";
   }
 };
 
