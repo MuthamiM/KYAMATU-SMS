@@ -223,6 +223,7 @@ model Student {
   guardians        StudentGuardian[]
   studentInvoices  StudentInvoice[]
   reminders        Reminder[]
+  aiChatMessages   AiChatMessage[]
 
   @@index([userId])
   @@index([classId])
@@ -449,6 +450,19 @@ model Reminder {
 
   @@index([studentId])
   @@index([remindAt])
+}
+
+model AiChatMessage {
+  id        String   @id @default(uuid())
+  studentId String
+  role      String   // 'user' or 'bot'
+  content   String
+  createdAt DateTime @default(now())
+
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([createdAt])
 }
 
 model TimetableSlot {

@@ -1,8 +1,17 @@
 import axios from 'axios';
 import * as reminderService from '../reminders/reminder.service.js';
 import * as dashboardService from '../dashboard/dashboard.service.js';
+import prisma from '../../config/database.js';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+
+export const getChatHistory = async (studentId) => {
+  return await prisma.aiChatMessage.findMany({
+    where: { studentId },
+    orderBy: { createdAt: 'asc' },
+    take: 50 // Keep the last 50 messages to prevent payload bloat
+  });
+};
 
 export const processChatMessage = async (userId, studentId, message) => {
   const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
@@ -18,7 +27,15 @@ export const processChatMessage = async (userId, studentId, message) => {
       ? dashboardData.timetable.map(t => `${t.startTime}: ${t.subject.name}`).join(', ')
       : 'No classes scheduled for today.';
 
-    const prompt = `
+    // 1. Save user message to database
+    await prisma.aiChatMessage.create({
+      data: { studentId, role: 'user', content: message }
+    });
+
+    // 2. Fetch history Context
+    const history = await getChatHistory(studentId);
+
+    const systemPrompt = `
       You are KyamaBot, a helpful AI assistant for Kyamatu Primary School students.
       The current date and time is ${new Date().toLocaleString()}.
       
@@ -45,13 +62,21 @@ export const processChatMessage = async (userId, studentId, message) => {
         "type": "CHAT",
         "reply": "[Your friendly response]"
       }
-      
-      User message: "${message}"
     `;
 
+    // Map history to OpenRouter array, excluding the very last one which is the current message we just pushed
+    const messagesPayload = [
+      { role: 'system', content: systemPrompt },
+      ...history.slice(0, -1).map(msg => ({ 
+        role: msg.role === 'bot' ? 'assistant' : 'user', 
+        content: msg.content 
+      })),
+      { role: 'user', content: message }
+    ];
+
     const response = await axios.post(OPENROUTER_API_URL, {
-      model: 'openai/gpt-3.5-turbo', // Default model, can be changed
-      messages: [{ role: 'user', content: prompt }],
+      model: 'openai/gpt-3.5-turbo',
+      messages: messagesPayload,
       response_format: { type: 'json_object' }
     }, {
       headers: {
@@ -78,9 +103,16 @@ export const processChatMessage = async (userId, studentId, message) => {
         });
       }
 
+      await prisma.aiChatMessage.create({
+        data: { studentId, role: 'bot', content: result.reply }
+      });
+
       return result.reply;
     } catch (parseError) {
       console.error('Failed to parse AI response as JSON:', aiResponseText);
+      await prisma.aiChatMessage.create({
+        data: { studentId, role: 'bot', content: aiResponseText }
+      });
       return aiResponseText; // Return raw text if JSON parsing fails
     }
   } catch (error) {

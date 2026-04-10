@@ -11,6 +11,7 @@ const KyamaBot = () => {
         { role: 'bot', content: "Hello! I'm KyamaBot, your school assistant. How can I help you today? I can help you plan your tasks or set reminders." }
     ]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingInitial, setIsLoadingInitial] = useState(false);
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -20,6 +21,33 @@ const KyamaBot = () => {
     useEffect(() => {
         scrollToBottom();
     }, [chatHistory]);
+
+    useEffect(() => {
+        if (isOpen && chatHistory.length === 1) {
+            fetchHistory();
+        }
+    }, [isOpen]);
+
+    const fetchHistory = async () => {
+        setIsLoadingInitial(true);
+        try {
+            const response = await api.get('/ai/chat/history');
+            const history = response.data.data;
+            if (history && history.length > 0) {
+                // Formatting history replacing role names to match frontend UI mappings
+                const formattedHistory = history.map(msg => ({
+                    role: msg.role === 'bot' || msg.role === 'assistant' ? 'bot' : 'user',
+                    content: msg.content
+                }));
+                // Combine default greeting with formatted history
+                setChatHistory([chatHistory[0], ...formattedHistory]);
+            }
+        } catch (error) {
+            console.error('Failed to load chat history:', error);
+        } finally {
+            setIsLoadingInitial(false);
+        }
+    };
 
     const handleSend = async (e) => {
         e.preventDefault();
@@ -96,6 +124,11 @@ const KyamaBot = () => {
                 <>
                     {/* Chat Window */}
                     <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/50">
+                        {isLoadingInitial && (
+                             <div className="flex justify-center text-xs text-gray-400 py-4 items-center gap-2">
+                                <Loader2 className="w-3 h-3 animate-spin"/> Loading previous memories...
+                             </div>
+                        )}
                         {chatHistory.map((msg, idx) => (
                             <div 
                                 key={idx} 

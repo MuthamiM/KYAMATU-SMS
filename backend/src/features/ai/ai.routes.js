@@ -8,5 +8,6 @@ const router = express.Router();
 router.use(authenticate);
 
 router.post('/chat', requireRole('STUDENT'), aiController.chat);
+router.get('/chat/history', requireRole('STUDENT'), aiController.getHistory);
 
 export default router;
