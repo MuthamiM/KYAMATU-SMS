@@ -138,8 +138,10 @@ const ReminderWidget = () => {
             
             <div className="mt-8 pt-6 border-t border-gray-50">
                 <button 
-                    onClick={() => toast('Ask KyamaBot to "Remind me to..."', { icon: '🤖' })}
-                    className="w-full py-3 bg-gray-50 hover:bg-gray-100 text-gray-400 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all border border-dashed border-gray-200"
+                    onClick={() => {
+                        window.dispatchEvent(new CustomEvent('OPEN_KYAMABOT', { detail: { initialMessage: 'I want to add a new reminder' } }));
+                    }}
+                    className="w-full py-3 bg-teal-50 hover:bg-teal-100 text-teal-600 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all border border-dashed border-teal-200 shadow-sm hover:shadow active:scale-95 animate-pulse"
                 >
                     + Add New via KyamaBot
                 </button>

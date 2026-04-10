@@ -28,6 +28,18 @@ const KyamaBot = () => {
         }
     }, [isOpen]);
 
+    useEffect(() => {
+        const handleOpenBot = (e) => {
+            setIsOpen(true);
+            setIsMinimized(false);
+            if (e.detail?.initialMessage) {
+                setMessage(e.detail.initialMessage);
+            }
+        };
+        window.addEventListener('OPEN_KYAMABOT', handleOpenBot);
+        return () => window.removeEventListener('OPEN_KYAMABOT', handleOpenBot);
+    }, []);
+
     const fetchHistory = async () => {
         setIsLoadingInitial(true);
         try {
@@ -60,6 +72,11 @@ const KyamaBot = () => {
 
         try {
             const response = await api.post('/ai/chat', { message: userMessage });
+            
+            // Add a small artificial delay so the premium animation is actually visible
+            // users hate blinking UI, and this makes the AI feel like it's "thinking"
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
             setChatHistory(prev => [...prev, { role: 'bot', content: response.data.data.reply }]);
         } catch (error) {
             console.error('Chat error:', error);
@@ -151,14 +168,40 @@ const KyamaBot = () => {
                             </div>
                         ))}
                         {isLoading && (
-                            <div className="flex justify-start animate-in fade-in">
-                                <div className="flex gap-3 max-w-[85%]">
-                                    <div className="w-8 h-8 rounded-full bg-white text-[#476C63] flex items-center justify-center border border-gray-100 shadow-sm">
-                                        <Loader2 className="w-4 h-4 animate-spin" />
+                            <div className="flex justify-start animate-in fade-in py-2">
+                                <style>
+                                    {`
+                                        @keyframes ai-pulse-custom {
+                                            0%, 100% { transform: scaleY(0.5); opacity: 0.5; }
+                                            50% { transform: scaleY(1.3); opacity: 1; }
+                                        }
+                                        .animate-ai-wave {
+                                            animation: ai-pulse-custom 1.2s ease-in-out infinite;
+                                        }
+                                    `}
+                                </style>
+                                <div className="flex items-center gap-2 px-5 py-4 bg-white rounded-[24px] border border-gray-100 shadow-[0_4px_15px_rgba(0,0,0,0.05)] border-l-4 border-l-[#476C63]">
+                                    <div className="flex items-center gap-[4px] h-6 px-1">
+                                        {[
+                                            '#431407', '#991b1b', '#ea580c', '#f59e0b', '#eab308', 
+                                            '#0ea5e9', 
+                                            '#eab308', '#f59e0b', '#ea580c', '#991b1b', '#431407'
+                                        ].map((color, i) => (
+                                            <div 
+                                                key={i}
+                                                className="w-1 rounded-full animate-ai-wave"
+                                                style={{ 
+                                                    backgroundColor: color,
+                                                    height: i === 5 ? '100%' : (i === 4 || i === 6) ? '80%' : (i === 3 || i === 7) ? '60%' : '40%',
+                                                    animationDelay: `${i * 0.1}s`,
+                                                    boxShadow: i === 5 ? `0 0 10px ${color}` : 'none'
+                                                }}
+                                            />
+                                        ))}
                                     </div>
-                                    <div className="p-3 bg-white text-gray-400 rounded-2xl rounded-tl-none border border-gray-100 shadow-sm text-[10px] font-bold uppercase tracking-widest italic">
-                                        Thinking...
-                                    </div>
+                                    <span className="text-[10px] font-bold text-[#476C63] uppercase tracking-[0.2em] pl-2 animate-pulse">
+                                        KyamaAI Processing
+                                    </span>
                                 </div>
                             </div>
                         )}
