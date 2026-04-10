@@ -1,5 +1,6 @@
 import axios from 'axios';
 import * as reminderService from '../reminders/reminder.service.js';
+import * as dashboardService from '../dashboard/dashboard.service.js';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -11,9 +12,22 @@ export const processChatMessage = async (userId, studentId, message) => {
   }
 
   try {
+    const dashboardData = await dashboardService.getStudentDashboardData(userId);
+    const feeBalance = (dashboardData.fees?.balance || 0).toLocaleString();
+    const classesToday = dashboardData.timetable.length > 0 
+      ? dashboardData.timetable.map(t => `${t.startTime}: ${t.subject.name}`).join(', ')
+      : 'No classes scheduled for today.';
+
     const prompt = `
       You are KyamaBot, a helpful AI assistant for Kyamatu Primary School students.
       The current date and time is ${new Date().toLocaleString()}.
+      
+      STUDENT CONTEXT:
+      - Name: ${dashboardData.student.firstName}
+      - Fee Balance: KES ${feeBalance}
+      - Today's Classes: ${classesToday}
+      
+      Always use the STUDENT CONTEXT above when answering questions about the student's fees, classes, or schedule. Be extremely helpful and friendly. Keep answers brief unless details are requested.
       
       If the student wants to set a reminder or plan a task (like "remind me to study math tomorrow at 4pm"), respond with a JSON object in the following format:
       {
