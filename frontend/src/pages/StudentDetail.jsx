@@ -28,10 +28,10 @@ function StudentDetail() {
           setAcademics(res.data.data);
         } else if (activeTab === 'attendance' && !attendance) {
           const res = await api.get(`/attendance/student/${id}`);
-          setAttendance(res.data.data.attendances);
+          setAttendance(res.data.data);
         } else if (activeTab === 'fees' && !fees) {
           const res = await api.get(`/fees/student/${id}/invoices`);
-          setFees(res.data.data.invoices);
+          setFees(res.data.data);
         }
       } catch (error) {
         toast.error(`Failed to fetch ${activeTab} data`);

@@ -222,6 +222,7 @@ model Student {
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   guardians        StudentGuardian[]
   studentInvoices  StudentInvoice[]
+  reminders        Reminder[]
 
   @@index([userId])
   @@index([classId])
@@ -433,6 +434,21 @@ model Message {
 
   @@index([senderId])
   @@index([receiverId])
+}
+
+model Reminder {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  remindAt    DateTime
+  isCompleted Boolean  @default(false)
+  studentId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([remindAt])
 }
 
 model TimetableSlot {

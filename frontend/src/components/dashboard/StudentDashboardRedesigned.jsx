@@ -14,6 +14,7 @@ import api from '../../services/api';
 import toast from 'react-hot-toast';
 import CourseOutlineView from './CourseOutlineView';
 import CourseResourcesView from './CourseResourcesView';
+import ReminderWidget from './ReminderWidget';
 
 const CircularProgress = ({ value, max, label, sublabel, color = '#99CBB9' }) => {
     const radius = 35;
@@ -526,6 +527,9 @@ const StudentDashboardRedesigned = ({ user }) => {
                             )}
                         </div>
                     </div>
+
+                    {/* Reminders Widget */}
+                    <ReminderWidget />
                 </div>
             </div>
 

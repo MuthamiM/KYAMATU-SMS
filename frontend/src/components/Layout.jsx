@@ -22,6 +22,7 @@ import {
   Calendar,
   Search,
 } from 'lucide-react';
+import KyamaBot from './common/KyamaBot';
 
 const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -236,10 +237,10 @@ function Layout() {
             </div>
           </div>
         </header>
-
         <main className="p-4 lg:p-6">
           <Outlet />
         </main>
+        {user?.role === 'STUDENT' && <KyamaBot />}
       </div>
     </div>
   );
