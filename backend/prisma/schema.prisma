@@ -224,6 +224,8 @@ model Student {
   studentInvoices  StudentInvoice[]
   reminders        Reminder[]
   aiChatMessages   AiChatMessage[]
+  googleRefreshToken    String?
+  microsoftRefreshToken String?
 
   @@index([userId])
   @@index([classId])
@@ -447,6 +449,9 @@ model Reminder {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  googleEventId   String?
+  microsoftTaskId String?
 
   @@index([studentId])
   @@index([remindAt])

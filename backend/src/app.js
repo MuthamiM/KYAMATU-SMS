@@ -29,6 +29,7 @@ import timetableRoutes from './features/academic/timetable.routes.js';
 import dashboardRoutes from './features/dashboard/dashboard.routes.js';
 import aiRoutes from './features/ai/ai.routes.js';
 import reminderRoutes from './features/reminders/reminder.routes.js';
+import integrationsRoutes from './features/integrations/integrations.routes.js';
 
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -576,6 +577,7 @@ app.use('/api/timetable', timetableRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/reminders', reminderRoutes);
+app.use('/api/integrations', integrationsRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
