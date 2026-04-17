@@ -172,7 +172,7 @@ function AdminDashboard({ stats, loading }) {
       }));
 
       // Student growth from API (format: [{year, count}])
-      const rawGrowth = studentGrowthRes.data.data || [];
+      const rawGrowth = Array.isArray(studentGrowthRes.data.data) ? studentGrowthRes.data.data : [];
       const monthlyAdmissions = rawGrowth.map(item => ({
         month: item.year,
         students: item.count,
@@ -180,7 +180,7 @@ function AdminDashboard({ stats, loading }) {
       }));
 
       // Fee collection from API (format: [{month, amount}])
-      const rawFees = feeTrendsRes.data.data || [];
+      const rawFees = Array.isArray(feeTrendsRes.data.data?.collectionTrend) ? feeTrendsRes.data.data.collectionTrend : (Array.isArray(feeTrendsRes.data.data) ? feeTrendsRes.data.data : []);
       const feeCollection = rawFees.filter(f => f.amount > 0).map(item => ({
         month: item.month,
         collected: item.amount,
@@ -188,7 +188,7 @@ function AdminDashboard({ stats, loading }) {
       }));
 
       // Attendance distribution from API (format: [{name, value}])
-      const rawAttendance = attendanceDistRes.data.data || [];
+      const rawAttendance = Array.isArray(attendanceDistRes.data.data?.distribution) ? attendanceDistRes.data.data.distribution : (Array.isArray(attendanceDistRes.data.data) ? attendanceDistRes.data.data : []);
       const attendanceData = rawAttendance.length > 0
         ? rawAttendance.map(item => ({
           name: item.name,
