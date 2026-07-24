@@ -8,11 +8,11 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 
 OUT = os.path.dirname(os.path.abspath(__file__))
-DARK = RGBColor(0x1B, 0x1B, 0x2F)
-ACCENT = RGBColor(0x00, 0x7B, 0xFF)
-WHITE = RGBColor(0xFF, 0xFF, 0xFF)
-LIGHT = RGBColor(0xE0, 0xE0, 0xE0)
-GREEN = RGBColor(0x00, 0xC8, 0x53)
+DARK = RGBColor(0xFF, 0xFF, 0xFF)      # White background
+ACCENT = RGBColor(0x00, 0x00, 0x00)    # Black accents
+WHITE = RGBColor(0x00, 0x00, 0x00)     # Black text
+LIGHT = RGBColor(0x55, 0x55, 0x55)     # Dark gray subtitles
+GREEN = RGBColor(0x00, 0x00, 0x00)     # Black highlights
 
 def set_bg(slide, color):
     bg = slide.background
@@ -103,7 +103,7 @@ def table_slide(prs, title, headers, rows):
         for p in cell.text_frame.paragraphs:
             p.font.size = Pt(13)
             p.font.bold = True
-            p.font.color.rgb = WHITE
+            p.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)  # White text on header
         cell.fill.solid()
         cell.fill.fore_color.rgb = ACCENT
     for ri, row in enumerate(rows):
@@ -114,7 +114,7 @@ def table_slide(prs, title, headers, rows):
                 p.font.size = Pt(12)
                 p.font.color.rgb = WHITE
             cell.fill.solid()
-            cell.fill.fore_color.rgb = RGBColor(0x2A, 0x2A, 0x40) if ri % 2 == 0 else RGBColor(0x22, 0x22, 0x38)
+            cell.fill.fore_color.rgb = RGBColor(0xF0, 0xF0, 0xF0) if ri % 2 == 0 else RGBColor(0xFF, 0xFF, 0xFF)
     return slide
 
 # ── BUILD PRESENTATION ──────────────────────────────────────────────
@@ -130,12 +130,12 @@ add_text(s, 0.5, 5.5, 9, 0.5, "Bachelor of Information Technology  •  BIT 3105
 
 # 2. Problem Statement
 content_slide(prs, "Problem Statement", [
-    "Kyamatu Primary School relies on paper-based records for all operations",
-    "30% of staff time spent on manual transcription of attendance and grades",
-    "Physical records vulnerable to loss, damage, and unauthorized alteration",
-    "15% data inconsistency rate across term transitions (MoE, 2023)",
-    "Parents have no remote access to student academic or financial data",
-    "No automated CBC competency grading — everything computed by hand",
+    "Inefficient manual tracking of student admissions and staff assignments",
+    "Tedious and error-prone manual computation of CBC grades and report cards",
+    "Lack of centralized, real-time daily attendance tracking across classes",
+    "Difficulty in managing, tracking, and reconciling fee invoices and payments",
+    "Poor communication channels for school announcements and updates",
+    "Complex and disjointed manual scheduling for weekly school timetables",
 ])
 
 # 3. Objectives
@@ -143,7 +143,10 @@ two_col_slide(prs, "Project Objectives",
     ["Centralized cloud platform for all school data",
      "Automated CBC grading and report card generation",
      "Digital attendance tracking with statistics",
-     "Fee management with payment tracking"],
+     "Fee management with payment tracking",
+     "Timetable scheduling and management",
+     "Communication tools (announcements, DMs)",
+     "Role-based access control (Admin, Teacher, etc.)"],
     ["Investigate data loss in current manual systems",
      "Evaluate digital literacy of stakeholders",
      "Design scalable CBC-aligned data model",

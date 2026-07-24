@@ -174,17 +174,17 @@ function AdminDashboard({ stats, loading }) {
       // Student growth from API (format: [{year, count}])
       const rawGrowth = Array.isArray(studentGrowthRes.data.data) ? studentGrowthRes.data.data : [];
       const monthlyAdmissions = rawGrowth.map(item => ({
-        month: item.year,
+        month: item.year?.toString() || '',
         students: item.count,
-        target: Math.round(item.count * 1.1), // target ~10% above
+        target: item.count === 0 ? 10 : Math.round(item.count * 1.1), // target ~10% above
       }));
 
       // Fee collection from API (format: [{month, amount}])
       const rawFees = Array.isArray(feeTrendsRes.data.data?.collectionTrend) ? feeTrendsRes.data.data.collectionTrend : (Array.isArray(feeTrendsRes.data.data) ? feeTrendsRes.data.data : []);
-      const feeCollection = rawFees.filter(f => f.amount > 0).map(item => ({
+      const feeCollection = rawFees.map(item => ({
         month: item.month,
         collected: item.amount,
-        expected: Math.round(item.amount * 1.2), // expected ~20% target
+        expected: item.amount === 0 ? 5000 : Math.round(item.amount * 1.2), // Provide baseline expected if 0
       }));
 
       // Attendance distribution from API (format: [{name, value}])

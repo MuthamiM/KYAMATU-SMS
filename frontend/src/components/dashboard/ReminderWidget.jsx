@@ -101,18 +101,39 @@ const ReminderWidget = () => {
                                     <p className={`text-xs font-bold leading-tight ${reminder.isCompleted ? 'line-through text-gray-400' : 'text-gray-800'}`}>
                                         {reminder.title}
                                     </p>
-                                    <div className="flex items-center gap-3 mt-1">
-                                        <div className="flex items-center gap-1 text-[9px] font-bold text-gray-400 uppercase">
-                                            <Calendar className="w-3 h-3" />
-                                            {format(new Date(reminder.remindAt), 'MMM d, h:mm a')}
-                                        </div>
-                                        {reminder.description?.includes('KyamaBot') && (
-                                            <div className="flex items-center gap-1 text-[9px] font-bold text-[#476C63] uppercase">
-                                                <Sparkles className="w-3 h-3" />
-                                                AI Plan
+                                        <div className="flex items-center gap-3 mt-1">
+                                            <div className="flex items-center gap-1 text-[9px] font-bold text-gray-400 uppercase">
+                                                <Calendar className="w-3 h-3" />
+                                                {format(new Date(reminder.remindAt), 'MMM d, h:mm a')}
                                             </div>
-                                        )}
-                                    </div>
+                                            
+                                            {/* Sync Indicators */}
+                                            <div className="flex items-center gap-1.5 ml-1">
+                                                {reminder.googleEventId && (
+                                                    <div className="flex items-center gap-1 text-[8px] font-bold text-blue-500 uppercase bg-blue-50 px-1.5 py-0.5 rounded-md" title="Synced to Google Calendar">
+                                                        <svg className="w-2.5 h-2.5" viewBox="0 0 24 24">
+                                                            <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                                        </svg>
+                                                        Google
+                                                    </div>
+                                                )}
+                                                {reminder.microsoftTaskId && (
+                                                    <div className="flex items-center gap-1 text-[8px] font-bold text-teal-600 uppercase bg-teal-50 px-1.5 py-0.5 rounded-md" title="Synced to Microsoft To-Do">
+                                                        <svg className="w-2.5 h-2.5" viewBox="0 0 23 23">
+                                                            <path fill="currentColor" d="M0 0h11v11H0zM12 0h11v11H12zM0 12h11v11H0zM12 12h11v11H12z"/>
+                                                        </svg>
+                                                        To-Do
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {reminder.description?.includes('KyamaBot') && (
+                                                <div className="flex items-center gap-1 text-[9px] font-bold text-emerald-600 uppercase">
+                                                    <Sparkles className="w-3 h-3" />
+                                                    AI Plan
+                                                </div>
+                                            )}
+                                        </div>
                                 </div>
                             </div>
                             <button 
