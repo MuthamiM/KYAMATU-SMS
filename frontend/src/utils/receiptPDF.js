@@ -2,7 +2,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
 /**
- * Receipt-style PDF generator for Kyamatu School documents
+ * Receipt-style PDF generator for Matundu School documents
  * Clean, minimal layout inspired by Receiptify aesthetic
  */
 
@@ -35,7 +35,7 @@ const createReceiptPDF = () => {
 const addHeader = (doc, y, title) => {
     doc.setFontSize(9);
     doc.setFont(FONT, 'bold');
-    doc.text('KYAMATU PRIMARY SCHOOL', 40, y, { align: 'center' });
+    doc.text('MATUNDU PRIMARY SCHOOL', 40, y, { align: 'center' });
     y += 4;
     doc.setFontSize(6);
     doc.setFont(FONT, 'normal');
@@ -97,7 +97,7 @@ const addFooter = (doc, y, docId) => {
         doc.text(`Doc ID: ${docId}`, 40, y, { align: 'center' });
         y += 3;
     }
-    doc.text('Kyamatu School Management System', 40, y, { align: 'center' });
+    doc.text('Matundu School Management System', 40, y, { align: 'center' });
     y += 4;
     doc.text('*** THANK YOU ***', 40, y, { align: 'center' });
     return y + 3;

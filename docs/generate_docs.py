@@ -1,6 +1,6 @@
 """
 Generates all project submission documents as Word (.docx) files for
-Kyamatu Primary School Management System - BIT 3105 Project
+Matundu Primary School Management System - BIT 3105 Project
 Author: Mwange Musa Muthami - 23/05037
 """
 import os
@@ -16,7 +16,7 @@ STUDENT = "Mwange Musa Muthami"
 REG = "23/05037"
 SUPERVISOR = "Dr. Simon N. Mwendia / Dr. Kevin Mugoye Sindu"
 COURSE = "Bachelor of Information Technology (BIT 3105)"
-SCHOOL = "Kyamatu Primary School"
+SCHOOL = "Matundu Primary School"
 TITLE = f"School Management System for {SCHOOL}"
 DATE = "April 2026"
 

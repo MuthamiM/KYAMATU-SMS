@@ -530,7 +530,7 @@ function Reports() {
       const lines = [
         'This certifies that the above-named',
         'student has been a bonafide student',
-        `of Kyamatu Primary School (${admissionYear}-`,
+        `of Matundu Primary School (${admissionYear}-`,
         `${currentYear}) and has completed the`,
         'prescribed course of study.',
       ];
@@ -781,7 +781,7 @@ function Reports() {
                       value={searchAdmNo}
                       onChange={(e) => setSearchAdmNo(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && searchStudent()}
-                      placeholder="e.g., KPS/2026/0001"
+                      placeholder="e.g., MPS/2026/0001"
                       className="input flex-1"
                     />
                     <button
@@ -970,7 +970,7 @@ function Reports() {
             <div className="card p-8 text-center">
               <Search className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mt-4">Search for a Student</h3>
-              <p className="text-gray-500 dark:text-gray-400 mt-2">Enter an admission number (e.g., KPS/2026/0001) or select from the list</p>
+              <p className="text-gray-500 dark:text-gray-400 mt-2">Enter an admission number (e.g., MPS/2026/0001) or select from the list</p>
             </div>
           )}
         </div>

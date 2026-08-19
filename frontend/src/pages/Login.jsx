@@ -42,7 +42,7 @@ function Login() {
             <div className="w-16 h-16 bg-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <GraduationCap className="w-10 h-10 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Kyamatu Primary School</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Matundu Primary School</h1>
             <p className="text-gray-500 mt-1">School Management System</p>
           </div>
 

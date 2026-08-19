@@ -4,9 +4,9 @@ const options = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'KYAMATU-SMS API',
+            title: 'MATUNDU-SMS API',
             version: '1.0.0',
-            description: 'API documentation for the Kyamatu School Management System',
+            description: 'API documentation for the Matundu School Management System',
             contact: {
                 name: 'API Support',
                 email: 'support@kyamatu.ac.ke',

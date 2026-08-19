@@ -45,7 +45,7 @@ export const processChatMessage = async (userId, studentId, message) => {
     const history = await getChatHistory(studentId);
 
     const systemPrompt = `
-      You are KyamaBot, a helpful AI assistant for Kyamatu Primary School students.
+      You are KyamaBot, a helpful AI assistant for Matundu Primary School students.
       The current date and time is ${new Date().toLocaleString()}.
       
       STUDENT CONTEXT:
@@ -100,7 +100,7 @@ export const processChatMessage = async (userId, studentId, message) => {
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': 'https://kyamatu.ac.ke',
-        'X-Title': 'Kyamatu SMS'
+        'X-Title': 'Matundu SMS'
       }
     });
 

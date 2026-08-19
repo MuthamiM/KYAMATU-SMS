@@ -449,11 +449,11 @@ function Settings() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="label">School Name</label>
-                  <input type="text" value="Kyamatu Primary School" disabled className="input bg-gray-50 dark:bg-slate-700" />
+                  <input type="text" value="Matundu Primary School" disabled className="input bg-gray-50 dark:bg-slate-700" />
                 </div>
                 <div>
                   <label className="label">School Code</label>
-                  <input type="text" value="KPS-001" disabled className="input bg-gray-50 dark:bg-slate-700" />
+                  <input type="text" value="MPS-001" disabled className="input bg-gray-50 dark:bg-slate-700" />
                 </div>
                 <div>
                   <label className="label">County</label>

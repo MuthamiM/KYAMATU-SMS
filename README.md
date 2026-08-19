@@ -1,4 +1,4 @@
-# Kyamatu Primary School Management System
+# Matundu Primary School Management System
 
 A comprehensive, production-grade School Management System aligned with Kenya's Competency-Based Curriculum (CBC).
 
