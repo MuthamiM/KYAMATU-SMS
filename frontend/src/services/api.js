@@ -2,15 +2,15 @@ import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 
 // Production backend URL
-const PRODUCTION_API_URL = 'https://kyamatu-sms-backend.onrender.com/api';
+const PRODUCTION_API_URL = 'https://api.mftechnologies.org/api';
 
 // Use VITE_API_URL from environment, or fallback logic
 const getBaseUrl = () => {
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return 'http://localhost:3000/api';
+    return 'http://localhost:5001/api';
   }
-  // In production (Cloudflare Pages), use the Render backend URL
+  // In production (Cloudflare Pages), use the domain backend URL
   return PRODUCTION_API_URL;
 };
 

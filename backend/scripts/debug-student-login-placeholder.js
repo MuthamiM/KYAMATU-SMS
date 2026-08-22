@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://kyamatu-sms-backend.onrender.com/api';
+const API_URL = 'https://matundu-sms-backend.onrender.com/api';
 
 async function testStudentLogin() {
     try {
@@ -9,7 +9,7 @@ async function testStudentLogin() {
         // OR better: use the admin to find a student, then reset their password or just assume a default.
         // Wait, I can't reset passwords easily. 
         // I'll check if there's a seed student. 
-        // Usually seed data has 'student@kyamatu.ac.ke' or similar?
+        // Usually seed data has 'student@matundu.ac.ke' or similar?
         // Let's rely on finding a student via Admin and checking their data structure. 
         // We can't actually LOGIN as them without the password.
 

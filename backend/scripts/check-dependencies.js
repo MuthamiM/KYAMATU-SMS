@@ -1,8 +1,8 @@
 // check_dependencies.js
 async function checkDependencies() {
     try {
-        const loginRes = await fetch('https://kyamatu-sms-backend.onrender.com/api/auth/login', {
-            method: 'POST', body: JSON.stringify({ email: 'admin@kyamatu.ac.ke', password: 'Admin@123' }), headers: { 'Content-Type': 'application/json' }
+        const loginRes = await fetch('https://matundu-sms-backend.onrender.com/api/auth/login', {
+            method: 'POST', body: JSON.stringify({ email: 'admin@matundu.ac.ke', password: 'Admin@123' }), headers: { 'Content-Type': 'application/json' }
         });
         const token = (await loginRes.json()).data.accessToken;
 
@@ -15,7 +15,7 @@ async function checkDependencies() {
 
         for (const ep of endpoints) {
             console.log(`Checking ${ep}...`);
-            const res = await fetch(`https://kyamatu-sms-backend.onrender.com/api/${ep}`, {
+            const res = await fetch(`https://matundu-sms-backend.onrender.com/api/${ep}`, {
                 headers: { Authorization: 'Bearer ' + token }
             });
 

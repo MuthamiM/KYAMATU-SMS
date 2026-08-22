@@ -112,12 +112,12 @@ def gen_proposal():
     # Chapter 1
     h1(d, "CHAPTER ONE: INTRODUCTION")
     h2(d, "1.1 Background")
-    para(d, "Kyamatu Primary School, situated in Voo, Kitui County, provides foundational education under Kenya's Competency-Based Curriculum (CBC) framework. The institution's daily operations—ranging from student enrollment and curriculum tracking to financial management—are highly data-intensive. Currently, the administration relies exclusively on conventional paper-based registries. Student admission records, attendance sheets, and academic grading matrices are curated in physical files, while the bursar's office manages school levies via manual ledgers and receipt books. This traditional paradigm significantly impacts the speed and transparency of administrative workflows, limiting the school's ability to provide timely academic and financial feedback to parents.")
+    para(d, "Matundu Primary School, situated in Voo, Kitui County, provides foundational education under Kenya's Competency-Based Curriculum (CBC) framework. The institution's daily operations—ranging from student enrollment and curriculum tracking to financial management—are highly data-intensive. Currently, the administration relies exclusively on conventional paper-based registries. Student admission records, attendance sheets, and academic grading matrices are curated in physical files, while the bursar's office manages school levies via manual ledgers and receipt books. This traditional paradigm significantly impacts the speed and transparency of administrative workflows, limiting the school's ability to provide timely academic and financial feedback to parents.")
     h2(d, "1.2 Problem Statement")
-    para(d, "The continued use of manual, paper-based administrative systems at Kyamatu Primary School creates severe operational bottlenecks and data vulnerabilities. Physical records are highly susceptible to loss, damage, and illicit alteration. Administrators and teaching staff spend an estimated 30% of their working hours manually transcribing attendance sheets, computing CBC competency grades (Exceeding, Meeting, Approaching, or Below Expectations), and reconciling fee balances.")
+    para(d, "The continued use of manual, paper-based administrative systems at Matundu Primary School creates severe operational bottlenecks and data vulnerabilities. Physical records are highly susceptible to loss, damage, and illicit alteration. Administrators and teaching staff spend an estimated 30% of their working hours manually transcribing attendance sheets, computing CBC competency grades (Exceeding, Meeting, Approaching, or Below Expectations), and reconciling fee balances.")
     para(d, "Furthermore, this manual ecosystem isolates parents from real-time student profiling. Parents currently have no mechanism to remotely verify their child's daily attendance, academic progress, or fee arrears, requiring physical school visits. According to recent educational ICT frameworks, reliance on fragmented physical records results in a 15% rate of data inconsistency across term transitions (Ministry of Education, 2023).")
     h2(d, "1.3 Proposed System")
-    para(d, "The proposed solution is a robust, modular, web-based School Management System tailored explicitly for Kyamatu Primary School. This cloud-hosted platform digitizes and integrates core school workflows:")
+    para(d, "The proposed solution is a robust, modular, web-based School Management System tailored explicitly for Matundu Primary School. This cloud-hosted platform digitizes and integrates core school workflows:")
     for f in ["Role-Based Portals: Secure dashboards for Administrators, Teachers, Bursars, Students, and Parents.",
               "CBC Assessment Engine: Automated grading algorithm evaluating formative scores against CBC competency parameters.",
               "Attendance Tracking: Digital attendance recording with real-time statistics and reporting.",
@@ -131,7 +131,7 @@ def gen_proposal():
               "To integrate a digital payment tracking system to process and reconcile school fee settlements."]:
         bullet(d, o)
     h3(d, "Research Objectives")
-    for o in ["To investigate data loss points and administrative delays in current manual systems at Kyamatu Primary School.",
+    for o in ["To investigate data loss points and administrative delays in current manual systems at Matundu Primary School.",
               "To evaluate digital literacy and hardware accessibility of teaching staff and parental demographic.",
               "To design a scalable Entity-Relationship framework that accurately models CBC academic tracking.",
               "To implement and test a full-stack web application utilizing React.js, Express, and PostgreSQL."]:
@@ -154,7 +154,7 @@ def gen_proposal():
     h1(d, "CHAPTER THREE: METHODOLOGY")
     h2(d, "3.1 Research Methodology")
     para(d, "Data Collection: Qualitative semi-structured interviews and ethnographic observation with the Headteacher, Bursar, and homeroom teachers.")
-    para(d, "Target Population: Administrative and teaching corpus of Kyamatu Primary School, alongside a representative subset of the guardian body.")
+    para(d, "Target Population: Administrative and teaching corpus of Matundu Primary School, alongside a representative subset of the guardian body.")
     para(d, "Sampling: Non-probability purposive sampling to select key informants who process academic and financial data.")
     h2(d, "3.2 Development Methodology")
     para(d, "The software engineering phase is governed by the Agile Development Methodology (Scrum framework). Development is divided into functional Sprints:")
@@ -199,7 +199,7 @@ def gen_srs():
     cover(d, "Software Requirements Specification (SRS)")
     h1(d, "1. INTRODUCTION")
     h2(d, "1.1 Purpose")
-    para(d, "This SRS describes the functional and non-functional requirements for the School Management System for Kyamatu Primary School. It serves as the contractual basis between the developer and the school.")
+    para(d, "This SRS describes the functional and non-functional requirements for the School Management System for Matundu Primary School. It serves as the contractual basis between the developer and the school.")
     h2(d, "1.2 Scope")
     para(d, "The system is a web-based application that manages student records, attendance, assessments, reports, fees, timetabling, and communication. It supports Kenya's CBC framework.")
     h2(d, "1.3 Definitions and Acronyms")
@@ -345,7 +345,7 @@ def gen_test_plan():
     d = new_doc()
     cover(d, "Test Plan")
     h1(d, "1. INTRODUCTION")
-    para(d, "This document describes the testing strategy, test cases, and results for the Kyamatu Primary School Management System.")
+    para(d, "This document describes the testing strategy, test cases, and results for the Matundu Primary School Management System.")
     h2(d, "1.1 Test Objectives")
     for o in ["Verify all functional requirements are correctly implemented","Validate system performance under expected load",
               "Ensure security mechanisms protect against common vulnerabilities","Confirm cross-browser and responsive design compatibility"]:
@@ -400,7 +400,7 @@ def gen_implementation():
     d = new_doc()
     cover(d, "Implementation Plan & Report")
     h1(d, "1. IMPLEMENTATION OVERVIEW")
-    para(d, "This document describes the implementation approach, technologies used, modules developed, challenges encountered, and deployment details for the Kyamatu Primary School Management System.")
+    para(d, "This document describes the implementation approach, technologies used, modules developed, challenges encountered, and deployment details for the Matundu Primary School Management System.")
     h2(d, "1.1 Technology Stack")
     add_table(d, ["Layer","Technology","Version"],
               [["Frontend","React","18.3"],["Build Tool","Vite","7.3"],["Styling","Tailwind CSS","3.4"],
@@ -438,7 +438,7 @@ def gen_implementation():
     para(d, "Database: PostgreSQL hosted on Supabase with managed backups.")
     para(d, "Docker Compose available for local development environment.")
     h1(d, "5. SOURCE CODE REPOSITORY")
-    para(d, "GitHub: https://github.com/MuthamiM/KYAMATU-SMS")
+    para(d, "GitHub: https://github.com/MuthamiM/MATUNDU-SMS")
     save(d, "5_Implementation_Plan.docx")
 
 # =====================================================================
@@ -448,7 +448,7 @@ def gen_user_manual():
     d = new_doc()
     cover(d, "User Manual")
     h1(d, "1. INTRODUCTION")
-    para(d, "This manual provides step-by-step instructions for using the Kyamatu Primary School Management System. The system is accessible via any modern web browser at the school's hosted URL.")
+    para(d, "This manual provides step-by-step instructions for using the Matundu Primary School Management System. The system is accessible via any modern web browser at the school's hosted URL.")
     h2(d, "1.1 System Requirements")
     for r in ["Modern web browser (Chrome 90+, Firefox 88+, Edge 90+, Safari 14+)","Internet connection (minimum 1 Mbps)","Screen resolution: 320px minimum width"]:
         bullet(d, r)
@@ -466,8 +466,8 @@ def gen_user_manual():
     para(d, "1. Open the system URL in your browser.\n2. Enter your email address and password.\n3. Click the 'Sign In' button.\n4. You will be redirected to your role-specific dashboard.")
     h2(d, "2.2 Test Credentials")
     add_table(d, ["Role","Email","Password"],
-              [["Admin","admin@kyamatu.ac.ke","Admin@123"],["Teacher","teacher@kyamatu.ac.ke","Admin@123"],
-               ["Bursar","bursar@kyamatu.ac.ke","Admin@123"],["Student","student1@kyamatu.ac.ke","Admin@123"]])
+              [["Admin","admin@matundu.ac.ke","Admin@123"],["Teacher","teacher@matundu.ac.ke","Admin@123"],
+               ["Bursar","bursar@matundu.ac.ke","Admin@123"],["Student","student1@matundu.ac.ke","Admin@123"]])
     d.add_page_break()
     h1(d, "3. ADMIN GUIDE")
     h2(d, "3.1 Dashboard")
@@ -525,7 +525,7 @@ def gen_final_doc():
     d = new_doc()
     cover(d, "Final Project Report")
     h1(d, "ABSTRACT")
-    para(d, "This report presents the design, development, and deployment of a web-based School Management System for Kyamatu Primary School, Kitui County. The system automates student management, attendance tracking, CBC-aligned assessment and grading, report card generation, fee management, timetabling, and communication. Built with React 18, Node.js/Express, and PostgreSQL, the system was deployed on Cloudflare Pages and Render. All 11 modules were successfully implemented, tested, and deployed, achieving 100% functional requirement coverage.")
+    para(d, "This report presents the design, development, and deployment of a web-based School Management System for Matundu Primary School, Kitui County. The system automates student management, attendance tracking, CBC-aligned assessment and grading, report card generation, fee management, timetabling, and communication. Built with React 18, Node.js/Express, and PostgreSQL, the system was deployed on Cloudflare Pages and Render. All 11 modules were successfully implemented, tested, and deployed, achieving 100% functional requirement coverage.")
     d.add_page_break()
     h1(d, "CHAPTER 1: INTRODUCTION")
     para(d, "(See Proposal Document for complete Background, Problem Statement, Objectives, and Significance sections.)")
@@ -562,7 +562,7 @@ def gen_final_doc():
     d.add_page_break()
     h1(d, "CHAPTER 7: CONCLUSION AND RECOMMENDATIONS")
     h2(d, "7.1 Conclusion")
-    para(d, "The School Management System for Kyamatu Primary School has been successfully designed, developed, tested, and deployed. The system addresses all identified problems: manual record-keeping, data loss risk, slow report generation, poor parent communication, and lack of real-time analytics. All 11 core modules are fully functional and accessible to stakeholders.")
+    para(d, "The School Management System for Matundu Primary School has been successfully designed, developed, tested, and deployed. The system addresses all identified problems: manual record-keeping, data loss risk, slow report generation, poor parent communication, and lack of real-time analytics. All 11 core modules are fully functional and accessible to stakeholders.")
     h2(d, "7.2 Recommendations for Future Work")
     for r in ["M-Pesa STK Push Integration: Direct mobile money payment initiation from within the system.",
               "SMS/Email Notifications: Automated alerts for attendance, fees, and announcements.",

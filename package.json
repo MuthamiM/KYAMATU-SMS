@@ -1,5 +1,5 @@
 {
-  "name": "kyamatu-sms",
+  "name": "matundu-sms",
   "version": "1.0.0",
   "private": true,
   "workspaces": [
@@ -11,6 +11,7 @@
     "dev:backend": "npm run dev --workspace=backend",
     "dev:frontend": "npm run dev --workspace=frontend",
     "build": "npm run build --workspace=frontend",
+    "deploy:cloudflare": "npm run build && NODE_OPTIONS=\"--dns-result-order=ipv4first\" npx -y wrangler pages deploy frontend/dist --project-name=kyamatu-frontend --branch=master",
     "test": "npm run test --workspaces"
   },
   "devDependencies": {

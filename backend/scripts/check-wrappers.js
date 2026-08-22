@@ -1,15 +1,15 @@
 // check_wrappers.js
 async function checkWrappers() {
     try {
-        const loginRes = await fetch('https://kyamatu-sms-backend.onrender.com/api/auth/login', {
-            method: 'POST', body: JSON.stringify({ email: 'admin@kyamatu.ac.ke', password: 'Admin@123' }), headers: { 'Content-Type': 'application/json' }
+        const loginRes = await fetch('https://matundu-sms-backend.onrender.com/api/auth/login', {
+            method: 'POST', body: JSON.stringify({ email: 'admin@matundu.ac.ke', password: 'Admin@123' }), headers: { 'Content-Type': 'application/json' }
         });
         const token = (await loginRes.json()).data.accessToken;
 
         const endpoints = ['academic/classes'];
 
         for (const ep of endpoints) {
-            const res = await fetch(`https://kyamatu-sms-backend.onrender.com/api/${ep}`, {
+            const res = await fetch(`https://matundu-sms-backend.onrender.com/api/${ep}`, {
                 headers: { Authorization: 'Bearer ' + token }
             });
             const json = await res.json();

@@ -41,7 +41,7 @@ export const generateQRSession = async (classId, termId, teacherId) => {
         classId,
         termId,
         teacherId,
-        className: `${classRecord.grade.name} ${classRecord.stream.name}`,
+        className: classRecord.name,
         date: new Date().toISOString().split('T')[0],
         createdAt: Date.now(),
         expiresAt: Date.now() + SESSION_TTL_MS,

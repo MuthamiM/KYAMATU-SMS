@@ -93,16 +93,15 @@ export const getStreams = async () => {
 export const createClass = async (data) => {
   const existingClass = await prisma.class.findUnique({
     where: {
-      gradeId_streamId_academicYearId: {
+      gradeId_academicYearId: {
         gradeId: data.gradeId,
-        streamId: data.streamId,
         academicYearId: data.academicYearId,
       },
     },
   });
 
   if (existingClass) {
-    throw new Error('Class already exists for this grade, stream, and year');
+    throw new Error('Class already exists for this grade and year');
   }
 
   const classRecord = await prisma.class.create({

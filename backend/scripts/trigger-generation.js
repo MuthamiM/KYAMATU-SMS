@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'https://kyamatu-sms-backend.onrender.com/api';
-const EMAIL = 'admin@kyamatu.ac.ke';
+const API_URL = 'https://matundu-sms-backend.onrender.com/api';
+const EMAIL = 'admin@matundu.ac.ke';
 const PASSWORD = 'Admin@123';
 
 async function main() {

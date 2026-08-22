@@ -1,12 +1,12 @@
 import axios from 'axios';
 import prisma from '../src/config/database.js';
 
-const API_URL = 'https://kyamatu-sms-backend.onrender.com/api';
+const API_URL = 'https://matundu-sms-backend.onrender.com/api';
 
 const login = async () => {
     try {
         const res = await axios.post(`${API_URL}/auth/login`, {
-            email: 'admin@kyamatu.ac.ke',
+            email: 'admin@matundu.ac.ke',
             password: 'Admin@123',
         });
         return res.data.data.accessToken;

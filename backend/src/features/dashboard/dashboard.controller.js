@@ -45,3 +45,12 @@ export const getStudentDashboard = async (req, res, next) => {
   }
 };
 
+export const getCurrentTerm = async (req, res, next) => {
+  try {
+    const data = await dashboardService.getCurrentTermInfo();
+    res.json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+};
+

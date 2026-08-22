@@ -2,11 +2,11 @@
 async function testLogin() {
     try {
         console.log('Testing login...');
-        const response = await fetch('https://kyamatu-sms-backend.onrender.com/api/auth/login', {
+        const response = await fetch('https://matundu-sms-backend.onrender.com/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                email: 'admin@kyamatu.ac.ke',
+                email: 'admin@matundu.ac.ke',
                 password: 'Admin@123'
             })
         });

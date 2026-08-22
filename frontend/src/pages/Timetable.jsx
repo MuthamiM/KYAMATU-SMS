@@ -85,9 +85,15 @@ function Timetable() {
   const fetchClasses = async () => {
     try {
       const res = await api.get('/academic/classes');
-      setClasses(res.data.data);
-      if (res.data.data.length > 0 && ['ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
-        setSelectedClassId(res.data.data[0].id);
+      const loadedClasses = res.data.data || [];
+      setClasses(loadedClasses);
+      if (loadedClasses.length > 0) {
+        const initialClassId = selectedClassId || loadedClasses[0].id;
+        setSelectedClassId(initialClassId);
+        fetchSubjects(initialClassId);
+        if (viewMode === 'class') {
+          fetchTimetable(initialClassId);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -98,7 +104,12 @@ function Timetable() {
   const fetchTeachers = async () => {
     try {
       const res = await api.get('/staff?role=TEACHER&limit=100');
-      setTeachers(res.data.data || []);
+      const loadedTeachers = res.data.data || [];
+      setTeachers(loadedTeachers);
+      if (loadedTeachers.length > 0 && viewMode === 'teacher' && !selectedTeacherId) {
+        setSelectedTeacherId(loadedTeachers[0].id);
+        fetchTimetable(undefined, loadedTeachers[0].id);
+      }
     } catch (err) {
       console.error(err);
       toast.error('Failed to fetch teachers');
@@ -112,27 +123,27 @@ function Timetable() {
       setSubjects(res.data.data || []);
     } catch (err) {
       console.error(err);
-      // toast.error('Failed to fetch subjects'); // Optional: don't spam if it fails often
     }
   };
 
-  const fetchTimetable = async () => {
-    if (!selectedClassId && viewMode === 'class') {
-      setTimetable([]);
+  const fetchTimetable = async (classIdOverride, teacherIdOverride) => {
+    const targetClassId = classIdOverride || selectedClassId;
+    const targetTeacherId = teacherIdOverride || selectedTeacherId;
+
+    if (!targetClassId && viewMode === 'class') {
       return;
     }
-    if (!selectedTeacherId && viewMode === 'teacher') {
-      setTimetable([]);
+    if (!targetTeacherId && viewMode === 'teacher') {
       return;
     }
 
     setLoading(true);
     try {
       let res;
-      if (viewMode === 'class') {
-        res = await api.get(`/timetable?classId=${selectedClassId}`);
-      } else if (viewMode === 'teacher') {
-        res = await api.get(`/timetable/teacher/${selectedTeacherId}`);
+      if (viewMode === 'class' && targetClassId) {
+        res = await api.get(`/timetable?classId=${targetClassId}`);
+      } else if (viewMode === 'teacher' && targetTeacherId) {
+        res = await api.get(`/timetable/teacher/${targetTeacherId}`);
       }
       setTimetable(res?.data?.data || []);
     } catch (err) {
@@ -187,7 +198,7 @@ function Timetable() {
 
             if (slot) {
               const subject = slot.subject?.code || slot.subject?.name?.substring(0, 3) || '?';
-              const className = `${slot.class?.grade?.name || ''} ${slot.class?.stream?.name || ''}`;
+              const className = slot.class?.name || slot.class?.grade?.name || '';
               row.push(`${subject}\n(${className})`);
             } else {
               row.push('');
@@ -219,10 +230,46 @@ function Timetable() {
     }
   };
 
+  const handleGenerateTimetable = async () => {
+    if (!window.confirm('Are you sure you want to auto-generate the complete school timetable? This will balance teacher workloads and subject periods across all grades.')) {
+      return;
+    }
+    setLoading(true);
+    const toastId = toast.loading('Generating balanced school timetable...');
+    try {
+      const res = await api.post('/timetable/generate');
+      toast.dismiss(toastId);
+      toast.success(res.data?.message || `Successfully generated ${res.data?.data?.generated || 'all'} timetable lessons!`);
+      fetchTimetable();
+      if (viewMode === 'master') fetchMasterTimetable();
+    } catch (err) {
+      toast.dismiss(toastId);
+      toast.error(err.response?.data?.message || 'Failed to auto-generate timetable');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenAddModal = () => {
+    if (!selectedClassId && classes.length > 0) {
+      setSelectedClassId(classes[0].id);
+    }
+    fetchSubjects(selectedClassId || classes[0]?.id);
+    setSelectedSlot({
+      day: DAYS[0],
+      startTime: TIMES[0].split(' - ')[0],
+      endTime: TIMES[0].split(' - ')[1],
+    });
+    setFormData({ subjectId: '', teacherId: '' });
+    setShowModal(true);
+  };
+
   const handleSlotClick = (day, timeRange) => {
     if (!['ADMIN', 'SUPER_ADMIN'].includes(user.role)) return;
     const [start, end] = timeRange.split(' - ');
     setSelectedSlot({ day, startTime: start, endTime: end });
+    fetchSubjects(selectedClassId);
 
     const existing = timetable.find(t => t.dayOfWeek === DAYS.indexOf(day) + 1 && t.startTime === start);
     if (existing) {
@@ -238,6 +285,10 @@ function Timetable() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (!selectedClassId) {
+      toast.error('Please select a class first');
+      return;
+    }
     try {
       await api.post('/timetable', {
         classId: selectedClassId,
@@ -247,11 +298,11 @@ function Timetable() {
         subjectId: formData.subjectId,
         teacherId: formData.teacherId || null
       });
-      toast.success('Slot saved');
+      toast.success('Timetable lesson saved successfully');
       setShowModal(false);
       fetchTimetable();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to save');
+      toast.error(err.response?.data?.message || 'Failed to save lesson');
     }
   };
 
@@ -280,7 +331,7 @@ function Timetable() {
         <div className="font-bold text-primary-700">{slot.subject?.name}</div>
         <div className="text-gray-500 truncate">
           {viewMode === 'teacher'
-            ? `${slot.class?.grade?.name || ''} ${slot.class?.stream?.name || ''}`
+            ? (slot.class?.name || slot.class?.grade?.name || '')
             : `${slot.teacher?.firstName || slot.teacher?.user?.firstName || 'No Teacher'} ${slot.teacher?.lastName || slot.teacher?.user?.lastName || ''}`
           }
         </div>
@@ -325,7 +376,7 @@ function Timetable() {
     return (
       <div className="text-xs p-1 bg-primary-50 rounded border border-primary-100">
         <div className="font-bold text-primary-700">{slot.subject?.code || slot.subject?.name}</div>
-        <div className="text-gray-600">{slot.class?.grade?.name} {slot.class?.stream?.name}</div>
+        <div className="text-gray-600">{slot.class?.name || slot.class?.grade?.name}</div>
       </div>
     );
   };
@@ -342,13 +393,34 @@ function Timetable() {
 
         <div className="flex flex-wrap gap-2 w-full xl:w-auto items-center">
           {['ADMIN', 'SUPER_ADMIN'].includes(user.role) && (
-            <button
-              onClick={handleDownloadMaster}
-              className="btn btn-secondary flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Master PDF
-            </button>
+            <>
+              <button
+                onClick={handleGenerateTimetable}
+                className="btn btn-primary flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-sm"
+                title="Automatically create complete balanced timetable for all classes"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Auto-Generate Timetable</span>
+              </button>
+
+              <button
+                onClick={handleOpenAddModal}
+                className="btn btn-secondary flex items-center gap-2"
+                title="Create a single lesson slot"
+              >
+                <Clock className="w-4 h-4 text-primary-600" />
+                <span>Add Lesson</span>
+              </button>
+
+              <button
+                onClick={handleDownloadMaster}
+                className="btn btn-secondary flex items-center gap-2"
+                title="Export Master Timetable PDF"
+              >
+                <Download className="w-4 h-4" />
+                Master PDF
+              </button>
+            </>
           )}
 
           {timetable.length > 0 && (
@@ -395,7 +467,7 @@ function Timetable() {
                   <option value="">Select Class</option>
                   {classes.map(c => (
                     <option key={c.id} value={c.id}>
-                      {c.grade.name} {c.stream.name}
+                      {c.name || c.grade?.name}
                     </option>
                   ))}
                 </select>
@@ -514,24 +586,77 @@ function Timetable() {
         </>
       )}
 
-      {/* Edit Slot Modal */}
+      {/* Create / Edit Slot Modal */}
       {showModal && selectedSlot && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-md w-full p-6 animate-scale-in">
-            <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-white">
-              {selectedSlot.day} @ {selectedSlot.startTime}
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg text-gray-900 dark:text-white">
+                {timetable.some(t => t.dayOfWeek === DAYS.indexOf(selectedSlot.day) + 1 && t.startTime === selectedSlot.startTime) ? 'Edit Lesson Slot' : 'Add New Lesson'}
+              </h3>
+              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
 
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label className="label">Subject</label>
+                <label className="label font-medium text-gray-700 dark:text-gray-300">Class / Grade</label>
+                <select
+                  className="input"
+                  required
+                  value={selectedClassId}
+                  onChange={(e) => {
+                    setSelectedClassId(e.target.value);
+                    fetchSubjects(e.target.value);
+                  }}
+                >
+                  <option value="">-- Choose Class --</option>
+                  {classes.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name || c.grade?.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label font-medium text-gray-700 dark:text-gray-300">Day of Week</label>
+                  <select
+                    className="input"
+                    value={selectedSlot.day}
+                    onChange={(e) => setSelectedSlot({ ...selectedSlot, day: e.target.value })}
+                  >
+                    {DAYS.map(day => (
+                      <option key={day} value={day}>{day}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="label font-medium text-gray-700 dark:text-gray-300">Period / Time</label>
+                  <select
+                    className="input"
+                    value={`${selectedSlot.startTime} - ${selectedSlot.endTime}`}
+                    onChange={(e) => {
+                      const [start, end] = e.target.value.split(' - ');
+                      setSelectedSlot({ ...selectedSlot, startTime: start, endTime: end });
+                    }}
+                  >
+                    {TIMES.filter(t => !isBreak(t)).map(time => (
+                      <option key={time} value={time}>{time}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="label font-medium text-gray-700 dark:text-gray-300">Subject</label>
                 <select
                   className="input"
                   required
                   value={formData.subjectId}
                   onChange={(e) => setFormData({ ...formData, subjectId: e.target.value })}
                 >
-                  <option value="">Select Subject</option>
+                  <option value="">-- Choose Subject --</option>
                   {subjects.map(s => (
                     <option key={s.id} value={s.id}>{s.name} ({s.code})</option>
                   ))}
@@ -539,13 +664,13 @@ function Timetable() {
               </div>
 
               <div>
-                <label className="label">Teacher</label>
+                <label className="label font-medium text-gray-700 dark:text-gray-300">Teacher (Optional)</label>
                 <select
                   className="input"
                   value={formData.teacherId}
                   onChange={(e) => setFormData({ ...formData, teacherId: e.target.value })}
                 >
-                  <option value="">Select Teacher (Optional)</option>
+                  <option value="">-- Assign Teacher (Optional) --</option>
                   {teachers.map(t => (
                     <option key={t.id} value={t.id}>
                       {t.firstName} {t.lastName}
@@ -554,14 +679,15 @@ function Timetable() {
                 </select>
               </div>
 
-              <div className="flex justify-between mt-6">
-                {/* Only show delete if slot exists */}
-                <button type="button" onClick={handleDelete} className="text-red-600 hover:text-red-800 text-sm">
-                  Delete
-                </button>
+              <div className="flex justify-between items-center pt-2">
+                {timetable.some(t => t.dayOfWeek === DAYS.indexOf(selectedSlot.day) + 1 && t.startTime === selectedSlot.startTime) ? (
+                  <button type="button" onClick={handleDelete} className="text-red-600 hover:text-red-800 text-sm font-medium">
+                    Remove Slot
+                  </button>
+                ) : <div />}
                 <div className="flex gap-2">
                   <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary">Cancel</button>
-                  <button type="submit" className="btn btn-primary">Save</button>
+                  <button type="submit" className="btn btn-primary">Save Lesson</button>
                 </div>
               </div>
             </form>

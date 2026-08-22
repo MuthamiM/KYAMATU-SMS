@@ -31,6 +31,16 @@ export const generateInvoice = async (req, res, next) => {
   }
 };
 
+export const generateGradeInvoices = async (req, res, next) => {
+  try {
+    const { gradeId, termId, dueDate, items } = req.body;
+    const result = await feesService.generateGradeInvoices(gradeId, termId, dueDate, items);
+    sendCreated(res, result, `Invoices generated for ${result.generatedCount} students in ${result.gradeName}`);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getStudentInvoices = async (req, res, next) => {
   try {
     // Privacy: If student, ensure they only access their own invoices

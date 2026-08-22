@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 
 async function main() {
     try {
-        const email = 'admin@kyamatu.ac.ke';
+        const email = 'admin@matundu.ac.ke';
         const newPassword = 'admin123';
 
         // Check if user exists first

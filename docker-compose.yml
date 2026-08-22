@@ -1,11 +1,11 @@
 services:
   db:
     image: postgres:15-alpine
-    container_name: kyamatu-db
+    container_name: matundu-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: kyamatu_sms
+      POSTGRES_DB: matundu_sms
     ports:
       - "5432:5432"
     volumes:
@@ -20,13 +20,13 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: kyamatu-backend
+    container_name: matundu-backend
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/kyamatu_sms?schema=public
-      JWT_SECRET: kyamatu-jwt-secret-change-in-production
-      JWT_REFRESH_SECRET: kyamatu-refresh-secret-change-in-production
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/matundu_sms?schema=public
+      JWT_SECRET: matundu-jwt-secret-change-in-production
+      JWT_REFRESH_SECRET: matundu-refresh-secret-change-in-production
       JWT_EXPIRES_IN: 15m
       JWT_REFRESH_EXPIRES_IN: 7d
       PORT: 3000
@@ -43,7 +43,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: kyamatu-frontend
+    container_name: matundu-frontend
     ports:
       - "5173:5173"
     environment:

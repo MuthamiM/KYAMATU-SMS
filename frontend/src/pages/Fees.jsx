@@ -5,6 +5,7 @@ import { Plus, Wallet, CreditCard, Receipt, Download } from 'lucide-react';
 
 function Fees() {
   const [students, setStudents] = useState([]);
+  const [grades, setGrades] = useState([]);
   const [terms, setTerms] = useState([]);
   const [summary, setSummary] = useState(null);
   const [payments, setPayments] = useState([]);
@@ -15,12 +16,19 @@ function Fees() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState('');
   
+  // Invoice Form State
+  const [invoiceMode, setInvoiceMode] = useState('GRADE'); // 'GRADE' or 'STUDENT'
+  const [selectedInvoiceGrade, setSelectedInvoiceGrade] = useState('');
   const [invoiceForm, setInvoiceForm] = useState({
     studentId: '',
+    gradeId: '',
     termId: '',
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   });
 
+  // Payment Form State
+  const [paymentGradeFilter, setPaymentGradeFilter] = useState('ALL');
+  const [paymentSearch, setPaymentSearch] = useState('');
   const [paymentForm, setPaymentForm] = useState({
     studentId: '',
     invoiceId: '',
@@ -59,16 +67,19 @@ function Fees() {
 
   const fetchDependencies = async () => {
     try {
-      const [studentsRes, termsRes] = await Promise.all([
-        api.get('/students?limit=100'), // Fetch all for dropdown
+      const [studentsRes, termsRes, gradesRes] = await Promise.all([
+        api.get('/students?limit=1000'), // Fetch all students for dropdown
         api.get('/academic/terms'),
+        api.get('/academic/grades'),
       ]);
       setStudents(studentsRes?.data?.data || []);
       setTerms(termsRes?.data?.data || []);
+      setGrades(gradesRes?.data?.data || []);
     } catch (error) {
       console.error('Failed to fetch dependencies');
       setStudents([]);
       setTerms([]);
+      setGrades([]);
     }
   };
 
@@ -86,11 +97,32 @@ function Fees() {
   const handleInvoiceSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/fees/invoices', invoiceForm);
-      toast.success('Invoice generated successfully');
+      if (invoiceMode === 'GRADE') {
+        if (!invoiceForm.gradeId) {
+          toast.error('Please select a Grade');
+          return;
+        }
+        const res = await api.post('/fees/invoices/grade', {
+          gradeId: invoiceForm.gradeId,
+          termId: invoiceForm.termId,
+          dueDate: invoiceForm.dueDate,
+        });
+        toast.success(res.data.message || 'Invoices generated for grade');
+      } else {
+        if (!invoiceForm.studentId) {
+          toast.error('Please select a student');
+          return;
+        }
+        await api.post('/fees/invoices', {
+          studentId: invoiceForm.studentId,
+          termId: invoiceForm.termId,
+          dueDate: invoiceForm.dueDate,
+        });
+        toast.success('Invoice generated successfully');
+      }
       setShowInvoiceModal(false);
       fetchData();
-      setInvoiceForm({ ...invoiceForm, studentId: '' });
+      setInvoiceForm({ ...invoiceForm, studentId: '', gradeId: '' });
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to generate invoice');
     }
@@ -379,43 +411,111 @@ function Fees() {
       {/* Generate Invoice Modal */}
       {showInvoiceModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-scale-in">
-            <h2 className="text-xl font-bold mb-4">Generate Invoice</h2>
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 animate-scale-in">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Generate Fee Invoice</h2>
+              <button onClick={() => setShowInvoiceModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+
+            {/* Mode Selector */}
+            <div className="flex bg-gray-100 p-1 rounded-lg mb-4">
+              <button
+                type="button"
+                className={`flex-1 py-1.5 text-sm font-semibold rounded-md transition-all ${
+                  invoiceMode === 'GRADE' ? 'bg-white shadow text-primary-700' : 'text-gray-600'
+                }`}
+                onClick={() => setInvoiceMode('GRADE')}
+              >
+                🏫 Bulk by Grade
+              </button>
+              <button
+                type="button"
+                className={`flex-1 py-1.5 text-sm font-semibold rounded-md transition-all ${
+                  invoiceMode === 'STUDENT' ? 'bg-white shadow text-primary-700' : 'text-gray-600'
+                }`}
+                onClick={() => setInvoiceMode('STUDENT')}
+              >
+                👤 Individual Student
+              </button>
+            </div>
+
             <form onSubmit={handleInvoiceSubmit} className="space-y-4">
-              <div>
-                <label className="label">Student</label>
-                <select
-                  required
-                  className="input"
-                  value={invoiceForm.studentId}
-                  onChange={(e) => setInvoiceForm({ ...invoiceForm, studentId: e.target.value })}
-                >
-                  <option value="">Select Student</option>
-                  {students.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.firstName} {s.lastName} ({s.admissionNumber})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {invoiceMode === 'GRADE' ? (
+                <div>
+                  <label className="label font-medium text-gray-700">Select Grade (Class Level)</label>
+                  <select
+                    required
+                    className="input"
+                    value={invoiceForm.gradeId}
+                    onChange={(e) => setInvoiceForm({ ...invoiceForm, gradeId: e.target.value })}
+                  >
+                    <option value="">-- Choose Grade --</option>
+                    {grades.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name || `Grade ${g.level}`}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Generates official term invoices for all enrolled learners in this grade.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="label font-medium text-gray-700">Filter by Grade</label>
+                    <select
+                      className="input"
+                      value={selectedInvoiceGrade}
+                      onChange={(e) => setSelectedInvoiceGrade(e.target.value)}
+                    >
+                      <option value="">All Grades</option>
+                      {grades.map((g) => (
+                        <option key={g.id} value={g.name}>
+                          {g.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="label font-medium text-gray-700">Select Student</label>
+                    <select
+                      required
+                      className="input"
+                      value={invoiceForm.studentId}
+                      onChange={(e) => setInvoiceForm({ ...invoiceForm, studentId: e.target.value })}
+                    >
+                      <option value="">-- Choose Student --</option>
+                      {students
+                        .filter((s) => !selectedInvoiceGrade || s.class?.grade?.name === selectedInvoiceGrade || s.class?.name === selectedInvoiceGrade)
+                        .map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.firstName} {s.lastName} ({s.admissionNumber}) - {s.class?.name || s.class?.grade?.name || 'No Class'}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                </>
+              )}
 
               <div>
-                <label className="label">Term</label>
+                <label className="label font-medium text-gray-700">Academic Term</label>
                 <select
                   required
                   className="input"
                   value={invoiceForm.termId}
                   onChange={(e) => setInvoiceForm({ ...invoiceForm, termId: e.target.value })}
                 >
-                  <option value="">Select Term</option>
+                  <option value="">-- Select Term --</option>
                   {terms.map((t) => (
-                    <option key={t.id} value={t.id}>{t.name} ({t.year})</option>
+                    <option key={t.id} value={t.id}>{t.name} ({t.year || t.academicYear?.year})</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="label">Due Date</label>
+                <label className="label font-medium text-gray-700">Due Date</label>
                 <input
                   type="date"
                   required
@@ -434,7 +534,7 @@ function Fees() {
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  Generate
+                  {invoiceMode === 'GRADE' ? 'Generate Grade Invoices' : 'Generate Invoice'}
                 </button>
               </div>
             </form>
@@ -445,31 +545,78 @@ function Fees() {
       {/* Record Payment Modal */}
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-scale-in">
-            <h2 className="text-xl font-bold mb-4">Record Payment</h2>
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 animate-scale-in">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Record Fee Payment</h2>
+              <button onClick={() => setShowPaymentModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+
             <form onSubmit={handlePaymentSubmit} className="space-y-4">
+              {/* Grade Filter for Payment */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-blue-50/60 p-3 rounded-lg border border-blue-100">
+                <div>
+                  <label className="text-xs font-semibold text-blue-900 uppercase">1. Filter by Grade</label>
+                  <select
+                    className="input text-sm mt-1 bg-white"
+                    value={paymentGradeFilter}
+                    onChange={(e) => setPaymentGradeFilter(e.target.value)}
+                  >
+                    <option value="ALL">All Grades (1-9)</option>
+                    {grades.map((g) => (
+                      <option key={g.id} value={g.name}>
+                        {g.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-blue-900 uppercase">Quick Search</label>
+                  <input
+                    type="text"
+                    placeholder="Search name / adm..."
+                    className="input text-sm mt-1 bg-white"
+                    value={paymentSearch}
+                    onChange={(e) => setPaymentSearch(e.target.value)}
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="label">Student</label>
+                <label className="label font-medium text-gray-700">2. Select Student</label>
                 <select
                   required
                   className="input"
                   value={paymentForm.studentId}
                   onChange={(e) => {
-                    setPaymentForm({ ...paymentForm, studentId: e.target.value });
+                    setPaymentForm({ ...paymentForm, studentId: e.target.value, invoiceId: '' });
                     fetchStudentInvoices(e.target.value);
                   }}
                 >
-                  <option value="">Select Student</option>
-                  {students.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.firstName} {s.lastName} ({s.admissionNumber})
-                    </option>
-                  ))}
+                  <option value="">-- Choose Student ({
+                    students.filter((s) => {
+                      const matchGrade = paymentGradeFilter === 'ALL' || s.class?.grade?.name === paymentGradeFilter || s.class?.name === paymentGradeFilter;
+                      const q = paymentSearch.toLowerCase().trim();
+                      const matchSearch = !q || `${s.firstName} ${s.lastName}`.toLowerCase().includes(q) || (s.admissionNumber || '').toLowerCase().includes(q);
+                      return matchGrade && matchSearch;
+                    }).length
+                  } learners) --</option>
+                  {students
+                    .filter((s) => {
+                      const matchGrade = paymentGradeFilter === 'ALL' || s.class?.grade?.name === paymentGradeFilter || s.class?.name === paymentGradeFilter;
+                      const q = paymentSearch.toLowerCase().trim();
+                      const matchSearch = !q || `${s.firstName} ${s.lastName}`.toLowerCase().includes(q) || (s.admissionNumber || '').toLowerCase().includes(q);
+                      return matchGrade && matchSearch;
+                    })
+                    .map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.firstName} {s.lastName} ({s.admissionNumber}) - {s.class?.name || s.class?.grade?.name || 'No Grade'}
+                      </option>
+                    ))}
                 </select>
               </div>
 
               <div>
-                <label className="label">Invoice</label>
+                <label className="label font-medium text-gray-700">3. Select Invoice</label>
                 <select
                   required
                   className="input"
@@ -480,25 +627,31 @@ function Fees() {
                   <option value="">Select Invoice</option>
                   {studentInvoices.map((inv) => (
                     <option key={inv.id} value={inv.id}>
-                      {inv.invoiceNo} - Bal: {formatCurrency(inv.balance)}
+                      {inv.invoiceNo} ({inv.term?.name || 'Term'}) - Bal: {formatCurrency(inv.balance)}
                     </option>
                   ))}
                 </select>
+                {paymentForm.studentId && studentInvoices.length === 0 && (
+                  <p className="text-xs text-amber-600 mt-1">No unpaid invoices found for this student. Please generate an invoice first.</p>
+                )}
               </div>
 
               <div>
-                <label className="label">Amount</label>
+                <label className="label font-medium text-gray-700">Amount (KES)</label>
                 <input
                   type="number"
                   required
+                  min="1"
+                  step="any"
                   className="input"
+                  placeholder="e.g. 5000"
                   value={paymentForm.amount}
                   onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
                 />
               </div>
 
               <div>
-                <label className="label">Payment Method</label>
+                <label className="label font-medium text-gray-700">Payment Method</label>
                 <select
                   required
                   className="input"
@@ -513,10 +666,11 @@ function Fees() {
 
               {(paymentForm.method === 'MPESA' || paymentForm.method === 'BANK_TRANSFER') && (
                 <div>
-                  <label className="label">Transaction Ref / Receipt No</label>
+                  <label className="label font-medium text-gray-700">Transaction Ref / Receipt No</label>
                   <input
                     type="text"
                     required
+                    placeholder={paymentForm.method === 'MPESA' ? 'e.g. QHX4829910' : 'e.g. TR-2026-9901'}
                     className="input"
                     value={paymentForm.method === 'MPESA' ? paymentForm.mpesaReceiptNo : paymentForm.transactionRef}
                     onChange={(e) => setPaymentForm({ 

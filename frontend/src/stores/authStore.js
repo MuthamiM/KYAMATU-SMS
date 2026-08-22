@@ -62,7 +62,7 @@ export const useAuthStore = create(
       },
     }),
     {
-      name: 'kyamatu-auth',
+      name: 'matundu-auth',
       partialize: (state) => ({
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,

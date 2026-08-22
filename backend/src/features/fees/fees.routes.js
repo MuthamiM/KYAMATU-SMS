@@ -16,6 +16,7 @@ router.post('/structures', isAdmin, feesController.createFeeStructure);
 router.get('/structures', isBursar, feesController.getFeeStructures);
 
 router.post('/invoices', isBursar, feesController.generateInvoice);
+router.post('/invoices/grade', isBursar, feesController.generateGradeInvoices);
 router.get('/invoices/export', isBursar, feesController.exportInvoices);
 router.get('/invoices/:id', isBursar, feesController.getInvoice);
 

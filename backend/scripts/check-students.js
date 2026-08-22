@@ -2,11 +2,11 @@
 async function checkStudents() {
     try {
         // 1. Login to get token
-        const loginRes = await fetch('https://kyamatu-sms-backend.onrender.com/api/auth/login', {
+        const loginRes = await fetch('https://matundu-sms-backend.onrender.com/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                email: 'admin@kyamatu.ac.ke',
+                email: 'admin@matundu.ac.ke',
                 password: 'Admin@123'
             })
         });
@@ -22,7 +22,7 @@ async function checkStudents() {
 
         // 2. Fetch Students
         console.log('Fetching students...');
-        const studentsRes = await fetch('https://kyamatu-sms-backend.onrender.com/api/students', {
+        const studentsRes = await fetch('https://matundu-sms-backend.onrender.com/api/students', {
             headers: {
                 'Authorization': `Bearer ${token}`
             }

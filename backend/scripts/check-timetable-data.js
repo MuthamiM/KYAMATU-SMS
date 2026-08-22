@@ -5,7 +5,7 @@ const API_URL = 'http://localhost:3000/api';
 const login = async () => {
     try {
         const res = await axios.post(`${API_URL}/auth/login`, {
-            email: 'admin@kyamatu.ac.ke',
+            email: 'admin@matundu.ac.ke',
             password: 'Admin@123',
         });
         return res.data.data.accessToken;

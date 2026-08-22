@@ -6,7 +6,7 @@ async function test() {
     const tokenRes = await fetch('http://localhost:3000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'student1@kyamatu.ac.ke', password: 'Admin@123' })
+        body: JSON.stringify({ email: 'student1@matundu.ac.ke', password: 'Admin@123' })
     });
     const tokenData = await tokenRes.json();
     if (!tokenData.data) return;

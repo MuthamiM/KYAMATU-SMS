@@ -1,32 +1,51 @@
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
-import { generateTimetable } from '../src/features/academic/timetable.service.js';
 
 const prisma = new PrismaClient();
 
-const SUBJECTS_LIST = [
-  { name: 'Mathematics', code: 'MAT' },
-  { name: 'English', code: 'ENG' },
-  { name: 'Kiswahili', code: 'KIS' },
-  { name: 'Science and Technology', code: 'SCI' },
-  { name: 'Social Studies', code: 'SST' },
-  { name: 'CRE', code: 'CRE' },
-  { name: 'Creative Arts', code: 'ART' },
-  { name: 'PHE', code: 'PHE' },
-  { name: 'Agriculture', code: 'AGR' },
-  { name: 'Home Science', code: 'HOM' }
-];
-
-// Kenyan first names
-const FIRST_NAMES_MALE = ['James', 'John', 'Peter', 'David', 'Michael', 'Brian', 'Kevin', 'Dennis', 'Collins', 'Victor', 'Samuel', 'Joseph', 'Daniel', 'Stephen', 'Patrick'];
-const FIRST_NAMES_FEMALE = ['Mary', 'Grace', 'Faith', 'Joy', 'Mercy', 'Alice', 'Sarah', 'Rose', 'Esther', 'Nancy', 'Lucy', 'Catherine', 'Jane', 'Ann', 'Elizabeth'];
-const LAST_NAMES = ['Mwangi', 'Otieno', 'Kamau', 'Wanjiku', 'Ochieng', 'Njoroge', 'Kipchoge', 'Wambui', 'Kimani', 'Mutua', 'Omondi', 'Karanja', 'Kiprotich', 'Akinyi', 'Ndungu'];
+const CBC_SUBJECTS_CONFIG = {
+  lowerPrimary: [
+    { name: 'Literacy Activities', code: 'LIT' },
+    { name: 'Kiswahili Language Activities', code: 'KIS' },
+    { name: 'English Language Activities', code: 'ENG' },
+    { name: 'Mathematical Activities', code: 'MAT' },
+    { name: 'Environmental Activities', code: 'ENV' },
+    { name: 'Hygiene and Nutrition Activities', code: 'HYG' },
+    { name: 'Religious Education (CRE)', code: 'CRE' },
+    { name: 'Movement and Creative Activities', code: 'MCA' },
+  ],
+  upperPrimary: [
+    { name: 'English', code: 'ENG' },
+    { name: 'Kiswahili', code: 'KIS' },
+    { name: 'Mathematics', code: 'MAT' },
+    { name: 'Science and Technology', code: 'SCI' },
+    { name: 'Agriculture', code: 'AGR' },
+    { name: 'Home Science', code: 'HOM' },
+    { name: 'Social Studies', code: 'SST' },
+    { name: 'Religious Education (CRE)', code: 'CRE' },
+    { name: 'Creative Arts', code: 'ART' },
+    { name: 'Physical and Health Education (PHE)', code: 'PHE' },
+  ],
+  juniorSecondary: [
+    { name: 'Mathematics', code: 'MAT' },
+    { name: 'English', code: 'ENG' },
+    { name: 'Kiswahili', code: 'KIS' },
+    { name: 'Integrated Science', code: 'ISC' },
+    { name: 'Agriculture and Nutrition', code: 'AGR' },
+    { name: 'Pre-Technical Studies', code: 'PTS' },
+    { name: 'Social Studies', code: 'SST' },
+    { name: 'Religious Education (CRE)', code: 'CRE' },
+    { name: 'Creative Arts and Sports', code: 'CAS' },
+  ]
+};
 
 async function main() {
-  console.log('Starting fresh seed with 10 students per class...');
+  console.log('Seeding Matundu Primary School database...');
 
   // Clean up everything
   await prisma.timetableSlot.deleteMany();
+  await prisma.courseResource.deleteMany();
+  await prisma.courseOutline.deleteMany();
   await prisma.payment.deleteMany();
   await prisma.invoiceItem.deleteMany();
   await prisma.studentInvoice.deleteMany();
@@ -48,8 +67,7 @@ async function main() {
   await prisma.staff.deleteMany();
   await prisma.user.deleteMany();
 
-  const adminHashedPassword = await bcrypt.hash('Admin@123', 12); // ADMIN & SUPER_ADMIN only
-  const defaultHashedPassword = await bcrypt.hash('admin', 12); // Teachers, Bursars, Students
+  const adminHashedPassword = await bcrypt.hash('Admin@123', 12);
 
   // 1. Create Academic Year 2026
   console.log('Creating academic year...');
@@ -63,7 +81,6 @@ async function main() {
   });
 
   // Create 3 terms for 2026
-  const terms = [];
   const termDates = [
     { name: 'Term 1', num: 1, start: '2026-01-05', end: '2026-04-10' },
     { name: 'Term 2', num: 2, start: '2026-05-02', end: '2026-08-10' },
@@ -71,7 +88,7 @@ async function main() {
   ];
 
   for (const t of termDates) {
-    const term = await prisma.term.create({
+    await prisma.term.create({
       data: {
         name: t.name,
         termNumber: t.num,
@@ -80,40 +97,32 @@ async function main() {
         academicYearId: currentYear.id
       }
     });
-    terms.push(term);
   }
-  const currentTerm = terms[0]; // Term 1
 
-  // 2. Create Grades (Grade 1-6)
-  console.log('Creating grades...');
-  const gradesData = [
-    { name: 'Grade 1', level: 1 },
-    { name: 'Grade 2', level: 2 },
-    { name: 'Grade 3', level: 3 },
-    { name: 'Grade 4', level: 4 },
-    { name: 'Grade 5', level: 5 },
-    { name: 'Grade 6', level: 6 },
-  ];
-
+  // 2. Create Grades (Grade 1-9)
+  console.log('Creating grades 1-9...');
   const createdGrades = [];
-  for (const g of gradesData) {
-    const grade = await prisma.grade.create({ data: g });
+  for (let i = 1; i <= 9; i++) {
+    const grade = await prisma.grade.create({
+      data: { name: `Grade ${i}`, level: i }
+    });
     createdGrades.push(grade);
   }
 
-  // 3. Create Streams
-  console.log('Creating streams...');
-  const streamEast = await prisma.stream.create({ data: { name: 'East' } });
-  const streamWest = await prisma.stream.create({ data: { name: 'West' } });
-
-  // 4. Create Classes (One stream per grade, except Grade 4 has two)
-  console.log('Creating classes...');
-  const createdClasses = [];
-
+  // 3. Create Classes and Official CBC Subjects
+  console.log('Creating classes and official CBC subjects...');
   for (const grade of createdGrades) {
-    // Create subjects for this grade
+    let subjectList = [];
+    if (grade.level <= 3) {
+      subjectList = CBC_SUBJECTS_CONFIG.lowerPrimary;
+    } else if (grade.level <= 6) {
+      subjectList = CBC_SUBJECTS_CONFIG.upperPrimary;
+    } else {
+      subjectList = CBC_SUBJECTS_CONFIG.juniorSecondary;
+    }
+
     const gradeSubjects = [];
-    for (const subj of SUBJECTS_LIST) {
+    for (const subj of subjectList) {
       const subject = await prisma.subject.create({
         data: {
           name: subj.name,
@@ -124,441 +133,56 @@ async function main() {
       gradeSubjects.push(subject);
     }
 
-    // Determine streams for this grade
-    const streamsForGrade = grade.name === 'Grade 4'
-      ? [streamEast, streamWest]
-      : [streamEast];
-
-    for (const stream of streamsForGrade) {
-      const cls = await prisma.class.create({
-        data: {
-          name: `${grade.name} ${stream.name}`,
-          capacity: 40,
-          gradeId: grade.id,
-          streamId: stream.id,
-          academicYearId: currentYear.id,
-        },
-      });
-      createdClasses.push({ ...cls, grade, subjects: gradeSubjects });
-
-      // Link subjects to class
-      for (const subj of gradeSubjects) {
-        await prisma.classSubject.create({
-          data: { classId: cls.id, subjectId: subj.id }
-        });
-      }
-    }
-  }
-
-  console.log(`Created ${createdClasses.length} classes`);
-
-  // 5. Create Admin & Management Staff
-  console.log('Creating admin and management staff...');
-
-  // Headmaster (SUPER_ADMIN)
-  const headmasterUser = await prisma.user.create({
-    data: { email: 'headmaster@kyamatu.ac.ke', password: adminHashedPassword, role: 'SUPER_ADMIN', phone: '+254700000001' },
-  });
-  await prisma.staff.create({
-    data: {
-      userId: headmasterUser.id,
-      employeeNumber: 'ADM001',
-      firstName: 'Joseph',
-      lastName: 'Mutua',
-      gender: 'Male',
-      qualification: 'M.Ed Administration',
-      specialization: 'School Administration'
-    }
-  });
-
-  // Deputy Headmaster (ADMIN)
-  const deputyUser = await prisma.user.create({
-    data: { email: 'deputy@kyamatu.ac.ke', password: adminHashedPassword, role: 'ADMIN', phone: '+254700000002' },
-  });
-  await prisma.staff.create({
-    data: {
-      userId: deputyUser.id,
-      employeeNumber: 'ADM002',
-      firstName: 'Margaret',
-      lastName: 'Wambua',
-      gender: 'Female',
-      qualification: 'B.Ed',
-      specialization: 'Curriculum & Instruction'
-    }
-  });
-
-  // System Admin (for testing)
-  await prisma.user.create({
-    data: { email: 'admin@kyamatu.ac.ke', password: adminHashedPassword, role: 'SUPER_ADMIN', phone: '+254700000000' },
-  });
-
-  // Bursar
-  const bursarUser = await prisma.user.create({
-    data: { email: 'bursar@kyamatu.ac.ke', password: defaultHashedPassword, role: 'BURSAR', phone: '+254700000003' },
-  });
-  await prisma.staff.create({
-    data: {
-      userId: bursarUser.id,
-      employeeNumber: 'FIN001',
-      firstName: 'Samuel',
-      lastName: 'Kioko',
-      gender: 'Male',
-      qualification: 'B.Com Accounting',
-      specialization: 'Finance & Accounting'
-    }
-  });
-
-  // 10 Teachers
-  console.log('Creating 10 teaching staff...');
-  const teacherData = [
-    { email: 'jmusa@kyamatu.ac.ke', empNo: 'TSC001', first: 'John', last: 'Musa', gender: 'Male', qual: 'B.Ed Mathematics', spec: 'Mathematics' },
-    { email: 'mmwende@kyamatu.ac.ke', empNo: 'TSC002', first: 'Mary', last: 'Mwende', gender: 'Female', qual: 'B.Ed English', spec: 'English' },
-    { email: 'pkimani@kyamatu.ac.ke', empNo: 'TSC003', first: 'Peter', last: 'Kimani', gender: 'Male', qual: 'B.Sc Education', spec: 'Science and Technology' },
-    { email: 'gwanjiku@kyamatu.ac.ke', empNo: 'TSC004', first: 'Grace', last: 'Wanjiku', gender: 'Female', qual: 'B.Ed Kiswahili', spec: 'Kiswahili' },
-    { email: 'dotieno@kyamatu.ac.ke', empNo: 'TSC005', first: 'David', last: 'Otieno', gender: 'Male', qual: 'B.Ed Social Studies', spec: 'Social Studies' },
-    { email: 'fnzuki@kyamatu.ac.ke', empNo: 'TSC006', first: 'Faith', last: 'Nzuki', gender: 'Female', qual: 'B.Ed CRE', spec: 'CRE' },
-    { email: 'bkiprop@kyamatu.ac.ke', empNo: 'TSC007', first: 'Brian', last: 'Kiprop', gender: 'Male', qual: 'B.Ed Arts', spec: 'Creative Arts' },
-    { email: 'enjoroge@kyamatu.ac.ke', empNo: 'TSC008', first: 'Esther', last: 'Njoroge', gender: 'Female', qual: 'B.Ed PHE', spec: 'PHE' },
-    { email: 'cmuturi@kyamatu.ac.ke', empNo: 'TSC009', first: 'Collins', last: 'Muturi', gender: 'Male', qual: 'B.Sc Agriculture', spec: 'Agriculture' },
-    { email: 'akinya@kyamatu.ac.ke', empNo: 'TSC010', first: 'Alice', last: 'Kinya', gender: 'Female', qual: 'B.Ed Home Science', spec: 'Home Science' },
-  ];
-
-  for (const t of teacherData) {
-    const teacherUser = await prisma.user.create({
-      data: { email: t.email, password: defaultHashedPassword, role: 'TEACHER', phone: `+2547${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}` },
-    });
-    await prisma.staff.create({
+    // Create one class per grade (no stream)
+    const cls = await prisma.class.create({
       data: {
-        userId: teacherUser.id,
-        employeeNumber: t.empNo,
-        firstName: t.first,
-        lastName: t.last,
-        gender: t.gender,
-        qualification: t.qual,
-        specialization: t.spec
-      }
-    });
-  }
-  console.log(`Created ${teacherData.length} teachers`);
-
-  // Assign teachers to classes/subjects
-  console.log('Assigning teachers to subjects...');
-  const teachers = await prisma.staff.findMany({
-    where: { user: { role: 'TEACHER' } },
-    include: { user: true }
-  });
-
-  const assignmentCount = {}; // Track assignments per teacher to balance load
-
-  for (const cls of createdClasses) {
-    for (const subj of cls.subjects) {
-      // Simple round-robin or random assignment based on specialization if possible
-      // For simplicity, assign random teacher
-      const teacher = teachers[Math.floor(Math.random() * teachers.length)];
-
-      await prisma.teacherAssignment.create({
-        data: {
-          staffId: teacher.id,
-          classId: cls.id,
-          subjectId: subj.id,
-          isClassTeacher: false // Could assign one per class later
-        }
-      });
-    }
-  }
-  console.log('Teachers assigned to subjects.');
-
-  // 3 Non-Teaching Staff (Support Staff - isActive: false for system access)
-  console.log('Creating 3 non-teaching support staff...');
-  const supportStaff = [
-    { empNo: 'SUP001', first: 'James', last: 'Mutiso', gender: 'Male', role: 'Security Guard' },
-    { empNo: 'SUP002', first: 'Rose', last: 'Muthoni', gender: 'Female', role: 'Cook' },
-    { empNo: 'SUP003', first: 'Patrick', last: 'Kamau', gender: 'Male', role: 'Groundskeeper' },
-  ];
-
-  for (const s of supportStaff) {
-    // Support staff don't need system login, so no user account
-    await prisma.staff.create({
-      data: {
-        employeeNumber: s.empNo,
-        firstName: s.first,
-        lastName: s.last,
-        gender: s.gender,
-        specialization: s.role,
-        userId: null, // No system access
-      }
-    });
-  }
-  console.log(`Created ${supportStaff.length} support staff`);
-
-  // 6. Create 10 Students per Class
-  console.log('Creating 10 students per class...');
-  let studentCounter = 1;
-  const allStudents = [];
-
-  for (const cls of createdClasses) {
-    console.log(`   Adding 10 students to ${cls.name}...`);
-
-    for (let i = 0; i < 10; i++) {
-      const isMale = Math.random() > 0.5;
-      const firstName = isMale
-        ? FIRST_NAMES_MALE[Math.floor(Math.random() * FIRST_NAMES_MALE.length)]
-        : FIRST_NAMES_FEMALE[Math.floor(Math.random() * FIRST_NAMES_FEMALE.length)];
-      const lastName = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
-
-      // Random admission date in Jan 2026
-      const admitDay = Math.floor(Math.random() * 10) + 5;
-      const admitDate = new Date(2026, 0, admitDay);
-
-      const studentUser = await prisma.user.create({
-        data: {
-          email: `student${studentCounter}@kyamatu.ac.ke`,
-          password: defaultHashedPassword,
-          role: 'STUDENT',
-        }
-      });
-
-      // Calculate birth year based on grade (roughly age 6-12)
-      const birthYear = 2026 - (cls.grade.level + 5);
-
-      const student = await prisma.student.create({
-        data: {
-          userId: studentUser.id,
-          firstName: firstName,
-          lastName: lastName,
-          admissionNumber: `ADM2026${studentCounter.toString().padStart(3, '0')}`,
-          gender: isMale ? 'Male' : 'Female',
-          dateOfBirth: new Date(birthYear, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1),
-          classId: cls.id,
-          admissionStatus: 'APPROVED',
-          admissionDate: admitDate
-        }
-      });
-
-      allStudents.push(student);
-      studentCounter++;
-    }
-  }
-
-  console.log(`Created ${allStudents.length} students total`);
-
-  // 7. Create Fee Structure and Invoices
-  console.log('Creating fee structures and invoices...');
-
-  // Fee structure for all grades
-  for (const grade of createdGrades) {
-    await prisma.feeStructure.create({
-      data: {
-        name: 'Tuition Fee',
-        amount: 15000,
+        name: `Grade ${grade.level}`,
+        capacity: 40,
         gradeId: grade.id,
-        termId: currentTerm.id
-      }
-    });
-  }
-
-  // Create invoices and some payments for students
-  for (const student of allStudents) {
-    const invoice = await prisma.studentInvoice.create({
-      data: {
-        invoiceNo: `INV${student.admissionNumber}`,
-        studentId: student.id,
-        termId: currentTerm.id,
-        totalAmount: 15000,
-        balance: 15000,
-        dueDate: new Date('2026-02-01')
-      }
+        academicYearId: currentYear.id,
+      },
     });
 
-    // 70% of students have made some payment
-    if (Math.random() > 0.3) {
-      const paymentAmount = Math.floor(Math.random() * 12000) + 3000; // 3000-15000
-      await prisma.payment.create({
-        data: {
-          amount: paymentAmount,
-          method: Math.random() > 0.5 ? 'MPESA' : 'BANK_TRANSFER',
-          status: 'COMPLETED',
-          transactionRef: `TX${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
-          studentId: student.id,
-          invoiceId: invoice.id,
-          paidAt: new Date(2026, 0, Math.floor(Math.random() * 14) + 1)
-        }
-      });
-
-      await prisma.studentInvoice.update({
-        where: { id: invoice.id },
-        data: {
-          paidAmount: paymentAmount,
-          balance: Math.max(0, 15000 - paymentAmount)
-        }
+    // Link subjects to class
+    for (const subj of gradeSubjects) {
+      await prisma.classSubject.create({
+        data: { classId: cls.id, subjectId: subj.id }
       });
     }
   }
 
-  // 8. Create Attendance Records (Today)
-  console.log('Creating attendance records...');
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  for (const student of allStudents) {
-    // 94% present, 4% absent, 2% late
-    const rand = Math.random();
-    let status = 'PRESENT';
-    if (rand > 0.96) status = 'LATE';
-    else if (rand > 0.94) status = 'ABSENT';
-
-    await prisma.attendance.create({
-      data: {
-        date: today,
-        studentId: student.id,
-        classId: student.classId,
-        status: status,
-        termId: currentTerm.id
-      }
-    });
-  }
-
-  // 9. Create Assessments and Scores
-  console.log('Creating assessments and scores...');
-  for (const cls of createdClasses) {
-    for (const subj of cls.subjects) {
-      // Create one CAT and one Exam per subject
-      const assessments = await Promise.all([
-        prisma.assessment.create({
-          data: {
-            name: 'CAT 1',
-            type: 'CAT',
-            maxScore: 30,
-            weight: 0.3,
-            date: new Date('2026-02-15'),
-            subjectId: subj.id,
-            termId: currentTerm.id
-          }
-        }),
-        prisma.assessment.create({
-          data: {
-            name: 'End of Term Exam',
-            type: 'EXAM',
-            maxScore: 70,
-            weight: 0.7,
-            date: new Date('2026-04-05'),
-            subjectId: subj.id,
-            termId: currentTerm.id
-          }
-        })
-      ]);
-
-      // Give 5 random students in each class a score for CAT 1
-      const classStudents = allStudents.filter(s => s.classId === cls.id);
-      const taggedStudents = classStudents.sort(() => 0.5 - Math.random()).slice(0, 5);
-
-      for (const student of taggedStudents) {
-        const score = Math.floor(Math.random() * 20) + 10; // 10-30
-        await prisma.assessmentScore.create({
-          data: {
-            studentId: student.id,
-            assessmentId: assessments[0].id,
-            score: score,
-            grade: score >= 24 ? 'A' : score >= 18 ? 'B' : 'C',
-            comment: 'Good effort'
-          }
-        });
-      }
+  // 4. Create Admin Account
+  console.log('Creating admin account...');
+  const adminUser = await prisma.user.create({
+    data: { email: 'admin@matundu.ac.ke', password: adminHashedPassword, role: 'SUPER_ADMIN', phone: '+254700000000' },
+  });
+  await prisma.staff.create({
+    data: {
+      userId: adminUser.id,
+      employeeNumber: 'ADM001',
+      firstName: 'Admin',
+      lastName: 'Matundu',
+      gender: 'Male',
+      qualification: 'System Administrator',
+      specialization: 'Administration'
     }
-  }
+  });
 
-  // 10. Generate Timetable
-  console.log('Generating timetable slots...');
-  await generateTimetable();
-
-  // 11. Seed Course Outlines & Resources for all classes/subjects
-  console.log('Seeding course outlines and resources...');
-
-  const subjectResourceMap = {
-    'Mathematics': { url: 'https://www.khanacademy.org/math', title: 'Khan Academy Mathematics', type: 'LINK' },
-    'English': { url: 'https://learnenglish.britishcouncil.org/', title: 'British Council English Learning', type: 'LINK' },
-    'Kiswahili': { url: 'https://www.bbc.com/swahili', title: 'BBC Kiswahili Resources', type: 'LINK' },
-    'Science and Technology': { url: 'https://www.khanacademy.org/science', title: 'Khan Academy Science', type: 'LINK' },
-    'Social Studies': { url: 'https://www.nationalgeographic.org/education/resource-library/', title: 'National Geographic Social Studies', type: 'LINK' },
-    'CRE': { url: 'https://www.bible.com/', title: 'Bible Study Resources', type: 'LINK' },
-    'Creative Arts': { url: 'https://www.tate.org.uk/learn', title: 'Tate Art Learning', type: 'LINK' },
-    'PHE': { url: 'https://www.topendsports.com/resources/', title: 'Physical Education Resources', type: 'LINK' },
-    'Agriculture': { url: 'https://www.fao.org/home/en/', title: 'FAO Agriculture Resources', type: 'LINK' },
-    'Home Science': { url: 'https://extension.umn.edu/family-and-consumer-science', title: 'Home Science Resources', type: 'LINK' },
-  };
-
-  const anyStaff = await prisma.staff.findFirst();
-  let outlinesCreated = 0;
-  let resourcesCreated = 0;
-
-  for (const term of terms) {
-    for (const cls of createdClasses) {
-      for (const subj of cls.subjects) {
-        const assignment = await prisma.teacherAssignment.findFirst({
-          where: { classId: cls.id, subjectId: subj.id }
-        });
-        const teacherId = assignment?.staffId || anyStaff?.id;
-        if (!teacherId) continue;
-
-        await prisma.courseOutline.create({
-          data: {
-            classId: cls.id,
-            subjectId: subj.id,
-            termId: term.id,
-            teacherId,
-            title: `${subj.name} - ${term.name} Outline`,
-            content: [
-              { title: 'Introduction', description: `${subj.name} — core goals, objectives and term overview.`, type: 'LESSON', date: 'Week 1' },
-              { title: 'Core Modules', description: 'Exploring fundamental principles and practical applications of key concepts.', type: 'LESSON', date: 'Weeks 2-5' },
-              { title: 'Continuous Assessment (CAT)', description: 'Formal CAT evaluating term progress and understanding so far.', type: 'CAT', date: 'Week 6' },
-              { title: 'Advanced Topics', description: 'Building on foundations with specialized techniques and real-world applications.', type: 'LESSON', date: 'Weeks 7-9' },
-              { title: 'Group Assignments', description: 'Individual and group assignment submissions and presentations.', type: 'ASSIGNMENT', date: 'Week 9' },
-              { title: 'Final Revision & Exam Prep', description: 'Comprehensive review and preparation for end-of-term examinations.', type: 'LESSON', date: 'Week 10' }
-            ]
-          }
-        });
-        outlinesCreated++;
-
-        const baseName = Object.keys(subjectResourceMap).find(k => subj.name.startsWith(k)) || null;
-        const resourceInfo = baseName ? subjectResourceMap[baseName] : {
-          url: 'https://www.open.edu/openlearn/', title: `${subj.name} Study Materials`, type: 'LINK'
-        };
-
-        await prisma.courseResource.create({
-          data: {
-            classId: cls.id,
-            subjectId: subj.id,
-            termId: term.id,
-            teacherId,
-            title: resourceInfo.title,
-            type: resourceInfo.type,
-            url: resourceInfo.url,
-            size: null
-          }
-        });
-        resourcesCreated++;
-      }
-    }
-  }
-  console.log(`   Created ${outlinesCreated} outlines and ${resourcesCreated} resources`);
-
-  // 12. Summary
+  // Summary
   const classCount = await prisma.class.count();
-  const studentCount = await prisma.student.count();
-  const staffCount = await prisma.staff.count();
+  const subjectCount = await prisma.subject.count();
 
   console.log('\nSeed completed successfully!');
   console.log('-------------------------------------------');
-  console.log(`Summary:`);
+  console.log('Summary:');
+  console.log(`   - Grades: 9 (Grade 1-9)`);
   console.log(`   - Classes: ${classCount}`);
-  console.log(`   - Students: ${studentCount} (10 per class)`);
-  console.log(`   - Staff: ${staffCount}`);
+  console.log(`   - Subjects: ${subjectCount}`);
+  console.log(`   - Students: 0 (add your own)`);
+  console.log(`   - Teachers: 0 (add your own)`);
   console.log('-------------------------------------------');
   console.log('\nLogin credentials:');
-  console.log('   Admin:   admin@kyamatu.ac.ke / Admin@123');
-  console.log('   Bursar:  bursar@kyamatu.ac.ke / admin');
-  console.log('   Teacher: jmusa@kyamatu.ac.ke / admin');
-  console.log('   Student: student1@kyamatu.ac.ke / admin');
+  console.log('   Admin: admin@matundu.ac.ke / Admin@123');
 }
 
 main()

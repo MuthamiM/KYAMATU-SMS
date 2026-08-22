@@ -16,7 +16,7 @@ export const createStudent = async (data) => {
 
   const { email, password, phone, ...studentData } = data;
 
-  const studentEmail = email || `${studentData.firstName[0]}${studentData.lastName}`.toLowerCase().replace(/\s+/g, '') + '@kyamatu.ac.ke';
+  const studentEmail = email || `${studentData.firstName[0]}${studentData.lastName}`.toLowerCase().replace(/\s+/g, '') + '@matundu.ac.ke';
   const rawPassword = password || 'admin'; // Default password for students is "admin"
   const hashedPassword = await bcrypt.hash(rawPassword, 12);
 
@@ -89,9 +89,11 @@ export const getStudents = async (filters = {}) => {
   }
   if (search) {
     where.OR = [
-      { firstName: { contains: search } },
-      { lastName: { contains: search } },
-      { admissionNumber: { contains: search } },
+      { firstName: { contains: search, mode: 'insensitive' } },
+      { lastName: { contains: search, mode: 'insensitive' } },
+      { admissionNumber: { contains: search, mode: 'insensitive' } },
+      { upiNumber: { contains: search, mode: 'insensitive' } },
+      { assessmentNumber: { contains: search, mode: 'insensitive' } },
     ];
   }
 
@@ -108,8 +110,17 @@ export const getStudents = async (filters = {}) => {
             stream: true,
           },
         },
+        guardians: {
+          include: {
+            guardian: {
+              include: {
+                user: { select: { email: true, phone: true } },
+              },
+            },
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { admissionNumber: 'asc' },
     }),
     prisma.student.count({ where }),
   ]);

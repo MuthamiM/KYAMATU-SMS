@@ -45,7 +45,7 @@ export const processChatMessage = async (userId, studentId, message) => {
     const history = await getChatHistory(studentId);
 
     const systemPrompt = `
-      You are KyamaBot, a helpful AI assistant for Matundu Primary School students.
+      You are MatunduAI, a helpful AI assistant for Matundu Primary School students.
       The current date and time is ${new Date().toLocaleString()}.
       
       STUDENT CONTEXT:
@@ -99,7 +99,7 @@ export const processChatMessage = async (userId, studentId, message) => {
       headers: {
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://kyamatu.ac.ke',
+        'HTTP-Referer': 'https://matundu.ac.ke',
         'X-Title': 'Matundu SMS'
       }
     });
@@ -155,7 +155,7 @@ const handleMockResponse = async (studentId, message) => {
 
     await reminderService.createReminder({
       title: title || 'New Task',
-      description: 'Set via KyamaBot (Mock Mode)',
+      description: 'Set via MatunduAI (Mock Mode)',
       remindAt,
       studentId,
     });
@@ -163,5 +163,5 @@ const handleMockResponse = async (studentId, message) => {
     return `(Mock Mode) I've set a reminder for "${title || 'New Task'}" for tomorrow. (Note: Please set GEMINI_API_KEY for real AI behavior)`;
   }
 
-  return "Hello! I'm KyamaBot. I'm currently in mock mode because no API key was found, but I can still help you set simple reminders if you say 'Remind me to [task]'.";
+  return "Hello! I'm MatunduAI. I'm currently in mock mode because no API key was found, but I can still help you set simple reminders if you say 'Remind me to [task]'.";
 };

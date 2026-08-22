@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-const API_URL = 'https://kyamatu-sms-backend.onrender.com/api';
+const API_URL = 'https://matundu-sms-backend.onrender.com/api';
 // Using the same credentials as seed.js
-const EMAIL = 'admin@kyamatu.ac.ke';
+const EMAIL = 'admin@matundu.ac.ke';
 const PASSWORD = 'Admin@123';
 
 const TIMES = [

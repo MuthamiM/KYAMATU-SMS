@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'https://kyamatu-sms-backend.onrender.com/api';
-const SECRET_KEY = 'kyamatu-reseed-2026';
+const API_URL = 'https://matundu-sms-backend.onrender.com/api';
+const SECRET_KEY = 'matundu-reseed-2026';
 
 const reseed = async () => {
     console.log('Triggering remote reseed...');

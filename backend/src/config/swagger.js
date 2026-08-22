@@ -9,7 +9,7 @@ const options = {
             description: 'API documentation for the Matundu School Management System',
             contact: {
                 name: 'API Support',
-                email: 'support@kyamatu.ac.ke',
+                email: 'support@matundu.ac.ke',
             },
         },
         servers: [

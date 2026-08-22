@@ -2,14 +2,14 @@
 async function testLimit() {
     try {
         console.log('Logging in...');
-        const loginRes = await fetch('https://kyamatu-sms-backend.onrender.com/api/auth/login', {
-            method: 'POST', body: JSON.stringify({ email: 'admin@kyamatu.ac.ke', password: 'Admin@123' }), headers: { 'Content-Type': 'application/json' }
+        const loginRes = await fetch('https://matundu-sms-backend.onrender.com/api/auth/login', {
+            method: 'POST', body: JSON.stringify({ email: 'admin@matundu.ac.ke', password: 'Admin@123' }), headers: { 'Content-Type': 'application/json' }
         });
         const token = (await loginRes.json()).data.accessToken;
 
         console.log('Fetching students with limit=1000...');
         const start = Date.now();
-        const res = await fetch('https://kyamatu-sms-backend.onrender.com/api/students?limit=1000', {
+        const res = await fetch('https://matundu-sms-backend.onrender.com/api/students?limit=1000', {
             headers: { Authorization: 'Bearer ' + token }
         });
         const duration = Date.now() - start;

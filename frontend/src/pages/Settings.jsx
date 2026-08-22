@@ -233,7 +233,7 @@ function Settings() {
                   <p className="text-sm text-green-700">
                     <strong>Admission No:</strong> {profile.student.admissionNumber}
                     {profile.student.class && (
-                      <> • <strong>Class:</strong> {profile.student.class.grade?.name} {profile.student.class.stream?.name}</>
+                      <> • <strong>Class:</strong> {profile.student.class.name || profile.student.class.grade?.name}</>
                     )}
                   </p>
                 </div>

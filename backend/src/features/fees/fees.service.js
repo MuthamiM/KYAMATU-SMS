@@ -100,6 +100,97 @@ export const generateInvoice = async (studentId, termId, items) => {
   return invoice;
 };
 
+export const generateGradeInvoices = async (gradeId, termId, dueDate, items) => {
+  const grade = await prisma.grade.findUnique({
+    where: { id: gradeId },
+    include: {
+      classes: {
+        include: {
+          students: {
+            where: { admissionStatus: 'APPROVED' },
+            select: { id: true, firstName: true, lastName: true, admissionNumber: true }
+          }
+        }
+      }
+    }
+  });
+
+  if (!grade) {
+    throw new NotFoundError('Grade');
+  }
+
+  // Get fee structures for this grade & term
+  const feeStructures = await prisma.feeStructure.findMany({
+    where: {
+      gradeId,
+      termId,
+    },
+  });
+
+  let defaultItems = items;
+  if (!defaultItems || defaultItems.length === 0) {
+    if (feeStructures.length > 0) {
+      defaultItems = feeStructures.map(fs => ({
+        description: fs.name,
+        amount: fs.amount,
+        feeStructureId: fs.id,
+      }));
+    } else {
+      defaultItems = [
+        { description: 'Tuition & Activity Fees', amount: 5000 }
+      ];
+    }
+  }
+
+  const totalAmount = defaultItems.reduce((sum, item) => sum + item.amount, 0);
+
+  // Flatten students from all classes in this grade
+  const allStudents = grade.classes.flatMap(cls => cls.students);
+
+  let generatedCount = 0;
+  let skippedCount = 0;
+
+  for (const st of allStudents) {
+    const existing = await prisma.studentInvoice.findFirst({
+      where: {
+        studentId: st.id,
+        termId,
+      }
+    });
+
+    if (existing) {
+      skippedCount++;
+      continue;
+    }
+
+    await prisma.studentInvoice.create({
+      data: {
+        invoiceNo: generateInvoiceNumber(),
+        studentId: st.id,
+        termId,
+        totalAmount,
+        balance: totalAmount,
+        dueDate: dueDate ? new Date(dueDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        items: {
+          create: defaultItems.map(it => ({
+            description: it.description,
+            amount: it.amount,
+            feeStructureId: it.feeStructureId || null
+          })),
+        },
+      },
+    });
+    generatedCount++;
+  }
+
+  return {
+    gradeName: grade.name,
+    totalStudents: allStudents.length,
+    generatedCount,
+    skippedCount
+  };
+};
+
 export const getStudentInvoices = async (studentId, filters = {}) => {
   const { termId, page = 1, limit = 20 } = filters;
   const skip = (page - 1) * limit;

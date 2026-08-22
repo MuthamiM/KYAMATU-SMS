@@ -22,9 +22,9 @@ export const registerValidator = [
 
 export const loginValidator = [
   body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Valid email is required'),
+    .notEmpty()
+    .trim()
+    .withMessage('Email or Admission Number is required'),
   body('password')
     .notEmpty()
     .withMessage('Password is required'),

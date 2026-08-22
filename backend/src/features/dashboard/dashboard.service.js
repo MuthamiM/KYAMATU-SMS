@@ -5,6 +5,18 @@ export const getSummaryStats = async () => {
   const startOfYear = new Date(`${currentYear}-01-01`);
   const endOfYear = new Date(`${currentYear}-12-31`);
 
+  // Active Academic Year & Term
+  const currentAcademicYear = await prisma.academicYear.findFirst({
+    where: { isCurrent: true },
+    include: {
+      terms: {
+        orderBy: { startDate: 'desc' },
+      },
+    },
+  });
+
+  const activeTerm = currentAcademicYear?.terms?.[0] || null;
+
   // Fee Summary
   const feeStats = await prisma.studentInvoice.aggregate({
     _sum: {
@@ -77,7 +89,30 @@ export const getSummaryStats = async () => {
     institute: {
       classes: totalClasses,
       sections: totalStreams
+    },
+    academic: {
+      academicYear: currentAcademicYear?.name || `${currentYear}`,
+      term: activeTerm?.name || 'Term 1',
+      termNumber: activeTerm?.termNumber || 1
     }
+  };
+};
+
+export const getCurrentTermInfo = async () => {
+  const currentAcademicYear = await prisma.academicYear.findFirst({
+    where: { isCurrent: true },
+    include: {
+      terms: {
+        orderBy: { startDate: 'desc' },
+      },
+    },
+  });
+
+  const activeTerm = currentAcademicYear?.terms?.[0] || null;
+  return {
+    academicYear: currentAcademicYear?.name || `${new Date().getFullYear()}`,
+    term: activeTerm?.name || 'Term 1',
+    termNumber: activeTerm?.termNumber || 1,
   };
 };
 
@@ -152,12 +187,22 @@ export const getAttendanceDistribution = async () => {
   // Overall attendance stats for pie chart
   const present = await prisma.attendance.count({ where: { status: 'PRESENT' } });
   const absent = await prisma.attendance.count({ where: { status: 'ABSENT' } });
+  const late = await prisma.attendance.count({ where: { status: 'LATE' } });
+  const total = present + absent + late;
+
+  if (total === 0) {
+    return [
+      { name: 'Present', value: 0 },
+      { name: 'Absent', value: 0 },
+      { name: 'Late', value: 0 }
+    ];
+  }
 
   // Calculate percentages
-  const total = present + absent || 1;
   return [
-    { name: 'Present', value: parseFloat(((present / total) * 100).toFixed(2)) },
-    { name: 'Absent', value: parseFloat(((absent / total) * 100).toFixed(2)) }
+    { name: 'Present', value: parseFloat(((present / total) * 100).toFixed(1)) },
+    { name: 'Absent', value: parseFloat(((absent / total) * 100).toFixed(1)) },
+    { name: 'Late', value: parseFloat(((late / total) * 100).toFixed(1)) }
   ];
 };
 

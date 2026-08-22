@@ -93,13 +93,13 @@ model Class {
   name               String
   capacity           Int                 @default(40)
   gradeId            String
-  streamId           String
+  streamId           String?
   academicYearId     String
   createdAt          DateTime            @default(now())
   attendances        Attendance[]
   academicYear       AcademicYear        @relation(fields: [academicYearId], references: [id])
   grade              Grade               @relation(fields: [gradeId], references: [id])
-  stream             Stream              @relation(fields: [streamId], references: [id])
+  stream             Stream?             @relation(fields: [streamId], references: [id])
   classSubjects      ClassSubject[]
   students           Student[]
   teacherAssignments TeacherAssignment[]
@@ -107,7 +107,7 @@ model Class {
   courseOutlines     CourseOutline[]
   courseResources    CourseResource[]
 
-  @@unique([gradeId, streamId, academicYearId])
+  @@unique([gradeId, academicYearId])
   @@index([gradeId])
   @@index([academicYearId])
 }
@@ -206,6 +206,9 @@ model Student {
   dateOfBirth      DateTime?
   gender           String?
   birthCertNumber  String?
+  upiNumber        String?            @unique // NEMIS Unique Learner Identifier (ULI/UPI)
+  assessmentNumber String?            // KCPE/KCSE Index or CBC Assessment Number
+  sneStatus        String?            @default("NO") // Special Needs Education status
   medicalInfo      String?
   classId          String?
   admissionStatus  AdmissionStatus   @default(PENDING)

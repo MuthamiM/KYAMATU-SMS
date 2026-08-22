@@ -17,7 +17,7 @@ export const useThemeStore = create(
       },
     }),
     {
-      name: 'kyamatu-theme',
+      name: 'matundu-theme',
     }
   )
 );

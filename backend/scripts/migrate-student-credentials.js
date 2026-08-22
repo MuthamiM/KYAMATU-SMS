@@ -17,7 +17,7 @@ async function migrate() {
         try {
             const firstInitial = student.firstName.charAt(0).toLowerCase();
             const lastName = student.lastName.toLowerCase().replace(/\s+/g, '');
-            const newEmail = `${firstInitial}${lastName}@kyamatu.ac.ke`;
+            const newEmail = `${firstInitial}${lastName}@matundu.ac.ke`;
 
             // Hash admission number as password
             const hashedPassword = await bcrypt.hash(student.admissionNumber, config.bcrypt.rounds);

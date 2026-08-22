@@ -156,7 +156,7 @@ const CourseResourcesManager = () => {
                         >
                             <option value="">Choose a class...</option>
                             {classes.map(c => (
-                                <option key={c.id} value={c.id}>{c.grade?.name} {c.stream?.name}</option>
+                                <option key={c.id} value={c.id}>{c.name || c.grade?.name}</option>
                             ))}
                         </select>
                     </div>
@@ -208,7 +208,7 @@ const CourseResourcesManager = () => {
                                                 <span className="font-medium text-teal-600">{res.type}</span>
                                                 <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
                                                 <a 
-                                                    href={res.url?.startsWith('/public') ? `https://kyamatu-sms-backend.onrender.com${res.url}` : res.url} 
+                                                    href={res.url?.startsWith('/public') ? `https://matundu-sms-backend.onrender.com${res.url}` : res.url} 
                                                     target="_blank" 
                                                     rel="noreferrer" 
                                                     className="hover:underline flex items-center gap-1"

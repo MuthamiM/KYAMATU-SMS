@@ -8,6 +8,9 @@ export const createStudentValidator = [
   body('dateOfBirth').optional().isISO8601().withMessage('Valid date of birth required'),
   body('gender').optional().isIn(['Male', 'Female']).withMessage('Gender must be Male or Female'),
   body('classId').optional().isUUID().withMessage('Valid class ID required'),
+  body('upiNumber').optional().isString().trim(),
+  body('assessmentNumber').optional().isString().trim(),
+  body('sneStatus').optional().isString().trim(),
 ];
 
 export const updateStudentValidator = [
@@ -16,6 +19,9 @@ export const updateStudentValidator = [
   body('lastName').optional().trim().notEmpty().withMessage('Last name cannot be empty'),
   body('dateOfBirth').optional().isISO8601().withMessage('Valid date of birth required'),
   body('gender').optional().isIn(['Male', 'Female']).withMessage('Gender must be Male or Female'),
+  body('upiNumber').optional().isString().trim(),
+  body('assessmentNumber').optional().isString().trim(),
+  body('sneStatus').optional().isString().trim(),
   body('medicalInfo').optional().isString(),
 ];
 

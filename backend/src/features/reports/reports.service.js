@@ -247,7 +247,7 @@ export const generateReportCard = async (studentId, termId) => {
       id: student.id,
       name: `${student.firstName} ${student.lastName}`,
       admissionNumber: student.admissionNumber,
-      class: `${student.class.grade.name} ${student.class.stream.name}`,
+      class: student.class.name,
       academicYear: student.class.academicYear.name,
     },
     term: {

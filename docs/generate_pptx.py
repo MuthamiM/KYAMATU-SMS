@@ -1,5 +1,5 @@
 """
-Generates Final Project Presentation (.pptx) for Kyamatu SMS
+Generates Final Project Presentation (.pptx) for Matundu SMS
 """
 import os
 from pptx import Presentation
@@ -123,7 +123,7 @@ prs.slide_width = Inches(10)
 prs.slide_height = Inches(7.5)
 
 # 1. Title
-s = title_slide(prs, "SCHOOL MANAGEMENT SYSTEM\nFOR KYAMATU PRIMARY SCHOOL", "")
+s = title_slide(prs, "SCHOOL MANAGEMENT SYSTEM\nFOR MATUNDU PRIMARY SCHOOL", "")
 add_text(s, 0.5, 4.3, 9, 0.5, "Mwange Musa Muthami  •  23/05037", size=16, color=WHITE, align=PP_ALIGN.CENTER)
 add_text(s, 0.5, 4.9, 9, 0.5, "Supervisor: Dr. Simon N. Mwendia / Dr. Kevin Mugoye Sindu", size=14, color=LIGHT, align=PP_ALIGN.CENTER)
 add_text(s, 0.5, 5.5, 9, 0.5, "Bachelor of Information Technology  •  BIT 3105  •  April 2026", size=14, color=LIGHT, align=PP_ALIGN.CENTER)
@@ -269,7 +269,7 @@ content_slide(prs, "Conclusion", [
 # 15. Thank You
 s = title_slide(prs, "THANK YOU", "Questions?")
 add_text(s, 0.5, 4.5, 9, 0.5, "Mwange Musa Muthami  •  23/05037", size=16, color=WHITE, align=PP_ALIGN.CENTER)
-add_text(s, 0.5, 5.1, 9, 0.5, "GitHub: https://github.com/MuthamiM/KYAMATU-SMS", size=14, color=LIGHT, align=PP_ALIGN.CENTER)
+add_text(s, 0.5, 5.1, 9, 0.5, "GitHub: https://github.com/MuthamiM/MATUNDU-SMS", size=14, color=LIGHT, align=PP_ALIGN.CENTER)
 
 # Save
 path = os.path.join(OUT, "8_Final_Presentation.pptx")

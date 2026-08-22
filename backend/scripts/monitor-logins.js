@@ -3,7 +3,7 @@
 import { spawn } from 'child_process';
 import path from 'path';
 
-console.log('👀 Starting Backend & Monitoring Kyamatu SMS Logins...\n');
+console.log('👀 Starting Backend & Monitoring Matundu SMS Logins...\n');
 console.log('NOTE: Please make sure no other backend terminals are running on port 3000.\n');
 
 // we'll run the actual node process and pipe it

@@ -91,156 +91,153 @@ export const upsertTimetableSlot = async (data) => {
 };
 
 export const generateTimetable = async () => {
-  // 1. Check if we have teacher assignments. If not, create them (Self-Healing).
-  const assignmentCount = await prisma.teacherAssignment.count();
-  if (assignmentCount === 0) {
-    console.log('No teacher assignments found. Auto-assigning...');
+  // 1. Check for registered teachers
+  const teachers = await prisma.staff.findMany({
+    where: {
+      user: {
+        role: { in: ['TEACHER', 'ADMIN', 'SUPER_ADMIN'] },
+        isActive: true,
+      }
+    },
+    include: { user: true }
+  });
 
-    // Fetch classes and teachers
-    const classes = await prisma.class.findMany();
-    const allTeachers = await prisma.staff.findMany({
-      where: { user: { role: 'TEACHER' } },
-      include: { user: true }
-    });
+  const realTeachers = teachers.filter(t => t.user?.role === 'TEACHER');
+  const availableTeachers = realTeachers.length > 0 ? realTeachers : teachers;
 
-    if (allTeachers.length > 0 && classes.length > 0) {
-      for (const cls of classes) {
-        // Fetch subjects for this class
-        // Use classSubjects (assuming they exist from seed)
-        const classSubjects = await prisma.classSubject.findMany({
-          where: { classId: cls.id },
-          include: { subject: true }
-        });
+  if (availableTeachers.length === 0) {
+    throw new ValidationError('No teachers found in the system. Please add your school teachers in the Staff page first, then generate the timetable.');
+  }
 
-        if (classSubjects.length === 0) {
-          // Fallback: If no class subjects, maybe create them? 
-          // For now, assume subjects exist or we skip.
-          console.log(`Class ${cls.name} has no subjects.`);
-          continue;
+  // 2. Fetch all classes and their subjects
+  const classes = await prisma.class.findMany({
+    include: {
+      grade: true,
+      classSubjects: { include: { subject: true } },
+      teacherAssignments: { include: { subject: true } }
+    }
+  });
+
+  if (classes.length === 0) {
+    throw new ValidationError('No classes found in the system.');
+  }
+
+  const allSubjects = await prisma.subject.findMany();
+
+  // 3. Assign teachers to class subjects evenly if not already assigned
+  for (const cls of classes) {
+    const classSubjectList = cls.classSubjects.length > 0 
+      ? cls.classSubjects 
+      : allSubjects.filter(s => s.gradeId === cls.gradeId).map(s => ({ subjectId: s.id, subject: s }));
+
+    for (let i = 0; i < classSubjectList.length; i++) {
+      const cs = classSubjectList[i];
+      // Pick teacher in round-robin based on class & subject index
+      const assignedTeacher = availableTeachers[(i + (cls.grade?.level || 1)) % availableTeachers.length];
+
+      const existingAssignment = await prisma.teacherAssignment.findFirst({
+        where: {
+          classId: cls.id,
+          subjectId: cs.subjectId,
         }
+      });
 
-        for (const cs of classSubjects) {
-          const teacher = allTeachers[Math.floor(Math.random() * allTeachers.length)];
-          try {
-            await prisma.teacherAssignment.create({
-              data: {
-                staffId: teacher.id,
-                classId: cls.id,
-                subjectId: cs.subjectId,
-                isClassTeacher: false
-              }
-            });
-          } catch (e) {
-            // Ignore duplicates if any
-          }
+      if (!existingAssignment) {
+        try {
+          await prisma.teacherAssignment.create({
+            data: {
+              staffId: assignedTeacher.id,
+              classId: cls.id,
+              subjectId: cs.subjectId,
+              isClassTeacher: i === 0,
+            }
+          });
+        } catch (e) {
+          // ignore duplicate
         }
       }
-      console.log('Auto-assigned teachers.');
-    } else {
-      console.log('Cannot assign teachers: No teachers or classes found.');
     }
   }
 
-  // 2. Clear existing timetable
+  // 4. Clear existing timetable slots
   await prisma.timetableSlot.deleteMany({});
 
-  // 3. Fetch all classes and their teacher assignments
-  const classes = await prisma.class.findMany({
+  // 5. Re-fetch all classes with fresh teacher assignments
+  const refreshedClasses = await prisma.class.findMany({
     include: {
+      grade: true,
       teacherAssignments: {
         include: { subject: true }
       }
     }
   });
 
-  // Default lesson mapping (Subject Name -> Count per week)
-  const lessonCounts = {
-    'Mathematics': 5,
-    'English': 5,
-    'Kiswahili': 5,
-    'Science': 4,
-    'Social Studies': 3,
-    'CRE': 2,
-    'Creative Arts': 2,
-    'Digital Literacy': 2,
-    'Agriculture': 3
-  };
-  const defaultCount = 3;
+  // Standard 9 periods per day
+  const days = [1, 2, 3, 4, 5]; // Monday to Friday
+  const periods = [
+    { start: '08:00', end: '08:40' },
+    { start: '08:40', end: '09:20' },
+    { start: '09:20', end: '10:00' },
+    { start: '10:20', end: '11:00' },
+    { start: '11:00', end: '11:40' },
+    { start: '11:40', end: '12:20' },
+    { start: '14:00', end: '14:40' },
+    { start: '14:40', end: '15:20' },
+    { start: '15:20', end: '16:00' }
+  ];
 
   const slotsToCreate = [];
-  const days = [1, 2, 3, 4, 5]; // Mon-Fri
-  const times = [
-    '08:00 - 08:40', '08:40 - 09:20', '09:20 - 10:00',
-    '10:20 - 11:00', '11:00 - 11:40', '11:40 - 12:20',
-    '14:00 - 14:40', '14:40 - 15:20', '15:20 - 16:00'
-  ]; // 9 slots per day
-
-  // Pre-calculate needed slots for all classes
-  const allClassesNeeded = [];
-
-  for (const cls of classes) {
-    const classNeeded = [];
-    for (const assign of cls.teacherAssignments) {
-      const count = lessonCounts[assign.subject.name] || defaultCount;
-      for (let i = 0; i < count; i++) {
-        classNeeded.push({
-          classId: cls.id,
-          subjectId: assign.subject.id,
-          teacherId: assign.staffId,
-          subjectName: assign.subject.name
-        });
-      }
-    }
-    // Shuffle for randomness
-    allClassesNeeded.push({ classId: cls.id, needed: classNeeded.sort(() => Math.random() - 0.5) });
-  }
-
-  // Greedy Assignment
   const teacherBusy = new Set();
 
-  for (const day of days) {
-    for (const time of times) {
-      for (const clsData of allClassesNeeded) {
-        // Try to find a lesson for this class, this day, this time
-        const lessonIndex = clsData.needed.findIndex(lesson => {
-          // Check if teacher is free
-          if (!lesson.teacherId) return true; // No teacher assigned? Allow.
-          return !teacherBusy.has(`${lesson.teacherId}-${day}-${time}`);
+  for (const cls of refreshedClasses) {
+    const assignments = cls.teacherAssignments;
+    if (assignments.length === 0) continue;
+
+    let assignIdx = 0;
+    for (const day of days) {
+      for (const period of periods) {
+        const assign = assignments[assignIdx % assignments.length];
+        assignIdx++;
+
+        let teacherId = assign.staffId;
+        // Check if teacher is already busy at this time slot
+        if (teacherId && teacherBusy.has(`${teacherId}-${day}-${period.start}`)) {
+          // Avoid clash: find alternate teacher or slot without clash
+          const freeTeacher = availableTeachers.find(t => !teacherBusy.has(`${t.id}-${day}-${period.start}`));
+          teacherId = freeTeacher ? freeTeacher.id : null;
+        }
+
+        slotsToCreate.push({
+          dayOfWeek: day,
+          startTime: period.start,
+          endTime: period.end,
+          classId: cls.id,
+          subjectId: assign.subjectId,
+          teacherId: teacherId || null,
         });
 
-        if (lessonIndex !== -1) {
-          const lesson = clsData.needed[lessonIndex];
-
-          // Assign it
-          slotsToCreate.push({
-            dayOfWeek: day,
-            startTime: time.split(' - ')[0],
-            endTime: time.split(' - ')[1],
-            classId: lesson.classId,
-            subjectId: lesson.subjectId,
-            teacherId: lesson.teacherId
-          });
-
-          // Mark teacher busy
-          if (lesson.teacherId) {
-            teacherBusy.add(`${lesson.teacherId}-${day}-${time}`);
-          }
-
-          // Remove from needed
-          clsData.needed.splice(lessonIndex, 1);
+        if (teacherId) {
+          teacherBusy.add(`${teacherId}-${day}-${period.start}`);
         }
       }
     }
   }
 
-  // Bulk create
+  // 6. Bulk create slots
   if (slotsToCreate.length > 0) {
-    // Avoid creating too many records at once if limits exist, but bulk is fine for < 1000
-    // Split chunks if huge
-    await prisma.timetableSlot.createMany({ data: slotsToCreate });
+    const chunkSize = 100;
+    for (let i = 0; i < slotsToCreate.length; i += chunkSize) {
+      await prisma.timetableSlot.createMany({
+        data: slotsToCreate.slice(i, i + chunkSize)
+      });
+    }
   }
 
-  return { generated: slotsToCreate.length };
+  return {
+    generated: slotsToCreate.length,
+    teachersCount: availableTeachers.length,
+    classesCount: refreshedClasses.length
+  };
 };
 
 export const deleteTimetableSlot = async (id) => {

@@ -1,12 +1,12 @@
 import axios from 'axios';
 
-const API_URL = 'https://kyamatu-sms-backend.onrender.com/api';
+const API_URL = 'https://matundu-sms-backend.onrender.com/api';
 
 async function testStudentLogin() {
     try {
-        console.log('Attempting to login as student1@kyamatu.ac.ke...');
+        console.log('Attempting to login as student1@matundu.ac.ke...');
         const res = await axios.post(`${API_URL}/auth/login`, {
-            email: 'student1@kyamatu.ac.ke',
+            email: 'student1@matundu.ac.ke',
             password: 'Admin@123'
         });
 

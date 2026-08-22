@@ -127,7 +127,7 @@ const ReminderWidget = () => {
                                                 )}
                                             </div>
 
-                                            {reminder.description?.includes('KyamaBot') && (
+                                            {(reminder.description?.includes('KyamaBot') || reminder.description?.includes('MatunduAI') || reminder.description?.includes('MatunduBot')) && (
                                                 <div className="flex items-center gap-1 text-[9px] font-bold text-emerald-600 uppercase">
                                                     <Sparkles className="w-3 h-3" />
                                                     AI Plan
@@ -151,7 +151,7 @@ const ReminderWidget = () => {
                         </div>
                         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-relaxed">
                             No active reminders.<br />
-                            <span className="text-[10px] text-teal-600 lowercase font-medium">Ask KyamaBot to set one for you!</span>
+                            <span className="text-[10px] text-teal-600 lowercase font-medium">Ask MatunduAI to set one for you!</span>
                         </p>
                     </div>
                 )}
@@ -160,11 +160,11 @@ const ReminderWidget = () => {
             <div className="mt-8 pt-6 border-t border-gray-50">
                 <button 
                     onClick={() => {
-                        window.dispatchEvent(new CustomEvent('OPEN_KYAMABOT', { detail: { initialMessage: 'I want to add a new reminder' } }));
+                        window.dispatchEvent(new CustomEvent('OPEN_MATUNDUBOT', { detail: { initialMessage: 'I want to add a new reminder' } }));
                     }}
                     className="w-full py-3 bg-teal-50 hover:bg-teal-100 text-teal-600 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all border border-dashed border-teal-200 shadow-sm hover:shadow active:scale-95 animate-pulse"
                 >
-                    + Add New via KyamaBot
+                    + Add New via MatunduAI
                 </button>
             </div>
         </div>

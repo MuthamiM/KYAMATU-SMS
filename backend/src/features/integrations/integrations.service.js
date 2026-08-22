@@ -96,7 +96,7 @@ const syncToGoogleCalendar = async (refreshToken, reminder) => {
       calendarId: 'primary',
       requestBody: {
         summary: reminder.title,
-        description: reminder.description || 'Kyamatu SMS Reminder',
+        description: reminder.description || 'Matundu SMS Reminder',
         start: { dateTime: new Date(reminder.remindAt).toISOString() },
         end: { dateTime: new Date(new Date(reminder.remindAt).getTime() + 30 * 60 * 1000).toISOString() },
       },
@@ -134,7 +134,7 @@ const syncToMicrosoftTodo = async (refreshToken, reminder) => {
 
     const res = await client.api('/me/todo/lists/tasks').post({
       title: reminder.title,
-      body: { content: reminder.description || 'Kyamatu SMS Reminder', contentType: 'text' },
+      body: { content: reminder.description || 'Matundu SMS Reminder', contentType: 'text' },
       dueDateTime: { dateTime: new Date(reminder.remindAt).toISOString(), timeZone: 'UTC' }
     });
 

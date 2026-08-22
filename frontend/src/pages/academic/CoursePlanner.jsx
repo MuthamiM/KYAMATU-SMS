@@ -134,7 +134,7 @@ const CoursePlanner = () => {
                         >
                             <option value="">Choose a class...</option>
                             {classes.map(c => (
-                                <option key={c.id} value={c.id}>{c.grade?.name} {c.stream?.name}</option>
+                                <option key={c.id} value={c.id}>{c.name || c.grade?.name}</option>
                             ))}
                         </select>
                     </div>

@@ -7,8 +7,10 @@ export const createAnnouncement = async (data) => {
 };
 
 export const getAnnouncements = async (filters = {}) => {
-  const { targetRole, isPublished, page = 1, limit = 20 } = filters;
-  const skip = (page - 1) * limit;
+  const { targetRole, isPublished } = filters;
+  const pageNum = parseInt(filters.page, 10) || 1;
+  const limitNum = parseInt(filters.limit, 10) || 20;
+  const skip = (pageNum - 1) * limitNum;
 
   const where = {};
   if (isPublished !== undefined) where.isPublished = isPublished === 'true';
@@ -18,13 +20,13 @@ export const getAnnouncements = async (filters = {}) => {
     prisma.announcement.findMany({
       where,
       skip,
-      take: limit,
+      take: limitNum,
       orderBy: { createdAt: 'desc' },
     }),
     prisma.announcement.count({ where }),
   ]);
 
-  return { announcements, meta: paginationMeta(total, page, limit) };
+  return { announcements, meta: paginationMeta(total, pageNum, limitNum) };
 };
 
 export const publishAnnouncement = async (id) => {
@@ -59,8 +61,10 @@ export const sendMessage = async (senderId, receiverId, subject, content) => {
 };
 
 export const getInbox = async (userId, filters = {}) => {
-  const { isRead, page = 1, limit = 20 } = filters;
-  const skip = (page - 1) * limit;
+  const { isRead } = filters;
+  const pageNum = parseInt(filters.page, 10) || 1;
+  const limitNum = parseInt(filters.limit, 10) || 20;
+  const skip = (pageNum - 1) * limitNum;
 
   const where = { receiverId: userId };
   if (isRead !== undefined) where.isRead = isRead === 'true';
@@ -69,7 +73,7 @@ export const getInbox = async (userId, filters = {}) => {
     prisma.message.findMany({
       where,
       skip,
-      take: limit,
+      take: limitNum,
       include: {
         sender: { select: { email: true, role: true } },
       },
@@ -78,18 +82,19 @@ export const getInbox = async (userId, filters = {}) => {
     prisma.message.count({ where }),
   ]);
 
-  return { messages, meta: paginationMeta(total, page, limit) };
+  return { messages, meta: paginationMeta(total, pageNum, limitNum) };
 };
 
 export const getSentMessages = async (userId, filters = {}) => {
-  const { page = 1, limit = 20 } = filters;
-  const skip = (page - 1) * limit;
+  const pageNum = parseInt(filters.page, 10) || 1;
+  const limitNum = parseInt(filters.limit, 10) || 20;
+  const skip = (pageNum - 1) * limitNum;
 
   const [messages, total] = await Promise.all([
     prisma.message.findMany({
       where: { senderId: userId },
       skip,
-      take: limit,
+      take: limitNum,
       include: {
         receiver: { select: { email: true, role: true } },
       },
@@ -98,7 +103,7 @@ export const getSentMessages = async (userId, filters = {}) => {
     prisma.message.count({ where: { senderId: userId } }),
   ]);
 
-  return { messages, meta: paginationMeta(total, page, limit) };
+  return { messages, meta: paginationMeta(total, pageNum, limitNum) };
 };
 
 export const markAsRead = async (messageId, userId) => {

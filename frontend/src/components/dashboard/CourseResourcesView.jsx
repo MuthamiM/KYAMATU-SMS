@@ -68,7 +68,7 @@ const CourseResourcesView = ({ isOpen, onClose, subjectName, teacher, classId, s
                         <div className="space-y-4">
                             {resources.map((res) => {
                                 const downloadUrl = res.url?.startsWith('/public') 
-                                    ? `https://kyamatu-sms-backend.onrender.com${res.url}` 
+                                    ? `https://matundu-sms-backend.onrender.com${res.url}` 
                                     : res.url;
                                 return (
                                 <div

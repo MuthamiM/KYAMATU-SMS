@@ -110,7 +110,7 @@ function StudentDetail() {
             </h2>
             <p className="text-gray-500">
               {student.class
-                ? `${student.class.grade?.name} ${student.class.stream?.name}`
+                ? (student.class.name || student.class.grade?.name)
                 : 'Not Assigned'}
             </p>
             <span className={`badge mt-2 ${
@@ -184,7 +184,7 @@ function StudentDetail() {
                         <p className="text-sm text-gray-500 mb-1">Current Class</p>
                         <p className="font-bold text-gray-900">
                           {student.class
-                            ? `${student.class.grade?.name} ${student.class.stream?.name}`
+                            ? (student.class.name || student.class.grade?.name)
                             : 'Not Assigned'}
                         </p>
                       </div>
@@ -200,6 +200,24 @@ function StudentDetail() {
                           {student.admissionDate
                             ? new Date(student.admissionDate).toLocaleDateString()
                             : 'N/A'}
+                        </p>
+                      </div>
+                      <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                        <p className="text-sm text-gray-500 mb-1">NEMIS Identifier (ULI/UPI)</p>
+                        <p className="font-bold text-gray-900 font-mono text-sm">
+                          {student.upiNumber || 'N/A'}
+                        </p>
+                      </div>
+                      <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                        <p className="text-sm text-gray-500 mb-1">Assessment / Index No</p>
+                        <p className="font-bold text-gray-900 font-mono text-sm">
+                          {student.assessmentNumber || 'N/A'}
+                        </p>
+                      </div>
+                      <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                        <p className="text-sm text-gray-500 mb-1">Special Needs (SNE)</p>
+                        <p className="font-bold text-gray-900">
+                          {student.sneStatus === 'YES' ? 'Special Needs Enrolled' : 'None (Regular)'}
                         </p>
                       </div>
                       <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">

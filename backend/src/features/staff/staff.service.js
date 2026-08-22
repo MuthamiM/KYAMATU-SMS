@@ -6,7 +6,7 @@ import { generateEmployeeNumber, paginationMeta } from '../../utils/helpers.js';
 export const createStaff = async (data) => {
   const employeeNumber = data.employeeNumber || generateEmployeeNumber();
   
-  const { email, phone, password, role, isActive, ...staffData } = data;
+  const { email, phone, password, role, isActive, isSupport, ...staffData } = data;
 
   // Default password: 'admin' for teachers/bursars, hash before storing
   const rawPassword = password || 'admin';
@@ -97,14 +97,40 @@ export const getStaffById = async (id) => {
 };
 
 export const updateStaff = async (id, data) => {
+  const { email, phone, role, isActive, ...staffData } = data;
+
+  const existingStaff = await prisma.staff.findUnique({
+    where: { id },
+    include: { user: true }
+  });
+
+  if (!existingStaff) {
+    throw new NotFoundError('Staff');
+  }
+
+  // Update user fields if provided
+  if (email || phone || role || isActive !== undefined) {
+    const userData = {};
+    if (email) userData.email = email;
+    if (phone !== undefined) userData.phone = phone;
+    if (role) userData.role = role;
+    if (isActive !== undefined) userData.isActive = isActive;
+
+    await prisma.user.update({
+      where: { id: existingStaff.userId },
+      data: userData,
+    });
+  }
+
+  // Update staff fields
   const staff = await prisma.staff.update({
     where: { id },
-    data,
+    data: staffData,
     include: {
-      user: { select: { email: true, phone: true, role: true } },
+      user: { select: { id: true, email: true, phone: true, role: true, isActive: true } },
     },
   });
-  
+
   return staff;
 };
 

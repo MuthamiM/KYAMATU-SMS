@@ -67,14 +67,13 @@ npm install
 npm run dev
 ```
 
-## Test Credentials
+## Default Login
 
-| Role    | Email                  | Password  |
-| ------- | ---------------------- | --------- |
-| Admin   | admin@kyamatu.ac.ke    | Admin@123 |
-| Teacher | teacher@kyamatu.ac.ke  | Admin@123 |
-| Bursar  | bursar@kyamatu.ac.ke   | Admin@123 |
-| Student | student1@kyamatu.ac.ke | Admin@123 |
+| Role  | Email               | Password  |
+| ----- | ------------------- | --------- |
+| Admin | admin@matundu.ac.ke | Admin@123 |
+
+> Teachers and students are added manually through the admin dashboard.
 
 ## API Endpoints
 
@@ -112,7 +111,7 @@ npm run dev
 ## Project Structure
 
 ```
-kyamatu-sms/
+matundu-sms/
 ├── backend/
 │   ├── src/
 │   │   ├── config/         # Configuration

@@ -2,7 +2,7 @@ const axios = require('axios');
 async function test() {
     try {
         const loginRes = await axios.post('http://localhost:3000/api/auth/login', {
-            email: 'student1@kyamatu.ac.ke',
+            email: 'student1@matundu.ac.ke',
             password: 'Admin@123'
         });
         const token = loginRes.data.data.token;
