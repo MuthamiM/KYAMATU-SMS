@@ -12,10 +12,17 @@ function Login() {
   const { login, isLoading } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleQuickLogin = (demoEmail, demoPassword) => {
+  const handleQuickLogin = async (demoEmail, demoPassword) => {
     setEmail(demoEmail);
     setPassword(demoPassword);
-    toast.success(`Loaded credentials for ${demoEmail}`);
+    toast.loading(`Signing in as ${demoEmail}...`, { id: 'auth-toast' });
+    const result = await login(demoEmail, demoPassword);
+    if (result.success) {
+      toast.success('Welcome back!', { id: 'auth-toast' });
+      navigate('/dashboard');
+    } else {
+      toast.error(result.error || 'Login failed. Please check credentials.', { id: 'auth-toast' });
+    }
   };
 
   const handleSubmit = async (e) => {
