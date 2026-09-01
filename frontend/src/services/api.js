@@ -7,8 +7,17 @@ const PRODUCTION_API_URL = 'https://api.mftechnologies.org/api';
 // Use VITE_API_URL from environment, or fallback logic
 const getBaseUrl = () => {
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return 'http://localhost:5001/api';
+  if (
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname.startsWith('192.168.') ||
+      window.location.hostname.startsWith('10.') ||
+      window.location.hostname.startsWith('172.') ||
+      window.location.port === '5173')
+  ) {
+    const host = window.location.hostname === '0.0.0.0' ? 'localhost' : window.location.hostname;
+    return `http://${host}:5001/api`;
   }
   // In production (Cloudflare Pages), use the domain backend URL
   return PRODUCTION_API_URL;

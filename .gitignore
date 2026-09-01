@@ -21,6 +21,7 @@ build/
 *.njsproj
 *.sln
 *.sw?
+.~lock.*
 
 # Environment
 .env
