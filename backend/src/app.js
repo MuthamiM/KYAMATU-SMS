@@ -302,11 +302,13 @@ app.post('/api/admin/reseed', async (req, res) => {
         gradeSubjects.push(s);
       }
 
+      const stream = await prisma.stream.create({ data: { name: 'A' } });
       const cls = await prisma.class.create({
         data: {
           name: `Grade ${grade.level}`,
           capacity: 40,
           gradeId: grade.id,
+          streamId: stream.id,
           academicYearId: currentYear.id
         }
       });
@@ -317,19 +319,58 @@ app.post('/api/admin/reseed', async (req, res) => {
       }
     }
 
-    // Admin Account
-    const adminUser = await prisma.user.create({ data: { email: 'admin@matundu.ac.ke', password: hashedPassword, role: 'SUPER_ADMIN', phone: '+254700000000' } });
-    await prisma.staff.create({ data: { userId: adminUser.id, employeeNumber: 'ADM001', firstName: 'Admin', lastName: 'Matundu', gender: 'Male', qualification: 'System Administrator', specialization: 'Administration' } });
+    // 1. Admin Account
+    const adminUser = await prisma.user.create({ data: { email: 'admin@matundu.ac.ke', password: hashedPassword, role: 'SUPER_ADMIN', phone: '+254700000001' } });
+    await prisma.staff.create({ data: { userId: adminUser.id, employeeNumber: 'ADM-001', firstName: 'System', lastName: 'Administrator', gender: 'Male', qualification: 'System Administrator', specialization: 'Administration' } });
+
+    // 2. Teacher Accounts
+    const teacher1 = await prisma.user.create({ data: { email: 'nathan@matundu.ac.ke', password: hashedPassword, role: 'TEACHER', phone: '0727148126' } });
+    await prisma.staff.create({ data: { userId: teacher1.id, employeeNumber: '675422', firstName: 'Nathan Mugambi', lastName: 'Njiru', gender: 'Male', qualification: 'B.Ed Science', specialization: 'Mathematics' } });
+
+    const teacher2 = await prisma.user.create({ data: { email: 'prominah@matundu.ac.ke', password: hashedPassword, role: 'TEACHER', phone: '0718578752' } });
+    await prisma.staff.create({ data: { userId: teacher2.id, employeeNumber: '541211', firstName: 'Prominah Syongombe', lastName: 'Robert', gender: 'Female', qualification: 'B.Ed Arts', specialization: 'English' } });
+
+    // 3. Bursar Account
+    const bursarUser = await prisma.user.create({ data: { email: 'bursar@matundu.ac.ke', password: hashedPassword, role: 'BURSAR', phone: '+254700000002' } });
+    await prisma.staff.create({ data: { userId: bursarUser.id, employeeNumber: 'BUR-001', firstName: 'Finance', lastName: 'Bursar', gender: 'Male', qualification: 'CPA-K', specialization: 'School Accounts' } });
+
+    // 4. Student Accounts
+    const studentClass = classes[7] || classes[0]; // Grade 8 or Grade 1
+    const studentUser = await prisma.user.create({ data: { email: 'student.117@matundu.ac.ke', password: hashedPassword, role: 'STUDENT' } });
+    await prisma.student.create({
+      data: {
+        userId: studentUser.id,
+        admissionNumber: 'MAT/2026/0117',
+        firstName: 'BENSON',
+        lastName: 'MUENI MWANZIA',
+        gender: 'MALE',
+        classId: studentClass.id,
+        admissionStatus: 'APPROVED'
+      }
+    });
+
+    const studentUser2 = await prisma.user.create({ data: { email: 'student.001@matundu.ac.ke', password: hashedPassword, role: 'STUDENT' } });
+    await prisma.student.create({
+      data: {
+        userId: studentUser2.id,
+        admissionNumber: 'MAT/2026/0001',
+        firstName: 'ALICE',
+        lastName: 'WANJIKU',
+        gender: 'FEMALE',
+        classId: studentClass.id,
+        admissionStatus: 'APPROVED'
+      }
+    });
 
     logger.info('Database reseed completed successfully');
     res.json({
       success: true,
-      message: 'Database reseeded successfully — add teachers and students manually',
+      message: 'Database reseeded successfully with full credentials',
       data: {
         grades: grades.length,
         classes: classes.length,
-        teachers: 0,
-        students: 0
+        teachers: 2,
+        students: 2
       }
     });
   } catch (error) {
