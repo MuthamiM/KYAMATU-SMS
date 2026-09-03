@@ -58,7 +58,7 @@ export const getStudents = async (filters = {}) => {
 
   const where = {};
 
-  if (checkTeacherId) {
+  if (checkTeacherId && !gradeId && !classId) {
     // Find all classes assigned to this teacher
     const assignments = await prisma.teacherAssignment.findMany({
       where: { staffId: checkTeacherId },
@@ -66,20 +66,16 @@ export const getStudents = async (filters = {}) => {
     });
     const assignedClassIds = assignments.map(a => a.classId);
 
-    // If teacher has no classes, returned empty (or handle as needed)
+    // If teacher has no classes, returned empty
     if (assignedClassIds.length === 0) {
       return { students: [], meta: paginationMeta(0, page, limit) };
     }
 
-    // Restrict query to these classes
+    // Restrict default query to these classes
     where.classId = { in: assignedClassIds };
   }
 
   if (classId) {
-    // If strict classId provided, ensure it's one of the allowed ones (intersection)
-    if (where.classId && !where.classId.in.includes(classId)) {
-      return { students: [], meta: paginationMeta(0, page, limit) };
-    }
     where.classId = classId;
   }
 
