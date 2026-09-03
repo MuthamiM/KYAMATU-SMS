@@ -200,6 +200,21 @@ app.post('/api/admin/reseed', async (req, res) => {
 
   try {
     logger.info('Starting database reseed via API...');
+
+    // Auto-patch missing columns on remote database if not yet migrated
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE "Student" ADD COLUMN IF NOT EXISTS "sneStatus" TEXT DEFAULT 'NO'`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "Student" ADD COLUMN IF NOT EXISTS "upiNumber" TEXT`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "Student" ADD COLUMN IF NOT EXISTS "assessmentNumber" TEXT`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "Student" ADD COLUMN IF NOT EXISTS "medicalInfo" TEXT`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "Student" ADD COLUMN IF NOT EXISTS "prefectRole" TEXT`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "Student" ADD COLUMN IF NOT EXISTS "googleRefreshToken" TEXT`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "Student" ADD COLUMN IF NOT EXISTS "microsoftRefreshToken" TEXT`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "Class" ALTER COLUMN "streamId" DROP NOT NULL`);
+    } catch (e) {
+      logger.warn({ message: 'Schema patch note', error: e.message });
+    }
+
     const bcrypt = await import('bcryptjs');
     const hashedPassword = await bcrypt.default.hash('Admin@123', 12);
 

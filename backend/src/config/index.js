@@ -1,6 +1,23 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+if (process.env.DATABASE_URL) {
+  let url = process.env.DATABASE_URL.trim();
+  if ((url.startsWith('"') && url.endsWith('"')) || (url.startsWith("'") && url.endsWith("'"))) {
+    url = url.slice(1, -1).trim();
+  }
+  if (url.startsWith('DATABASE_URL=')) {
+    url = url.replace('DATABASE_URL=', '').trim();
+  }
+  if (url.startsWith('psql ')) {
+    url = url.replace(/^psql\s+['"]?/, '').replace(/['"]?$/, '').trim();
+  }
+  if ((url.startsWith('"') && url.endsWith('"')) || (url.startsWith("'") && url.endsWith("'"))) {
+    url = url.slice(1, -1).trim();
+  }
+  process.env.DATABASE_URL = url;
+}
+
 const requiredEnvVars = ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'DATABASE_URL'];
 
 const validateEnv = () => {
